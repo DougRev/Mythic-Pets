@@ -10,8 +10,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useAuth, useFirestore, useStorage, uploadFile } from '@/firebase';
-import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { collection } from 'firebase/firestore';
+import { addDoc, collection } from 'firebase/firestore';
 import { v4 as uuidv4 } from 'uuid';
 
 
@@ -49,7 +48,7 @@ export function CreatePetDialog({ children }: { children: React.ReactNode }) {
   };
 
   const handleSavePet = async () => {
-    if (!user) {
+    if (!user || !firestore) {
       toast({ variant: 'destructive', title: 'Authentication Error', description: 'You must be logged in to create a pet.' });
       return;
     }
@@ -74,15 +73,13 @@ export function CreatePetDialog({ children }: { children: React.ReactNode }) {
         userProfileId: user.uid,
         createdAt: new Date().toISOString(),
       };
+      
+      const petsCollection = collection(firestore, 'users', user.uid, 'petProfiles');
+      await addDoc(petsCollection, petData);
 
-      if (firestore) {
-        const petsCollection = collection(firestore, 'users', user.uid, 'petProfiles');
-        await addDocumentNonBlocking(petsCollection, petData);
-
-        toast({ title: 'Pet Created!', description: `${pet.name} has been added to your family.` });
-        setPet({ name: '', species: '', breed: '', photoDataUri: null }); // Reset form
-        setOpen(false); // Close dialog
-      }
+      toast({ title: 'Pet Created!', description: `${pet.name} has been added to your family.` });
+      setPet({ name: '', species: '', breed: '', photoDataUri: null }); // Reset form
+      setOpen(false); // Close dialog
 
     } catch (error) {
       console.error("Error creating pet:", error);
