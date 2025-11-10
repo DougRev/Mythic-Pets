@@ -6,17 +6,16 @@ import { Card, CardContent } from '@/components/ui/card';
 import { PlusCircle } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { CreatePetDialog } from '@/components/CreatePetDialog';
-import { useAuth, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
-import { useFirestore } from '@/firebase';
+import { useAuth, useCollection, useMemoFirebase, useFirestore } from '@/firebase';
+import { collection, query } from 'firebase/firestore';
 
 export default function PetSelectionPage() {
   const { user } = useAuth();
   const firestore = useFirestore();
 
   const petsQuery = useMemoFirebase(() => {
-    if (!user) return null;
-    return query(collection(firestore, 'pets'), where('userId', '==', user.uid));
+    if (!user || !firestore) return null;
+    return query(collection(firestore, 'users', user.uid, 'petProfiles'));
   }, [firestore, user]);
 
   const { data: pets, isLoading } = useCollection<any>(petsQuery);
@@ -50,7 +49,7 @@ export default function PetSelectionPage() {
               <CardContent className="p-0">
                 <div className="relative aspect-square">
                   <Image
-                    src={pet.photoDataUri || (petAvatarDefault?.imageUrl || '/default-avatar.jpg')}
+                    src={pet.photoURL || (petAvatarDefault?.imageUrl || '/default-avatar.jpg')}
                     alt={pet.name}
                     fill
                     className="object-cover"

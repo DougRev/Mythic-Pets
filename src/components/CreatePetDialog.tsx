@@ -9,9 +9,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { useAuth, useFirestore } from '@/firebase';
+import { useAuth, useFirestore, useStorage, uploadFile } from '@/firebase';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { collection } from 'firebase/firestore';
+import { v4 as uuidv4 } from 'uuid';
+
 
 type PetDetails = {
   name: string;
@@ -26,6 +28,7 @@ export function CreatePetDialog({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
   const { user } = useAuth();
   const firestore = useFirestore();
+  const storage = useStorage();
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [pet, setPet] = useState<PetDetails>({ name: '', species: '', breed: '', photoDataUri: null });
@@ -58,13 +61,22 @@ export function CreatePetDialog({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
 
     try {
+      // 1. Upload image to Firebase Storage
+      const imagePath = `users/${user.uid}/pets/${uuidv4()}`;
+      const photoURL = await uploadFile(storage, imagePath, pet.photoDataUri);
+
+      // 2. Save pet data to Firestore with the image URL
       const petData = {
-        ...pet,
-        userId: user.uid,
+        name: pet.name,
+        species: pet.species,
+        breed: pet.breed,
+        photoURL: photoURL, // Use the public URL from Storage
+        userProfileId: user.uid,
         createdAt: new Date().toISOString(),
       };
+
       if (firestore) {
-        const petsCollection = collection(firestore, 'pets');
+        const petsCollection = collection(firestore, 'users', user.uid, 'petProfiles');
         await addDocumentNonBlocking(petsCollection, petData);
 
         toast({ title: 'Pet Created!', description: `${pet.name} has been added to your family.` });
