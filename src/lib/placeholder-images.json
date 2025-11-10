@@ -1,3 +1,58 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "landing-hero",
+      "description": "A majestic cat dressed as a king on a throne.",
+      "imageUrl": "https://images.unsplash.com/photo-1747979044937-ccd295f997b2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxtYWplc3RpYyUyMGNhdHxlbnwwfHx8fDE3NjI3OTUxMjJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "majestic cat"
+    },
+    {
+      "id": "feature-persona",
+      "description": "A dog portrayed as a cyberpunk hacker.",
+      "imageUrl": "https://images.unsplash.com/photo-1603070376972-a9bbaae5095f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxjeWJlcnB1bmslMjBkb2d8ZW58MHx8fHwxNzYyNzk1MTIyfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "cyberpunk dog"
+    },
+    {
+      "id": "feature-story",
+      "description": "An open book with glowing magical runes coming out of it.",
+      "imageUrl": "https://images.unsplash.com/photo-1642843259459-5612b43da3a7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxtYWdpYyUyMGJvb2t8ZW58MHx8fHwxNzYyNzc0NjUxfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "magic book"
+    },
+    {
+      "id": "feature-share",
+      "description": "A mobile phone showing a social media post of a pet.",
+      "imageUrl": "https://images.unsplash.com/photo-1641604210418-9c32f8f05ca0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxwaG9uZSUyMHNvY2lhbCUyMG1lZGlhfGVufDB8fHx8MTc2Mjc5NTEyMnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "phone social media"
+    },
+    {
+      "id": "gallery-item-1",
+      "description": "A golden retriever knight in shining armor.",
+      "imageUrl": "https://images.unsplash.com/photo-1616614992732-6a2eb714f8c3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxkb2clMjBrbmlnaHR8ZW58MHx8fHwxNzYyNzk1MTIyfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "dog knight"
+    },
+    {
+      "id": "gallery-item-2",
+      "description": "A siamese cat as a wise wizard with a staff.",
+      "imageUrl": "https://images.unsplash.com/photo-1675456212683-d26873ee3df3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxjYXQlMjB3aXphcmR8ZW58MHx8fHwxNzYyNzU3NDk1fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "cat wizard"
+    },
+    {
+      "id": "gallery-item-3",
+      "description": "A parrot as a swashbuckling pirate captain.",
+      "imageUrl": "https://images.unsplash.com/photo-1674267845241-6255d65e4d6b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxwYXJyb3QlMjBwaXJhdGV8ZW58MHx8fHwxNzYyNzk1MTIyfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "parrot pirate"
+    },
+    {
+      "id": "gallery-item-4",
+      "description": "A guinea pig as a noir detective in a trench coat.",
+      "imageUrl": "https://images.unsplash.com/photo-1619961279595-d9440fbf93a7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxndWluZWElMjBwaWclMjBkZXRlY3RpdmV8ZW58MHx8fHwxNzYyNzk1MTIyfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "guinea pig detective"
+    },
+    {
+      "id": "pet-avatar-default",
+      "description": "A generic placeholder for a pet's avatar.",
+      "imageUrl": "https://images.unsplash.com/photo-1673226124339-b206c555ad46?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxhbmltYWwlMjBzaWxob3VldHRlfGVufDB8fHx8MTc2Mjc5NTEyMnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "animal silhouette"
+    }
+  ]
 }
