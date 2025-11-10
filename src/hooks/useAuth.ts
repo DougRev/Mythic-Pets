@@ -12,7 +12,7 @@ import {
   signInWithEmailAndPassword,
   signInWithPopup,
   GoogleAuthProvider,
-  AppleAuthProvider,
+  OAuthProvider,
   updateProfile,
   User,
 } from 'firebase/auth';
@@ -62,7 +62,7 @@ export const useAuth = () => {
 
   const signInWithApple = async () => {
     if (!auth || !firestore) throw new Error("Firebase not initialized");
-    const provider = new AppleAuthProvider();
+    const provider = new OAuthProvider('apple.com');
     const userCredential = await signInWithPopup(auth, provider);
     await createUserProfile(firestore, userCredential.user);
     return userCredential;
