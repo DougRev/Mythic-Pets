@@ -48,7 +48,7 @@ export function CreatePetDialog({ children }: { children: React.ReactNode }) {
   };
 
   const handleSavePet = async () => {
-    if (!user || !firestore) {
+    if (!user || !firestore || !storage) {
       toast({ variant: 'destructive', title: 'Authentication Error', description: 'You must be logged in to create a pet.' });
       return;
     }
