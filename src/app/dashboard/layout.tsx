@@ -1,5 +1,6 @@
 'use client';
 
+import React, { useEffect } from 'react';
 import {
   SidebarProvider,
   Sidebar,
@@ -19,7 +20,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { user, isUserLoading } = useUser();
   const router = useRouter();
 
-  if (isUserLoading) {
+  useEffect(() => {
+    // If the user is not loading and there's no user, redirect to login.
+    if (!isUserLoading && !user) {
+      router.push('/login');
+    }
+  }, [isUserLoading, user, router]);
+
+  if (isUserLoading || !user) {
+    // While loading or before redirecting, show a loading indicator or nothing
     return (
         <div className="flex items-center justify-center h-screen">
             <p>Loading...</p>
@@ -27,11 +36,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     );
   }
 
-  if (!user) {
-    router.push('/login');
-    return null;
-  }
-
+  // If user is authenticated, render the dashboard layout
   return (
     <SidebarProvider>
       <Sidebar>
