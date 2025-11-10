@@ -29,6 +29,7 @@ export function CreatePetDialog({ children }: { children: React.ReactNode }) {
   const { user, isUserLoading } = useAuth();
   const firestore = useFirestore();
   const storage = useStorage();
+
   const [open, setOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [pet, setPet] = useState<PetDetails>({ name: '', species: '', breed: '', photoDataUri: null });
