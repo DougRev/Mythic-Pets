@@ -6,14 +6,15 @@ import { Card, CardContent } from '@/components/ui/card';
 import { PlusCircle } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { CreatePetDialog } from '@/components/CreatePetDialog';
-import { useAuth, useCollection, useMemoFirebase, useFirestore } from '@/firebase';
+import { useAuth } from '@/hooks/useAuth';
+import { useCollection } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
+import React from 'react';
 
 export default function PetSelectionPage() {
-  const { user } = useAuth();
-  const firestore = useFirestore();
+  const { user, firestore } = useAuth();
 
-  const petsQuery = useMemoFirebase(() => {
+  const petsQuery = React.useMemo(() => {
     if (!user || !firestore) return null;
     return query(collection(firestore, 'users', user.uid, 'petProfiles'));
   }, [firestore, user]);

@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { useAuth, useFirestore, useStorage } from '@/firebase';
+import { useAuth } from '@/hooks/useAuth';
 import { addDoc, collection } from 'firebase/firestore';
 import { uploadFile } from '@/firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
@@ -26,9 +26,7 @@ const petAvatarDefault = PlaceHolderImages.find(p => p.id === 'pet-avatar-defaul
 
 export function CreatePetDialog({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
-  const { user, isUserLoading } = useAuth();
-  const firestore = useFirestore();
-  const storage = useStorage();
+  const { user, isUserLoading, firestore, storage } = useAuth();
 
   const [open, setOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -50,11 +48,6 @@ export function CreatePetDialog({ children }: { children: React.ReactNode }) {
   };
 
   const handleSavePet = async () => {
-    if (isUserLoading) {
-        toast({ variant: 'destructive', title: 'Authentication loading', description: 'Please wait for authentication to complete.' });
-        return;
-    }
-    
     if (!user || !firestore || !storage) {
       toast({ variant: 'destructive', title: 'Authentication Error', description: 'You must be logged in to create a pet.' });
       return;

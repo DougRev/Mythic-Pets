@@ -1,22 +1,11 @@
 'use client';
 
 import {
-  getStorage,
   ref,
   uploadString,
   getDownloadURL,
   FirebaseStorage,
 } from 'firebase/storage';
-import { useFirebaseApp } from '@/firebase/provider';
-
-/**
- * Custom hook to get an initialized Firebase Storage instance.
- * @returns {FirebaseStorage} The Firebase Storage instance.
- */
-export function useStorage(): FirebaseStorage {
-  const app = useFirebaseApp();
-  return getStorage(app);
-}
 
 /**
  * Uploads a file to Firebase Storage.

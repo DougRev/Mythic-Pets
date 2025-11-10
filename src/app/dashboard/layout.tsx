@@ -14,10 +14,10 @@ import { AppLogo } from '@/components/AppLogo';
 import { UserNav } from '@/components/UserNav';
 import { DashboardNav } from '@/components/DashboardNav';
 import { useRouter } from 'next/navigation';
-import { useUser } from '@/firebase';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { user, isUserLoading } = useUser();
+  const { user, isUserLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
