@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { WandSparkles, BookImage, User, Settings, LayoutGrid } from 'lucide-react';
+import { WandSparkles, BookImage, User, Settings, LayoutGrid, PawPrint } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Tooltip,
@@ -13,6 +13,7 @@ import {
 
 const navItems = [
   { href: '/dashboard', label: 'Create', icon: WandSparkles },
+  { href: '/dashboard/pets', label: 'Pets', icon: PawPrint },
   { href: '/dashboard/gallery', label: 'Gallery', icon: BookImage },
   { href: '/dashboard/account', label: 'Account', icon: User },
 ];
@@ -24,7 +25,7 @@ export function DashboardNav() {
     <TooltipProvider>
       <nav className="flex flex-col gap-2 p-2">
         {navItems.map((item) => {
-          const isActive = pathname === item.href;
+          const isActive = pathname.startsWith(item.href) && (item.href !== '/dashboard' || pathname === '/dashboard');
           return (
             <Tooltip key={item.href}>
               <TooltipTrigger asChild>
