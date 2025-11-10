@@ -9,8 +9,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { useAuth, useFirestore, useStorage, uploadFile } from '@/firebase';
+import { useAuth, useFirestore, useStorage } from '@/firebase';
 import { addDoc, collection } from 'firebase/firestore';
+import { uploadFile } from '@/firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
 
 
@@ -25,11 +26,11 @@ const petAvatarDefault = PlaceHolderImages.find(p => p.id === 'pet-avatar-defaul
 
 export function CreatePetDialog({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, isUserLoading } = useAuth();
   const firestore = useFirestore();
   const storage = useStorage();
   const [open, setOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [pet, setPet] = useState<PetDetails>({ name: '', species: '', breed: '', photoDataUri: null });
 
   const handlePetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -48,6 +49,11 @@ export function CreatePetDialog({ children }: { children: React.ReactNode }) {
   };
 
   const handleSavePet = async () => {
+    if (isUserLoading) {
+        toast({ variant: 'destructive', title: 'Authentication loading', description: 'Please wait for authentication to complete.' });
+        return;
+    }
+    
     if (!user || !firestore || !storage) {
       toast({ variant: 'destructive', title: 'Authentication Error', description: 'You must be logged in to create a pet.' });
       return;
@@ -57,7 +63,7 @@ export function CreatePetDialog({ children }: { children: React.ReactNode }) {
       return;
     }
     
-    setIsLoading(true);
+    setIsSaving(true);
 
     try {
       // 1. Upload image to Firebase Storage
@@ -85,7 +91,7 @@ export function CreatePetDialog({ children }: { children: React.ReactNode }) {
       console.error("Error creating pet:", error);
       toast({ variant: 'destructive', title: 'Creation Failed', description: 'Could not save the pet. Please try again.' });
     } finally {
-      setIsLoading(false);
+      setIsSaving(false);
     }
   };
 
@@ -131,8 +137,8 @@ export function CreatePetDialog({ children }: { children: React.ReactNode }) {
             </div>
         </div>
         <DialogFooter>
-          <Button onClick={handleSavePet} disabled={isLoading}>
-            {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</> : 'Save Pet'}
+          <Button onClick={handleSavePet} disabled={isSaving || isUserLoading}>
+            {isSaving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</> : 'Save Pet'}
           </Button>
         </DialogFooter>
       </DialogContent>
