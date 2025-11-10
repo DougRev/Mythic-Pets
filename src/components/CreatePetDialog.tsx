@@ -81,12 +81,16 @@ export function CreatePetDialog({ children }: { children: React.ReactNode }) {
       setPet({ name: '', species: '', breed: '', photoDataUri: null }); // Reset form
       setOpen(false); // Close dialog
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating pet:", error);
+      let description = 'Could not save the pet. Please try again.';
+      if (error.code === 'storage/unauthorized' || (error.message && error.message.includes('CORS'))) {
+          description = 'A storage permission error (CORS) occurred. This is a one-time setup issue. Please check the developer console for instructions on how to resolve it.';
+      }
       toast({ 
         variant: 'destructive', 
         title: 'Creation Failed', 
-        description: 'Could not save the pet. This might be due to storage permissions (CORS). Please check the browser console for more details.' 
+        description: description,
       });
     } finally {
       setIsSaving(false);
