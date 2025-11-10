@@ -2,6 +2,7 @@
  * @description This ruleset enforces a strict user-ownership model for all data. Users can only access their own profiles, pets, personas, and stories.
  * @dataStructure
  *   /users/{userId} - User profile data.
+ *   /pets/{petId} - Pet profiles owned by a user.
  *   /users/{userId}/petProfiles/{petProfileId} - Pet profiles owned by the user.
  *   /users/{userId}/petProfiles/{petProfileId}/aiPersonas/{aiPersonaId} - AI personas for each pet profile.
  *   /users/{userId}/petProfiles/{petProfileId}/aiPersonas/{aiPersonaId}/aiStories/{aiStoryId} - AI stories for each AI persona.
@@ -36,6 +37,12 @@ service cloud.firestore {
       allow create: if isSignedIn() && request.auth.uid == userId;
       allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
       allow delete: if isExistingOwner(userId);
+    }
+    
+    match /pets/{petId} {
+      allow read: if isOwner(resource.data.userId);
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isOwner(resource.data.userId);
     }
 
     /**
