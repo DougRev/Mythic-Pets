@@ -83,7 +83,11 @@ export function CreatePetDialog({ children }: { children: React.ReactNode }) {
 
     } catch (error) {
       console.error("Error creating pet:", error);
-      toast({ variant: 'destructive', title: 'Creation Failed', description: 'Could not save the pet. Please try again.' });
+      toast({ 
+        variant: 'destructive', 
+        title: 'Creation Failed', 
+        description: 'Could not save the pet. This might be due to storage permissions (CORS). Please check the browser console for more details.' 
+      });
     } finally {
       setIsSaving(false);
     }
