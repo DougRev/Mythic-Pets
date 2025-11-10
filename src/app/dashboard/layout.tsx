@@ -12,8 +12,26 @@ import {
 import { AppLogo } from '@/components/AppLogo';
 import { UserNav } from '@/components/UserNav';
 import { DashboardNav } from '@/components/DashboardNav';
+import { useRouter } from 'next/navigation';
+import { useUser } from '@/firebase';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const { user, isUserLoading } = useUser();
+  const router = useRouter();
+
+  if (isUserLoading) {
+    return (
+        <div className="flex items-center justify-center h-screen">
+            <p>Loading...</p>
+        </div>
+    );
+  }
+
+  if (!user) {
+    router.push('/login');
+    return null;
+  }
+
   return (
     <SidebarProvider>
       <Sidebar>
