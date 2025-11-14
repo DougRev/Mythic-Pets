@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Upload, PawPrint, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -31,6 +31,13 @@ export function CreatePetDialog({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [pet, setPet] = useState<PetDetails>({ name: '', species: '', breed: '', photoDataUri: null });
+
+  useEffect(() => {
+    if (open) {
+      // Log the origin when the dialog opens, to help debug CORS issues.
+      console.log('CORS_ORIGIN_URL_TO_ALLOW:', window.location.origin);
+    }
+  }, [open]);
 
   const handlePetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPet({ ...pet, [e.target.name]: e.target.value });
@@ -83,9 +90,8 @@ export function CreatePetDialog({ children }: { children: React.ReactNode }) {
       console.error("Error creating pet:", error);
       let description = 'Could not save the pet. Please try again.';
       
-      // Check for a CORS-related error message.
       if (error.code === 'storage/unauthorized' || (error.message && error.message.toLowerCase().includes('cors'))) {
-          description = "A one-time storage permission (CORS) setup is required. Please check the developer console for a 'gsutil' command and run it in a new terminal to fix this, then try saving again.";
+          description = `A one-time storage permission (CORS) setup is required. Please copy the URL from the console log starting with 'CORS_ORIGIN_URL_TO_ALLOW' and ask me to help you configure CORS.`;
       }
 
       toast({ 
