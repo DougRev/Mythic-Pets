@@ -36,27 +36,13 @@ export default function PersonaGalleryPage({ params }: { params: { petId: string
     return <div className="container mx-auto max-w-4xl py-8 px-4 md:px-6">Pet not found.</div>;
   }
 
-  return (
-    <div className="container mx-auto max-w-4xl py-8 px-4 md:px-6">
-      <div className="flex items-center justify-between mb-8">
-         <div className="space-y-2">
-            <h1 className="font-headline text-3xl font-bold tracking-tight sm:text-4xl">
-              {pet.name}'s Personas
-            </h1>
-            <p className="text-lg text-muted-foreground">
-              Select a persona to see their stories or create a new one.
-            </p>
-        </div>
-        <Button asChild>
-          <Link href={`/dashboard/pets/${petId}/create-persona`}>
-             <PlusCircle className="mr-2 h-4 w-4" />
-             Create New Persona
-          </Link>
-        </Button>
-      </div>
+  const renderContent = () => {
+    if (isPersonasLoading) {
+      return <p>Loading personas...</p>;
+    }
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {isPersonasLoading && <p>Loading personas...</p>}
+    return (
+       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {personas && personas.map((persona) => (
           <Link key={persona.id} href={`/dashboard/pets/${petId}/personas/${persona.id}`} className="group">
             <Card className="overflow-hidden transition-all duration-200 ease-in-out group-hover:shadow-xl group-hover:-translate-y-1">
@@ -89,6 +75,28 @@ export default function PersonaGalleryPage({ params }: { params: { petId: string
             </Card>
         </Link>
       </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto max-w-4xl py-8 px-4 md:px-6">
+      <div className="flex items-center justify-between mb-8">
+         <div className="space-y-2">
+            <h1 className="font-headline text-3xl font-bold tracking-tight sm:text-4xl">
+              {pet.name}'s Personas
+            </h1>
+            <p className="text-lg text-muted-foreground">
+              Select a persona to see their stories or create a new one.
+            </p>
+        </div>
+        <Button asChild>
+          <Link href={`/dashboard/pets/${petId}/create-persona`}>
+             <PlusCircle className="mr-2 h-4 w-4" />
+             Create New Persona
+          </Link>
+        </Button>
+      </div>
+      {renderContent()}
     </div>
   );
 }
