@@ -40,12 +40,15 @@ export async function generateAiPersona(input: GenerateAiPersonaInput): Promise<
 const generateImagePrompt = ai.definePrompt({
   name: 'generateAiPersonaImagePrompt',
   input: {schema: GenerateAiPersonaInputSchema},
-  model: googleAI.model('gemini-2.5-flash-image'),
+  model: googleAI.model('gemini-2.5-flash-image-preview'),
   prompt: `You are a creative AI that generates AI personas for pets based on user-provided images and themes.
 
   Based on the following theme: {{{theme}}},
   And the user's creative direction: {{{prompt}}},
   Generate a persona image for the pet in this photo: {{media url=photoDataUri}}.`,
+  config: {
+    responseModalities: ['IMAGE'],
+  }
 });
 
 const generateLorePrompt = ai.definePrompt({
@@ -73,7 +76,7 @@ const generateAiPersonaFlow = ai.defineFlow(
   async input => {
     // Run image and lore generation in parallel
     const [imageResult, loreResult] = await Promise.all([
-      ai.generate({ prompt: generateImagePrompt.prompt, model: generateImagePrompt.model, input }),
+      generateImagePrompt(input),
       generateLorePrompt(input)
     ]);
     
