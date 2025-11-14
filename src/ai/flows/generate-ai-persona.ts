@@ -40,21 +40,12 @@ export async function generateAiPersona(input: GenerateAiPersonaInput): Promise<
 const generateImagePrompt = ai.definePrompt({
   name: 'generateAiPersonaImagePrompt',
   input: {schema: GenerateAiPersonaInputSchema},
-  output: {schema: z.object({
-    personaImage: z
-    .string()
-    .describe(
-      'The AI-generated image of the pet persona as a data URI.'
-    ),
-  })},
   model: googleAI.model('gemini-2.5-flash-image'),
   prompt: `You are a creative AI that generates AI personas for pets based on user-provided images and themes.
 
   Based on the following theme: {{{theme}}},
   And the user's creative direction: {{{prompt}}},
-  Generate a persona image for the pet in this photo: {{media url=photoDataUri}}.
-
-  Return the image as a data URI in the personaImage field.`,
+  Generate a persona image for the pet in this photo: {{media url=photoDataUri}}.`,
 });
 
 const generateLorePrompt = ai.definePrompt({
@@ -63,6 +54,7 @@ const generateLorePrompt = ai.definePrompt({
     output: {schema: z.object({
         loreText: z.string().describe('A short lore text (100-150 words) describing the pet persona.'),
     })},
+    model: googleAI.model('gemini-2.5-flash'),
     prompt: `You are a creative AI that generates lore for pet personas.
 
     Based on the following theme: {{{theme}}},
@@ -77,22 +69,20 @@ const generateAiPersonaFlow = ai.defineFlow(
     name: 'generateAiPersonaFlow',
     inputSchema: GenerateAiPersonaInputSchema,
     outputSchema: GenerateAiPersonaOutputSchema,
-    tools: [generateImagePrompt, generateLorePrompt],
-    model: googleAI.model('gemini-2.5-flash'),
   },
   async input => {
     // Run image and lore generation in parallel
     const [imageResult, loreResult] = await Promise.all([
-      generateImagePrompt(input),
+      ai.generate({ prompt: generateImagePrompt.prompt, model: generateImagePrompt.model, input }),
       generateLorePrompt(input)
     ]);
     
-    if (!imageResult.output || !loreResult.output) {
+    if (!imageResult.media?.url || !loreResult.output) {
         throw new Error('Failed to generate persona image or lore.');
     }
 
     return {
-      personaImage: imageResult.output.personaImage,
+      personaImage: imageResult.media.url,
       loreText: loreResult.output.loreText,
     };
   }
