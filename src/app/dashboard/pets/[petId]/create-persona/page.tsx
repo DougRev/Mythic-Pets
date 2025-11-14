@@ -66,11 +66,12 @@ const personaFormSchema = z.object({
 type PersonaFormValues = z.infer<typeof personaFormSchema>;
 
 
-export default function CreatePersonaPage({ params: { petId } }: { params: { petId: string } }) {
+export default function CreatePersonaPage({ params }: { params: { petId: string } }) {
   const router = useRouter();
   const { toast } = useToast();
   const { user, firestore, storage } = useAuth();
   const [isGenerating, setIsGenerating] = useState(false);
+  const { petId } = params;
 
   const petRef = React.useMemo(() => {
     if (!user || !firestore) return null;

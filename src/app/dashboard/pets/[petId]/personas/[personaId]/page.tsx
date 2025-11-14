@@ -17,9 +17,10 @@ import { useAuth } from '@/hooks/useAuth';
 import { useDoc } from '@/firebase';
 import { doc } from 'firebase/firestore';
 
-export default function PersonaDetailsPage({ params: { petId, personaId } }: { params: { petId: string, personaId: string } }) {
+export default function PersonaDetailsPage({ params }: { params: { petId: string, personaId: string } }) {
   const router = useRouter();
   const { user, firestore } = useAuth();
+  const { petId, personaId } = params;
 
   const personaRef = React.useMemo(() => {
     if (!user || !firestore) return null;
