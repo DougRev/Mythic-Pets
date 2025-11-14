@@ -10,6 +10,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import {googleAI} from '@genkit-ai/google-genai';
 
 const GenerateAiPersonaInputSchema = z.object({
   photoDataUri: z
@@ -46,6 +47,7 @@ const generateImagePrompt = ai.definePrompt({
       'The AI-generated image of the pet persona as a data URI.'
     ),
   })},
+  model: googleAI.model('gemini-2.5-flash-image'),
   prompt: `You are a creative AI that generates AI personas for pets based on user-provided images and themes.
 
   Based on the following theme: {{{theme}}},
@@ -75,6 +77,8 @@ const generateAiPersonaFlow = ai.defineFlow(
     name: 'generateAiPersonaFlow',
     inputSchema: GenerateAiPersonaInputSchema,
     outputSchema: GenerateAiPersonaOutputSchema,
+    tools: [generateImagePrompt, generateLorePrompt],
+    model: googleAI.model('gemini-2.5-flash'),
   },
   async input => {
     // Run image and lore generation in parallel
