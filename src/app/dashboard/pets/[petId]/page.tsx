@@ -5,28 +5,52 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { PlusCircle } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { useCollection, useDoc } from '@/firebase';
+import { collection, doc, query } from 'firebase/firestore';
+import React from 'react';
 
 // Mock data
-const petName = "Zarathos";
 const personas = [
     { id: '1', name: "Space Explorer", imageUrl: "https://picsum.photos/seed/persona1/400/400", imageHint: "cat astronaut" },
     { id: '2', name: "Mystic Mage", imageUrl: "https://picsum.photos/seed/persona2/400/400", imageHint: "cat wizard" },
 ];
 
 export default function PersonaGalleryPage({ params }: { params: { petId: string } }) {
+  const { user, firestore } = useAuth();
+
+  const petRef = React.useMemo(() => {
+    if (!user || !firestore) return null;
+    return doc(firestore, 'users', user.uid, 'petProfiles', params.petId);
+  }, [firestore, user, params.petId]);
+
+  const { data: pet, isLoading: isPetLoading } = useDoc<any>(petRef);
+
+  // TODO: Fetch real personas
+  const isPersonasLoading = false;
+
+
+  if (isPetLoading) {
+    return <div className="container mx-auto max-w-4xl py-8 px-4 md:px-6">Loading...</div>;
+  }
+
+  if (!pet) {
+    return <div className="container mx-auto max-w-4xl py-8 px-4 md:px-6">Pet not found.</div>;
+  }
+
   return (
     <div className="container mx-auto max-w-4xl py-8 px-4 md:px-6">
       <div className="flex items-center justify-between mb-8">
          <div className="space-y-2">
             <h1 className="font-headline text-3xl font-bold tracking-tight sm:text-4xl">
-              {petName}'s Personas
+              {pet.name}'s Personas
             </h1>
             <p className="text-lg text-muted-foreground">
               Select a persona to see their stories or create a new one.
             </p>
         </div>
         <Button asChild>
-          <Link href="/dashboard">
+          <Link href={`/dashboard/pets/${params.petId}/create-persona`}>
              <PlusCircle className="mr-2 h-4 w-4" />
              Create New Persona
           </Link>
@@ -55,7 +79,7 @@ export default function PersonaGalleryPage({ params }: { params: { petId: string
             </Card>
           </Link>
         ))}
-         <Link href="/dashboard" className="group">
+         <Link href={`/dashboard/pets/${params.petId}/create-persona`} className="group">
             <Card className="h-full border-2 border-dashed bg-transparent hover:border-primary hover:bg-muted/50 transition-colors duration-200">
               <CardContent className="flex flex-col items-center justify-center h-full p-4">
                   <div className="flex flex-col items-center justify-center text-muted-foreground">

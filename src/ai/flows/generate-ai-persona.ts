@@ -15,9 +15,10 @@ const GenerateAiPersonaInputSchema = z.object({
   photoDataUri: z
     .string()
     .describe(
-      'A photo of a pet, as a data URI that must include a MIME type and use Base64 encoding. Expected format: \'data:<mimetype>;base64,<encoded_data>\'.' // Corrected grammar here
+      "A photo of a pet, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'." // Corrected grammar here
     ),
   theme: z.string().describe('The theme for the AI persona (e.g., Superhero, Detective, Knight).'),
+  prompt: z.string().optional().describe('Optional user prompt for more specific direction.'),
 });
 export type GenerateAiPersonaInput = z.infer<typeof GenerateAiPersonaInputSchema>;
 
@@ -42,10 +43,11 @@ const prompt = ai.definePrompt({
   prompt: `You are a creative AI that generates AI personas for pets based on user-provided images and themes.
 
   Based on the following theme: {{{theme}}},
+  And the user's creative direction: {{{prompt}}},
   Generate a persona image and lore for the pet in this photo: {{media url=photoDataUri}}.
   The lore should be about 100-150 words long. Make sure that the lore matches the generated image.
 
-  Return the image as a data URI in personaImage and the lore text in loreText.`, // Corrected template string
+  Return the image as a data URI in personaImage and the lore text in loreText.`,
 });
 
 const generateAiPersonaFlow = ai.defineFlow(
