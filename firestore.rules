@@ -6,6 +6,7 @@
  *   /users/{userId}/petProfiles/{petProfileId} - Pet profiles owned by the user.
  *   /users/{userId}/petProfiles/{petProfileId}/aiPersonas/{aiPersonaId} - AI personas for each pet profile.
  *   /users/{userId}/petProfiles/{petProfileId}/aiPersonas/{aiPersonaId}/aiStories/{aiStoryId} - AI stories for each AI persona.
+ *   /users/{userId}/petProfiles/{petProfileId}/aiPersonas/{aiPersonaId}/aiStories/{aiStoryId}/chapters/{chapterId} - Chapters for each story.
  * @keySecurityDecisions
  *   - Users can only create, read, update, and delete their own data.
  *   - Listing operations are restricted to the owner of the data.
@@ -98,6 +99,10 @@ service cloud.firestore {
       allow create: if isOwner(userId);
       allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
+
+      match /chapters/{chapterId} {
+        allow read, write: if isOwner(userId);
+      }
     }
   }
 
@@ -114,3 +119,5 @@ service cloud.firestore {
     return isOwner(userId) && resource != null;
   }
 }
+
+    

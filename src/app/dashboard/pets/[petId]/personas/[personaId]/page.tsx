@@ -4,7 +4,7 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, Bot, Edit, Share2, Sparkles, Trash2 } from 'lucide-react';
+import { ArrowLeft, Bot, Edit, Share2, Sparkles, Trash2, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
 import { useCollection, useDoc } from '@/firebase';
-import { doc, collection, query } from 'firebase/firestore';
+import { doc, collection, query, orderBy } from 'firebase/firestore';
 
 export default function PersonaDetailsPage() {
   const router = useRouter();
@@ -34,7 +34,8 @@ export default function PersonaDetailsPage() {
 
   const storiesQuery = React.useMemo(() => {
     if (!personaRef) return null;
-    return query(collection(personaRef, 'aiStories'));
+    // Order stories by generation date, newest first
+    return query(collection(personaRef, 'aiStories'), orderBy('generationDate', 'desc'));
   }, [personaRef]);
 
   const { data: stories, isLoading: areStoriesLoading } = useCollection<any>(storiesQuery);
@@ -106,8 +107,8 @@ export default function PersonaDetailsPage() {
                 <div className="space-y-2">
                   {stories.map(story => (
                     <Link key={story.id} href={`/dashboard/pets/${petId}/personas/${personaId}/stories/${story.id}`} className="block p-4 border rounded-lg hover:bg-muted transition-colors">
-                      <h4 className="font-bold">{story.title}</h4>
-                      <p className="text-sm text-muted-foreground truncate">{story.storyText}</p>
+                      <h4 className="font-bold flex items-center gap-2"><BookOpen className="h-4 w-4" />{story.title}</h4>
+                      <p className="text-sm text-muted-foreground pl-6">{story.lastChapter} {story.lastChapter > 1 ? 'chapters' : 'chapter'}</p>
                     </Link>
                   ))}
                 </div>
@@ -126,3 +127,5 @@ export default function PersonaDetailsPage() {
     </div>
   );
 }
+
+    

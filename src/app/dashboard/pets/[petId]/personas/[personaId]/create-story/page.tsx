@@ -39,16 +39,13 @@ import { useAuth } from '@/hooks/useAuth';
 import { useDoc } from '@/firebase';
 import { doc, addDoc, collection } from 'firebase/firestore';
 import { generateAiStory } from '@/ai/flows/generate-ai-story';
+import { uploadFile } from '@/firebase/storage';
+import { v4 as uuidv4 } from 'uuid';
 
 const storyFormSchema = z.object({
-  tone: z
-    .string({
-      required_error: 'Please select a tone for the story.',
-    }),
-  length: z
-    .string({
-      required_error: 'Please select a length for the story.',
-    }),
+  tone: z.string({
+    required_error: 'Please select a tone for the story.',
+  }),
   prompt: z.string().max(1000).optional(),
 });
 
@@ -60,7 +57,7 @@ export default function CreateStoryPage() {
   const petId = params.petId as string;
   const personaId = params.personaId as string;
   const { toast } = useToast();
-  const { user, firestore } = useAuth();
+  const { user, firestore, storage } = useAuth();
   const [isGenerating, setIsGenerating] = useState(false);
 
   const petRef = React.useMemo(() => {
@@ -80,13 +77,12 @@ export default function CreateStoryPage() {
     resolver: zodResolver(storyFormSchema),
     defaultValues: {
         tone: 'Epic',
-        length: 'Story Page',
         prompt: '',
     },
   });
 
   const onSubmit = async (data: StoryFormValues) => {
-    if (!pet || !persona || !user || !firestore) {
+    if (!pet || !persona || !user || !firestore || !storage) {
       toast({
         variant: 'destructive',
         title: 'Error',
@@ -97,36 +93,51 @@ export default function CreateStoryPage() {
 
     setIsGenerating(true);
     try {
+      // 1. Generate the story 'book' and its first chapter
       const storyResult = await generateAiStory({
         petName: pet.name,
         persona: `Theme: ${persona.theme}\nLore: ${persona.loreText}`,
         tone: data.tone as any,
-        length: data.length as any,
         prompt: data.prompt,
+        personaImage: persona.imageUrl,
       });
 
-      if (!storyResult || !storyResult.title || !storyResult.storyText) {
-          throw new Error("AI generation failed to return a story.");
+      if (!storyResult || !storyResult.title || !storyResult.chapterText || !storyResult.chapterImage) {
+          throw new Error("AI generation failed to return a complete story chapter.");
       }
       
-      const newStory = {
+      // 2. Create the main story document (the "book")
+      const storiesCollection = collection(personaRef, 'aiStories');
+      const storyDocRef = await addDoc(storiesCollection, {
         aiPersonaId: personaId,
         title: storyResult.title,
-        storyText: storyResult.storyText,
         tone: data.tone,
-        length: data.length,
         generationDate: new Date().toISOString(),
         isFavorite: false,
-      };
+        lastChapter: 1,
+      });
 
-      const storiesCollection = collection(personaRef, 'aiStories');
-      await addDoc(storiesCollection, newStory);
+      // 3. Upload chapter image to storage
+      const imagePath = `users/${user.uid}/stories/${storyDocRef.id}/${uuidv4()}`;
+      const imageUrl = await uploadFile(storage, imagePath, storyResult.chapterImage);
+
+      // 4. Create the first chapter document in the subcollection
+      const chaptersCollection = collection(storyDocRef, 'chapters');
+      await addDoc(chaptersCollection, {
+          chapterNumber: 1,
+          chapterTitle: storyResult.chapterTitle,
+          chapterText: storyResult.chapterText,
+          imageUrl: imageUrl,
+          generationDate: new Date().toISOString(),
+      });
+
 
       toast({
         title: 'Story Created!',
-        description: `A new chapter in ${pet.name}'s legend has been written.`,
+        description: `A new legend, "${storyResult.title}", has begun for ${pet.name}.`,
       });
 
+      // 5. Redirect to the persona page to see the new story listed
       router.push(`/dashboard/pets/${petId}/personas/${personaId}`);
 
     } catch (error: any) {
@@ -162,62 +173,36 @@ export default function CreateStoryPage() {
         <CardHeader>
           <CardTitle>Create a New Story</CardTitle>
           <CardDescription>
-            Generate a new tale for {pet.name} as the {persona.theme}.
+            Generate the first chapter of a new tale for {pet.name} as the {persona.theme}.
           </CardDescription>
         </CardHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <FormField
-                        control={form.control}
-                        name="tone"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Tone</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                                <SelectTrigger>
-                                <SelectValue placeholder="Select a tone..." />
-                                </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                                {['Wholesome', 'Funny', 'Epic', 'Mystery', 'Sad'].map((tone) => (
-                                <SelectItem key={tone} value={tone}>
-                                    {tone}
-                                </SelectItem>
-                                ))}
-                            </SelectContent>
-                            </Select>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                     <FormField
-                        control={form.control}
-                        name="length"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Length</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                                <SelectTrigger>
-                                <SelectValue placeholder="Select a length..." />
-                                </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                                {['Short Post', 'Story Page', 'Full Tale'].map((length) => (
-                                <SelectItem key={length} value={length}>
-                                    {length}
-                                </SelectItem>
-                                ))}
-                            </SelectContent>
-                            </Select>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                </div>
+                <FormField
+                    control={form.control}
+                    name="tone"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Tone</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                            <SelectTrigger>
+                            <SelectValue placeholder="Select a tone..." />
+                            </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            {['Wholesome', 'Funny', 'Epic', 'Mystery', 'Sad'].map((tone) => (
+                            <SelectItem key={tone} value={tone}>
+                                {tone}
+                            </SelectItem>
+                            ))}
+                        </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
               <FormField
                 control={form.control}
                 name="prompt"
@@ -233,7 +218,7 @@ export default function CreateStoryPage() {
                       />
                     </FormControl>
                     <FormDescription>
-                      Add any specific plot points, characters, or details you want the AI to include.
+                      Add any specific plot points, characters, or details you want the AI to include for the first chapter.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -255,3 +240,5 @@ export default function CreateStoryPage() {
     </div>
   );
 }
+
+    

@@ -158,7 +158,7 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "AIStory",
       "type": "object",
-      "description": "Represents an AI-generated story for a pet persona.",
+      "description": "Represents an AI-generated story 'book' for a pet persona.",
       "properties": {
         "id": {
           "type": "string",
@@ -172,17 +172,9 @@
           "type": "string",
           "description": "Title of the AI story."
         },
-        "storyText": {
-          "type": "string",
-          "description": "Text content of the AI story."
-        },
         "tone": {
           "type": "string",
           "description": "Tone of the AI story (e.g., 'Wholesome', 'Funny')."
-        },
-        "length": {
-          "type": "string",
-          "description": "Length of the AI story (e.g., 'Short Post', 'Story Page')."
         },
         "generationDate": {
           "type": "string",
@@ -192,15 +184,59 @@
         "isFavorite": {
           "type": "boolean",
           "description": "Is the story a favorite of the user?"
+        },
+        "lastChapter": {
+            "type": "number",
+            "description": "The number of the last generated chapter."
         }
       },
       "required": [
         "id",
         "aiPersonaId",
         "title",
-        "storyText",
         "tone",
-        "length",
+        "generationDate",
+        "lastChapter"
+      ]
+    },
+    "AIChapter": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "AIChapter",
+      "type": "object",
+      "description": "Represents a single chapter within an AI-generated story.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the AIChapter entity."
+        },
+        "chapterNumber": {
+          "type": "number",
+          "description": "The sequential number of the chapter within the story."
+        },
+        "chapterTitle": {
+          "type": "string",
+          "description": "The title of the chapter."
+        },
+        "chapterText": {
+          "type": "string",
+          "description": "The text content of the chapter."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL of the AI-generated image for this chapter."
+        },
+        "generationDate": {
+          "type": "string",
+          "description": "Date and time when the chapter was generated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "chapterNumber",
+        "chapterTitle",
+        "chapterText",
+        "imageUrl",
         "generationDate"
       ]
     }
@@ -282,7 +318,7 @@
           "schema": {
             "$ref": "#/backend/entities/AIStory"
           },
-          "description": "Subcollection of AI-generated stories for a specific AI persona. Each document represents an AI story. User can only access AI stories associated with their user ID, pet profile, and AI persona.",
+          "description": "Subcollection of AI-generated stories for a specific AI persona. Each document represents an AI story 'book'. User can only access AI stories associated with their user ID, pet profile, and AI persona.",
           "params": [
             {
               "name": "userId",
@@ -302,8 +338,41 @@
             }
           ]
         }
+      },
+      {
+        "path": "/users/{userId}/petProfiles/{petProfileId}/aiPersonas/{aiPersonaId}/aiStories/{aiStoryId}/chapters/{chapterId}",
+        "definition": {
+          "entityName": "AIChapter",
+          "schema": {
+            "$ref": "#/backend/entities/AIChapter"
+          },
+          "description": "Subcollection of chapters for a specific AI story. Each document represents a chapter. User can only access chapters associated with their user ID.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "petProfileId",
+              "description": "The unique identifier for the pet profile."
+            },
+            {
+              "name": "aiPersonaId",
+              "description": "The unique identifier for the AI persona."
+            },
+            {
+              "name": "aiStoryId",
+              "description": "The unique identifier for the AI story."
+            },
+            {
+              "name": "chapterId",
+              "description": "The unique identifier for the chapter."
+            }
+          ]
+        }
       }
     ],
-    "reasoning": "The Firestore data structure is designed to support the Mythic Pets application, focusing on user profiles, pet profiles, AI personas, and AI-generated stories. The structure prioritizes authorization independence and simplifies security rules, adhering to the core design principles.\n\n**Authorization Independence:**\n\n*   User-owned data (PetProfiles, AIPersonas, AIStories) is nested under the `/users/{userId}` path, ensuring that access control is based on the user's ID. This eliminates the need for `get()` calls in security rules to check ownership.\n*   No `members` map is necessary as the user implicitly owns all data under their user ID.\n\n**Structural Segregation:**\n\n*   Each data type (UserProfile, PetProfile, AIPersona, AIStory) is stored in its own collection or subcollection, ensuring that security rules are homogeneous within each collection.\n\n**Access Modeling:**\n\n*   Private Data: User profiles and all associated data (pets, personas, stories) are stored under the `/users/{userId}` path, providing path-based ownership.\n*   Hierarchical Paths: The structure uses nested paths to represent the relationships between users, pets, personas, and stories (e.g., `/users/{userId}/petProfiles/{petProfileId}/aiPersonas/{aiPersonaId}/aiStories/{aiStoryId}`).\n\n**QAPs (Rules are not Filters):**\n\n*   The structure supports secure `list` operations because all documents within a subcollection have the same ownership based on the user ID. Rules can allow listing of all documents under `/users/{userId}` without needing to filter based on document content.\n\n**Example Security Rules:**\n\n```\nmatch /users/{userId} {\n  allow read, update, delete: if request.auth.uid == userId;\n  allow create: if request.auth.uid != null;\n\n  match /petProfiles/{petProfileId} {\n    allow read, write: if request.auth.uid == userId;\n\n    match /aiPersonas/{aiPersonaId} {\n      allow read, write: if request.auth.uid == userId;\n\n      match /aiStories/{aiStoryId} {\n        allow read, write: if request.auth.uid == userId;\n      }\n    }\n  }\n}\n```"
+    "reasoning": "The Firestore data structure is designed to support the Mythic Pets application, focusing on user profiles, pet profiles, AI personas, and AI-generated stories. The structure prioritizes authorization independence and simplifies security rules, adhering to the core design principles.\n\n**Authorization Independence:**\n\n*   User-owned data (PetProfiles, AIPersonas, AIStories) is nested under the `/users/{userId}` path, ensuring that access control is based on the user's ID. This eliminates the need for `get()` calls in security rules to check ownership.\n*   No `members` map is necessary as the user implicitly owns all data under their user ID.\n\n**Structural Segregation:**\n\n*   Each data type (UserProfile, PetProfile, AIPersona, AIStory) is stored in its own collection or subcollection, ensuring that security rules are homogeneous within each collection.\n\n**Access Modeling:**\n\n*   Private Data: User profiles and all associated data (pets, personas, stories) are stored under the `/users/{userId}` path, providing path-based ownership.\n*   Hierarchical Paths: The structure uses nested paths to represent the relationships between users, pets, personas, and stories (e.g., `/users/{userId}/petProfiles/{petProfileId}/aiPersonas/{aiPersonaId}/aiStories/{aiStoryId}`).\n\n**QAPs (Rules are not Filters):**\n\n*   The structure supports secure `list` operations because all documents within a subcollection have the same ownership based on the user ID. Rules can allow listing of all documents under `/users/{userId}` without needing to filter based on document content.\n\n**Example Security Rules:**\n\n```\nmatch /users/{userId} {\n  allow read, update, delete: if request.auth.uid == userId;\n  allow create: if request.auth.uid != null;\n\n  match /petProfiles/{petProfileId} {\n    allow read, write: if request.auth.uid == userId;\n\n    match /aiPersonas/{aiPersonaId} {\n      allow read, write: if request.auth.uid == userId;\n\n      match /aiStories/{aiStoryId} {\n        allow read, write: if request.auth.uid == userId;\n\n         match /chapters/{chapterId} {\n           allow read, write: if request.auth.uid == userId;\n         }\n      }\n    }\n  }\n}\n```"
   }
 }
+    

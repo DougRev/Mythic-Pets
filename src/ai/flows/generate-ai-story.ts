@@ -10,22 +10,32 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import {googleAI} from '@genkit-ai/google-genai';
 
 const GenerateAiStoryInputSchema = z.object({
   persona: z.string().describe("The pet's persona, including theme and lore."),
   tone: z
     .enum(['Wholesome', 'Funny', 'Epic', 'Mystery', 'Sad'])
     .describe('The tone of the story.'),
-  length:
-    z.enum(['Short Post', 'Story Page', 'Full Tale']).describe('The length of the story.'),
   petName: z.string().describe('The name of the pet.'),
+  personaImage: z
+    .string()
+    .describe(
+      "The persona image of the pet, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+    ),
   prompt: z.string().optional().describe('Optional user prompt for creative direction.'),
 });
 export type GenerateAiStoryInput = z.infer<typeof GenerateAiStoryInputSchema>;
 
 const GenerateAiStoryOutputSchema = z.object({
   title: z.string().describe('The title of the generated story.'),
-  storyText: z.string().describe('The generated story text.'),
+  chapterTitle: z.string().describe('The title of the first chapter.'),
+  chapterText: z.string().describe('The text for the first chapter of the story.'),
+  chapterImage: z
+    .string()
+    .describe(
+      "The AI-generated image for the chapter as a data URI. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+    ),
 });
 export type GenerateAiStoryOutput = z.infer<typeof GenerateAiStoryOutputSchema>;
 
@@ -35,21 +45,42 @@ export async function generateAiStory(
   return generateAiStoryFlow(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'generateAiStoryPrompt',
+const generateStoryPrompt = ai.definePrompt({
+  name: 'generateAiStoryTextPrompt',
   input: {schema: GenerateAiStoryInputSchema},
-  output: {schema: GenerateAiStoryOutputSchema},
+  output: {schema: z.object({
+    title: z.string().describe('The overall title for the story/book.'),
+    chapterTitle: z.string().describe('The title for this specific chapter.'),
+    chapterText: z.string().describe('The text content for this chapter.'),
+  })},
   prompt: `You are a creative story writer specializing in stories about pets.
 
-  Based on the pet's name, persona, and the user's preferences, you will generate a story. The story should feature the pet as the main character.
+  Based on the pet's name, persona, and the user's preferences, you will generate the first chapter of a story. The story should feature the pet as the main character.
 
   Pet Name: {{{petName}}}
   Persona: {{{persona}}}
   Tone: {{{tone}}}
-  Length: {{{length}}}
   Creative Direction: {{{prompt}}}
+  
+  Please provide an overall title for the story, a title for the first chapter, and the chapter text. The chapter text should be around 200-300 words.`,
+});
 
-  Please provide a short title for the story and the story text.`,
+const generateImagePrompt = ai.definePrompt({
+  name: 'generateAiStoryImagePrompt',
+  input: {
+    schema: z.object({
+      chapterText: z.string(),
+      personaImage: z.string(),
+    }),
+  },
+  model: googleAI.model('gemini-2.5-flash-image-preview'),
+  prompt: `Based on the following chapter text, generate a visually compelling scene. The style should be consistent with the provided persona image.
+
+  Chapter Text: {{{chapterText}}}
+  Persona Image: {{media url=personaImage}}`,
+  config: {
+    responseModalities: ['IMAGE'],
+  },
 });
 
 const generateAiStoryFlow = ai.defineFlow(
@@ -59,10 +90,29 @@ const generateAiStoryFlow = ai.defineFlow(
     outputSchema: GenerateAiStoryOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
-    if (!output) {
-      throw new Error('Failed to generate story.');
+    // 1. Generate story text and titles
+    const { output: textOutput } = await generateStoryPrompt(input);
+    if (!textOutput) {
+      throw new Error('Failed to generate story text.');
     }
-    return output;
+
+    // 2. Generate chapter image based on the generated text
+    const { media } = await generateImagePrompt({
+        chapterText: textOutput.chapterText,
+        personaImage: input.personaImage
+    });
+
+    if (!media?.url) {
+      throw new Error('Failed to generate chapter image.');
+    }
+
+    return {
+      title: textOutput.title,
+      chapterTitle: textOutput.chapterTitle,
+      chapterText: textOutput.chapterText,
+      chapterImage: media.url,
+    };
   }
 );
+
+    
