@@ -103,12 +103,12 @@ export default function PersonaDetailsPage() {
             </CardHeader>
             <CardContent>
               {stories && stories.length > 0 && (
-                <div className="space-y-4">
+                <div className="space-y-2">
                   {stories.map(story => (
-                    <div key={story.id} className="border-b pb-4">
+                    <Link key={story.id} href={`/dashboard/pets/${petId}/personas/${personaId}/stories/${story.id}`} className="block p-4 border rounded-lg hover:bg-muted transition-colors">
                       <h4 className="font-bold">{story.title}</h4>
                       <p className="text-sm text-muted-foreground truncate">{story.storyText}</p>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               )}
