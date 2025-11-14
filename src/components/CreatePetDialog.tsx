@@ -60,16 +60,14 @@ export function CreatePetDialog({ children }: { children: React.ReactNode }) {
     setIsSaving(true);
 
     try {
-      // 1. Upload image to Firebase Storage
       const imagePath = `users/${user.uid}/pets/${uuidv4()}`;
       const photoURL = await uploadFile(storage, imagePath, pet.photoDataUri);
 
-      // 2. Save pet data to Firestore with the image URL
       const petData = {
         name: pet.name,
         species: pet.species,
         breed: pet.breed,
-        photoURL: photoURL, // Use the public URL from Storage
+        photoURL: photoURL,
         userProfileId: user.uid,
         createdAt: new Date().toISOString(),
       };
@@ -84,13 +82,17 @@ export function CreatePetDialog({ children }: { children: React.ReactNode }) {
     } catch (error: any) {
       console.error("Error creating pet:", error);
       let description = 'Could not save the pet. Please try again.';
-      if (error.code === 'storage/unauthorized' || (error.message && error.message.includes('CORS'))) {
-          description = 'A storage permission error (CORS) occurred. This is a one-time setup issue. Please check the developer console for instructions on how to resolve it.';
+      
+      // Check for a CORS-related error message.
+      if (error.code === 'storage/unauthorized' || (error.message && error.message.toLowerCase().includes('cors'))) {
+          description = "A one-time storage permission (CORS) setup is required. Please check the developer console for a 'gsutil' command and run it in a new terminal to fix this, then try saving again.";
       }
+
       toast({ 
         variant: 'destructive', 
         title: 'Creation Failed', 
         description: description,
+        duration: 9000,
       });
     } finally {
       setIsSaving(false);
