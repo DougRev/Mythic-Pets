@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -66,15 +66,16 @@ const personaFormSchema = z.object({
 type PersonaFormValues = z.infer<typeof personaFormSchema>;
 
 
-export default function CreatePersonaPage({ params }: { params: { petId: string } }) {
+export default function CreatePersonaPage() {
   const router = useRouter();
+  const params = useParams();
+  const petId = params.petId as string;
   const { toast } = useToast();
   const { user, firestore, storage } = useAuth();
   const [isGenerating, setIsGenerating] = useState(false);
-  const { petId } = params;
 
   const petRef = React.useMemo(() => {
-    if (!user || !firestore) return null;
+    if (!user || !firestore || !petId) return null;
     return doc(firestore, 'users', user.uid, 'petProfiles', petId);
   }, [firestore, user, petId]);
 
@@ -106,6 +107,10 @@ export default function CreatePersonaPage({ params }: { params: { petId: string 
         prompt: data.prompt,
       });
 
+      if (!personaResult || !personaResult.personaImage || !personaResult.loreText) {
+          throw new Error("AI generation failed to return expected data.");
+      }
+
       // 2. Upload generated image to storage
       const imagePath = `users/${user.uid}/personas/${uuidv4()}`;
       const imageUrl = await uploadFile(storage, imagePath, personaResult.personaImage);
@@ -131,12 +136,12 @@ export default function CreatePersonaPage({ params }: { params: { petId: string 
       // 4. Redirect to the new persona page
       router.push(`/dashboard/pets/${petId}/personas/${docRef.id}`);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Persona generation failed:', error);
       toast({
         variant: 'destructive',
         title: 'Generation Failed',
-        description: 'Could not create the persona. Please try again.',
+        description: error.message || 'Could not create the persona. Please try again.',
       });
     } finally {
       setIsGenerating(false);

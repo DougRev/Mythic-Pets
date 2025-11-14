@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { PlusCircle } from 'lucide-react';
@@ -10,12 +11,13 @@ import { useCollection, useDoc } from '@/firebase';
 import { collection, doc, query } from 'firebase/firestore';
 import React from 'react';
 
-export default function PersonaGalleryPage({ params }: { params: { petId: string } }) {
+export default function PersonaGalleryPage() {
+  const params = useParams();
+  const petId = params.petId as string;
   const { user, firestore } = useAuth();
-  const { petId } = params;
 
   const petRef = React.useMemo(() => {
-    if (!user || !firestore) return null;
+    if (!user || !firestore || !petId) return null;
     return doc(firestore, 'users', user.uid, 'petProfiles', petId);
   }, [firestore, user, petId]);
 

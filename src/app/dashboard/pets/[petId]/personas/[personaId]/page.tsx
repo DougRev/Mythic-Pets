@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft, Bot, Edit, Share2, Sparkles, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,13 +17,16 @@ import { useAuth } from '@/hooks/useAuth';
 import { useDoc } from '@/firebase';
 import { doc } from 'firebase/firestore';
 
-export default function PersonaDetailsPage({ params }: { params: { petId: string, personaId: string } }) {
+export default function PersonaDetailsPage() {
   const router = useRouter();
+  const params = useParams();
+  const petId = params.petId as string;
+  const personaId = params.personaId as string;
   const { user, firestore } = useAuth();
-  const { petId, personaId } = params;
+  
 
   const personaRef = React.useMemo(() => {
-    if (!user || !firestore) return null;
+    if (!user || !firestore || !petId || !personaId) return null;
     return doc(firestore, 'users', user.uid, 'petProfiles', petId, 'aiPersonas', personaId);
   }, [firestore, user, petId, personaId]);
 
