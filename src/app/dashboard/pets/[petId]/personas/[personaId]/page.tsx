@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft, Bot, Edit, Share2, Sparkles, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -14,8 +15,8 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
-import { useDoc } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { useCollection, useDoc } from '@/firebase';
+import { doc, collection, query } from 'firebase/firestore';
 
 export default function PersonaDetailsPage() {
   const router = useRouter();
@@ -24,15 +25,21 @@ export default function PersonaDetailsPage() {
   const personaId = params.personaId as string;
   const { user, firestore } = useAuth();
   
-
   const personaRef = React.useMemo(() => {
     if (!user || !firestore || !petId || !personaId) return null;
     return doc(firestore, 'users', user.uid, 'petProfiles', petId, 'aiPersonas', personaId);
   }, [firestore, user, petId, personaId]);
 
-  const { data: persona, isLoading } = useDoc<any>(personaRef);
+  const { data: persona, isLoading: isPersonaLoading } = useDoc<any>(personaRef);
 
-  if (isLoading) {
+  const storiesQuery = React.useMemo(() => {
+    if (!personaRef) return null;
+    return query(collection(personaRef, 'aiStories'));
+  }, [personaRef]);
+
+  const { data: stories, isLoading: areStoriesLoading } = useCollection<any>(storiesQuery);
+
+  if (isPersonaLoading) {
     return <div className="flex h-screen items-center justify-center">Loading persona...</div>;
   }
 
@@ -89,13 +96,28 @@ export default function PersonaDetailsPage() {
           <Card className="mt-6">
             <CardHeader>
                 <CardTitle>Stories</CardTitle>
-                <CardDescription>No stories have been generated for this persona yet.</CardDescription>
+                {areStoriesLoading && <CardDescription>Loading stories...</CardDescription>}
+                {!areStoriesLoading && (!stories || stories.length === 0) && (
+                  <CardDescription>No stories have been generated for this persona yet.</CardDescription>
+                )}
             </CardHeader>
             <CardContent>
-                <Button className="w-full">
+              {stories && stories.length > 0 && (
+                <div className="space-y-4">
+                  {stories.map(story => (
+                    <div key={story.id} className="border-b pb-4">
+                      <h4 className="font-bold">{story.title}</h4>
+                      <p className="text-sm text-muted-foreground truncate">{story.storyText}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <Button asChild className="w-full mt-4">
+                  <Link href={`/dashboard/pets/${petId}/personas/${personaId}/create-story`}>
                     <Edit className="mr-2"/>
-                    Create First Story
-                </Button>
+                    {stories && stories.length > 0 ? 'Create Another Story' : 'Create First Story'}
+                  </Link>
+              </Button>
             </CardContent>
           </Card>
 
