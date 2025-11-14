@@ -10,9 +10,8 @@ import { useCollection, useDoc } from '@/firebase';
 import { collection, doc, query } from 'firebase/firestore';
 import React from 'react';
 
-export default function PersonaGalleryPage({ params }: { params: { petId: string } }) {
+export default function PersonaGalleryPage({ params: { petId } }: { params: { petId: string } }) {
   const { user, firestore } = useAuth();
-  const { petId } = params;
 
   const petRef = React.useMemo(() => {
     if (!user || !firestore) return null;
