@@ -20,11 +20,12 @@ import { doc } from 'firebase/firestore';
 export default function PersonaDetailsPage({ params }: { params: { petId: string, personaId: string } }) {
   const router = useRouter();
   const { user, firestore } = useAuth();
+  const { petId, personaId } = params;
 
   const personaRef = React.useMemo(() => {
     if (!user || !firestore) return null;
-    return doc(firestore, 'users', user.uid, 'petProfiles', params.petId, 'aiPersonas', params.personaId);
-  }, [firestore, user, params.petId, params.personaId]);
+    return doc(firestore, 'users', user.uid, 'petProfiles', petId, 'aiPersonas', personaId);
+  }, [firestore, user, petId, personaId]);
 
   const { data: persona, isLoading } = useDoc<any>(personaRef);
 
@@ -38,7 +39,7 @@ export default function PersonaDetailsPage({ params }: { params: { petId: string
 
   return (
     <div className="container mx-auto max-w-4xl py-8 px-4 md:px-6">
-      <Button variant="ghost" onClick={() => router.push(`/dashboard/pets/${params.petId}`)} className="mb-4">
+      <Button variant="ghost" onClick={() => router.push(`/dashboard/pets/${petId}`)} className="mb-4">
         <ArrowLeft className="mr-2" />
         Back to All Personas
       </Button>

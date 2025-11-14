@@ -71,11 +71,12 @@ export default function CreatePersonaPage({ params }: { params: { petId: string 
   const { toast } = useToast();
   const { user, firestore, storage } = useAuth();
   const [isGenerating, setIsGenerating] = useState(false);
+  const petId = params.petId;
 
   const petRef = React.useMemo(() => {
     if (!user || !firestore) return null;
-    return doc(firestore, 'users', user.uid, 'petProfiles', params.petId);
-  }, [firestore, user, params.petId]);
+    return doc(firestore, 'users', user.uid, 'petProfiles', petId);
+  }, [firestore, user, petId]);
 
   const { data: pet, isLoading: isPetLoading } = useDoc<any>(petRef);
 
@@ -102,7 +103,7 @@ export default function CreatePersonaPage({ params }: { params: { petId: string 
       const personaResult = await generateAiPersona({
         photoDataUri: pet.photoURL, // Assuming photoURL is a data URI
         theme: data.theme,
-        // We could add the prompt to the flow if desired
+        prompt: data.prompt,
       });
 
       // 2. Upload generated image to storage
@@ -111,7 +112,7 @@ export default function CreatePersonaPage({ params }: { params: { petId: string 
 
       // 3. Save the new persona to Firestore
       const newPersona = {
-        petProfileId: params.petId,
+        petProfileId: petId,
         theme: data.theme,
         imageStyle: data.theme, // Using theme as style for now
         imageUrl: imageUrl,
@@ -128,7 +129,7 @@ export default function CreatePersonaPage({ params }: { params: { petId: string 
       });
 
       // 4. Redirect to the new persona page
-      router.push(`/dashboard/pets/${params.petId}/personas/${docRef.id}`);
+      router.push(`/dashboard/pets/${petId}/personas/${docRef.id}`);
 
     } catch (error) {
       console.error('Persona generation failed:', error);
