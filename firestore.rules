@@ -117,10 +117,7 @@ service cloud.firestore {
 
 service firebase.storage {
   match /b/{bucket}/o {
-    // Files can be read by anyone, but only authenticated users can write.
-    // This is a good default for user-generated content like profile pictures.
-    
-    // Match any file in the 'users' folder.
+    // Match any file in a user-specific folder.
     // The {userId} wildcard captures the user's ID from the path.
     match /users/{userId}/{allPaths=**} {
       // Allow read, write (create, update, delete) operations if the
