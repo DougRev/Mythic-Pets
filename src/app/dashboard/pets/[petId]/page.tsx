@@ -12,7 +12,7 @@ import React from 'react';
 
 export default function PersonaGalleryPage({ params }: { params: { petId: string } }) {
   const { user, firestore } = useAuth();
-  const petId = params.petId;
+  const { petId } = params;
 
   const petRef = React.useMemo(() => {
     if (!user || !firestore) return null;

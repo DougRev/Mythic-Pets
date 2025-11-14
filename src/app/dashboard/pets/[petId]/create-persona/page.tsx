@@ -71,7 +71,7 @@ export default function CreatePersonaPage({ params }: { params: { petId: string 
   const { toast } = useToast();
   const { user, firestore, storage } = useAuth();
   const [isGenerating, setIsGenerating] = useState(false);
-  const petId = params.petId;
+  const { petId } = params;
 
   const petRef = React.useMemo(() => {
     if (!user || !firestore) return null;
