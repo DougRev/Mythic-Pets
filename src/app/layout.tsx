@@ -6,6 +6,7 @@ import { FirebaseClientProvider } from '@/firebase';
 export const metadata: Metadata = {
   title: 'Mythic Pets',
   description: 'Turn your pet into a legend with AI-powered personas and stories.',
+  manifest: '/manifest.json',
 };
 
 export default function RootLayout({

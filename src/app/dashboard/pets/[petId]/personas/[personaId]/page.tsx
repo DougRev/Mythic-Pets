@@ -74,7 +74,7 @@ export default function PersonaDetailsPage() {
           </div>
         </div>
 
-        <div>
+        <div className="flex flex-col gap-6">
           <Card>
             <CardHeader>
               <CardTitle className="font-headline text-3xl">{persona.theme} Persona</CardTitle>
@@ -94,7 +94,7 @@ export default function PersonaDetailsPage() {
             </CardContent>
           </Card>
           
-          <Card className="mt-6">
+          <Card className="flex-1">
             <CardHeader>
                 <CardTitle>Stories</CardTitle>
                 {areStoriesLoading && <CardDescription>Loading stories...</CardDescription>}
@@ -127,5 +127,3 @@ export default function PersonaDetailsPage() {
     </div>
   );
 }
-
-    
