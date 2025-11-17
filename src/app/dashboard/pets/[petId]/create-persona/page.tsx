@@ -89,7 +89,7 @@ export default function CreatePersonaPage() {
   });
 
   const onSubmit = async (data: PersonaFormValues) => {
-    if (!pet || !user || !firestore || !storage) {
+    if (!pet || !user || !firestore || !storage || !petRef) {
       toast({
         variant: 'destructive',
         title: 'Error',
