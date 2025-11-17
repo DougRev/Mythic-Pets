@@ -82,7 +82,7 @@ export default function CreateStoryPage() {
   });
 
   const onSubmit = async (data: StoryFormValues) => {
-    if (!pet || !persona || !user || !firestore || !storage) {
+    if (!pet || !persona || !user || !firestore || !storage || !personaRef) {
       toast({
         variant: 'destructive',
         title: 'Error',
@@ -240,5 +240,3 @@ export default function CreateStoryPage() {
     </div>
   );
 }
-
-    
