@@ -19,6 +19,8 @@ const AppleIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 24 24" {...props}><path d="M19.3,4.74A5.8,5.8,0,0,0,15,3.13a5.53,5.53,0,0,0-4.32,2.3,5.71,5.71,0,0,0-4.33-2.3,5.89,5.89,0,0,0-4.43,1.61,6,6,0,0,0-1.8,4.53c0,3.52,2.61,6.23,4,7.56,1.23,1.14,2.5,2.28,4.3,2.28s3.07-1.14,4.3-2.28c1.39-1.33,4-4,4-7.56A5.92,5.92,0,0,0,19.3,4.74Zm-7.6,13a.85.85,0,0,1-.53-.17,11.32,11.32,0,0,1-2.47-2.4c-1-1.3-2.31-3.64-2.31-5.71,0-1.84.92-2.82,2-2.82A2.78,2.78,0,0,1,11.13,8.8a.78.78,0,0,1,1.44-.65,2.83,2.83,0,0,1,2.79-1.3,2.57,2.57,0,0,1,1.91,1,2.81,2.81,0,0,1,.73,2.1,5.26,5.26,0,0,1-2.3,4.36A11.31,11.31,0,0,1,13,17.58.7.7,0,0,1,11.7,17.77Z"></path><path d="M15.13,2.44a3.86,3.86,0,0,0-3.4,2.08,3.56,3.56,0,0,0-3.32-2.08A4.1,4.1,0,0,0,4.8,4.36,3.76,3.76,0,0,1,7.09,4,4,0,0,1,11.7,2,a4.4,4.4,0,0,0,3.7,2.1,3.43,3.43,0,0,0,3.31-2.18,3.8,3.8,0,0,0,3.42,2.18,4.32,4.32,0,0,0,3.7-2.1c.09-.17,1.38-2.52-1.38-4A4.14,4.14,0,0,0,15.13,2.44Z"></path></svg>
 );
 
+// A simple list of inappropriate words. This should be expanded.
+const inappropriateWords = ['admin', 'moderator', 'root', 'badword'];
 
 export default function SignupPage() {
   const router = useRouter();
@@ -27,6 +29,7 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = React.useState(false);
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
+  const [confirmPassword, setConfirmPassword] = React.useState('');
   const [displayName, setDisplayName] = React.useState('');
   const [isLoading, setIsLoading] = React.useState(false);
   const [isSocialLoading, setSocialLoading] = React.useState<null | 'google' | 'apple'>(null);
@@ -40,6 +43,26 @@ export default function SignupPage() {
 
   const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    if (password !== confirmPassword) {
+      toast({
+        variant: "destructive",
+        title: "Sign-up Failed",
+        description: "Passwords do not match.",
+      });
+      return;
+    }
+
+    const lowerCaseDisplayName = displayName.toLowerCase();
+    if (inappropriateWords.some(word => lowerCaseDisplayName.includes(word))) {
+      toast({
+        variant: "destructive",
+        title: "Sign-up Failed",
+        description: "Please choose a different display name.",
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
       await signUpWithEmail(email, password, displayName);
@@ -129,6 +152,13 @@ export default function SignupPage() {
                 >
                   {showPassword ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
                 </button>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <div className="relative">
+                <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input id="confirmPassword" type={showPassword ? "text" : "password"} required className="pl-10 pr-10" placeholder="••••••••" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}/>
               </div>
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
