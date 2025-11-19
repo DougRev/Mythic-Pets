@@ -41,6 +41,7 @@ import { doc, addDoc, collection } from 'firebase/firestore';
 import { generateAiPersona } from '@/ai/flows/generate-ai-persona';
 import { uploadFile } from '@/firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
+import { Input } from '@/components/ui/input';
 
 const themes = [
   'Superhero',
@@ -51,6 +52,7 @@ const themes = [
   'Sci-Fi',
   'Noir',
   'Knight',
+  'Other...',
 ];
 
 const artStyles = [
@@ -67,10 +69,19 @@ const personaFormSchema = z.object({
   theme: z.string({
     required_error: 'Please select a theme.',
   }),
+  customTheme: z.string().optional(),
   imageStyle: z.string({
     required_error: 'Please select an art style.',
   }),
   prompt: z.string().max(500).optional(),
+}).refine(data => {
+    if (data.theme === 'Other...') {
+        return !!data.customTheme && data.customTheme.length > 0;
+    }
+    return true;
+}, {
+    message: 'Please enter a custom theme.',
+    path: ['customTheme'],
 });
 
 type PersonaFormValues = z.infer<typeof personaFormSchema>;
@@ -95,11 +106,14 @@ export default function CreatePersonaPage() {
     resolver: zodResolver(personaFormSchema),
     defaultValues: {
       prompt: '',
+      customTheme: '',
     },
   });
 
+  const watchedTheme = form.watch('theme');
+
   const onSubmit = async (data: PersonaFormValues) => {
-    if (!pet || !user || !firestore || !storage || !petRef) {
+    if (!pet || !user || !firestore || !storage) {
       toast({
         variant: 'destructive',
         title: 'Error',
@@ -107,13 +121,20 @@ export default function CreatePersonaPage() {
       });
       return;
     }
+    
+    if (!petRef) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Pet reference not found.' });
+        return;
+    }
 
     setIsGenerating(true);
     try {
+      const theme = data.theme === 'Other...' ? data.customTheme : data.theme;
+
       // 1. Generate Persona Image & Lore
       const personaResult = await generateAiPersona({
         photoDataUri: pet.photoURL, // Assuming photoURL is a data URI
-        theme: data.theme,
+        theme: theme!,
         imageStyle: data.imageStyle,
         petName: pet.name,
         prompt: data.prompt,
@@ -130,7 +151,7 @@ export default function CreatePersonaPage() {
       // 3. Save the new persona to Firestore
       const newPersona = {
         petProfileId: petId,
-        theme: data.theme,
+        theme: theme,
         imageStyle: data.imageStyle,
         imageUrl: imageUrl,
         loreText: personaResult.loreText,
@@ -232,6 +253,21 @@ export default function CreatePersonaPage() {
                         </FormItem>
                         )}
                     />
+                    {watchedTheme === 'Other...' && (
+                         <FormField
+                            control={form.control}
+                            name="customTheme"
+                            render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Custom Theme</FormLabel>
+                                <FormControl>
+                                <Input placeholder="e.g., Pirate Captain, Rockstar" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+                    )}
                     <FormField
                         control={form.control}
                         name="imageStyle"
