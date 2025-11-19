@@ -8,4 +8,5 @@ import '@/ai/flows/generate-ai-persona.ts';
 import '@/ai/flows/regenerate-image.ts';
 import '@/ai/flows/regenerate-lore.ts';
 import '@/ai/flows/continue-ai-story.ts';
+import '@/ai/flows/create-share-image.ts';
     

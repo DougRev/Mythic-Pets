@@ -19,6 +19,7 @@ import { useCollection, useDoc } from '@/firebase';
 import { doc, collection, query, orderBy } from 'firebase/firestore';
 import { RegenerateImageDialog } from '@/components/RegenerateImageDialog';
 import { RegenerateLoreDialog } from '@/components/RegenerateLoreDialog';
+import { ShareDialog } from '@/components/ShareDialog';
 
 export default function PersonaDetailsPage() {
   const router = useRouter();
@@ -81,7 +82,13 @@ export default function PersonaDetailsPage() {
             <RegenerateImageDialog persona={persona} pet={pet} onRegenerationComplete={refetchPersona}>
               <Button variant="outline"><RefreshCw className="mr-2"/>Regen Image</Button>
             </RegenerateImageDialog>
-            <Button variant="outline"><Share2 className="mr-2"/>Share</Button>
+            <ShareDialog
+              title={persona.theme}
+              body={persona.loreText}
+              imageUrl={persona.imageUrl}
+            >
+              <Button variant="outline"><Share2 className="mr-2"/>Share</Button>
+            </ShareDialog>
             <Button variant="outline" disabled><Trash2 className="mr-2"/>Delete</Button>
           </div>
         </div>
