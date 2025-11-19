@@ -9,11 +9,16 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { ArrowLeft, Loader2, Wand2 } from 'lucide-react';
 import Image from 'next/image';
+import { useToast } from '@/hooks/use-toast';
+import { continueAiStory } from '@/ai/flows/continue-ai-story';
+import { uploadFile } from '@/firebase/storage';
+import { v4 as uuidv4 } from 'uuid';
 
 export default function StoryDetailsPage() {
   const params = useParams();
   const router = useRouter();
-  const { user, firestore } = useAuth();
+  const { user, firestore, storage } = useAuth();
+  const { toast } = useToast();
 
   const petId = params.petId as string;
   const personaId = params.personaId as string;
@@ -23,10 +28,20 @@ export default function StoryDetailsPage() {
   const [currentChapter, setCurrentChapter] = useState(1);
 
   // Memoized references
+  const petRef = React.useMemo(() => {
+    if (!user || !firestore || !petId) return null;
+    return doc(firestore, 'users', user.uid, 'petProfiles', petId);
+  }, [firestore, user, petId]);
+  
+  const personaRef = React.useMemo(() => {
+    if (!petRef || !personaId) return null;
+    return doc(petRef, 'aiPersonas', personaId);
+  }, [petRef, personaId]);
+
   const storyRef = React.useMemo(() => {
-    if (!user || !firestore || !petId || !personaId || !storyId) return null;
-    return doc(firestore, 'users', user.uid, 'petProfiles', petId, 'aiPersonas', personaId, 'aiStories', storyId);
-  }, [firestore, user, petId, personaId, storyId]);
+    if (!personaRef || !storyId) return null;
+    return doc(personaRef, 'aiStories', storyId);
+  }, [personaRef, storyId]);
   
   const chaptersQuery = React.useMemo(() => {
     if(!storyRef) return null;
@@ -34,8 +49,10 @@ export default function StoryDetailsPage() {
   }, [storyRef]);
 
   // Data fetching
-  const { data: story, isLoading: isStoryLoading } = useDoc<any>(storyRef);
-  const { data: chapters, isLoading: areChaptersLoading } = useCollection<any>(chaptersQuery);
+  const { data: pet, isLoading: isPetLoading } = useDoc<any>(petRef);
+  const { data: persona, isLoading: isPersonaLoading } = useDoc<any>(personaRef);
+  const { data: story, isLoading: isStoryLoading, refetch: refetchStory } = useDoc<any>(storyRef);
+  const { data: chapters, isLoading: areChaptersLoading, refetch: refetchChapters } = useCollection<any>(chaptersQuery);
 
   useEffect(() => {
     if (story) {
@@ -45,15 +62,75 @@ export default function StoryDetailsPage() {
 
 
   const handleGenerateNextChapter = async () => {
+    if (!story || !chapters || !pet || !persona || !user || !firestore || !storage || !storyRef) {
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Could not generate next chapter. Missing required data.',
+        });
+        return;
+    }
+    
     setIsGenerating(true);
-    // Placeholder for AI generation logic
-    console.log("Generating next chapter...");
-    // This will be implemented in the next step.
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setIsGenerating(false);
+    try {
+        const previousChaptersText = chapters
+            .sort((a, b) => a.chapterNumber - b.chapterNumber)
+            .map(c => `Chapter ${c.chapterNumber}: ${c.chapterTitle}\n${c.chapterText}`)
+            .join('\n\n');
+
+        const nextChapterResult = await continueAiStory({
+            petName: pet.name,
+            persona: `Theme: ${persona.theme}\nLore: ${persona.loreText}`,
+            tone: story.tone,
+            previousChapters: previousChaptersText,
+            personaImage: persona.imageUrl
+        });
+
+        if (!nextChapterResult || !nextChapterResult.chapterTitle || !nextChapterResult.chapterText || !nextChapterResult.chapterImage) {
+            throw new Error('AI generation failed to return a complete next chapter.');
+        }
+
+        const nextChapterNumber = story.lastChapter + 1;
+
+        const imagePath = `users/${user.uid}/stories/${storyId}/${uuidv4()}`;
+        const imageUrl = await uploadFile(storage, imagePath, nextChapterResult.chapterImage);
+
+        const chaptersCollection = collection(storyRef, 'chapters');
+        await addDoc(chaptersCollection, {
+            chapterNumber: nextChapterNumber,
+            chapterTitle: nextChapterResult.chapterTitle,
+            chapterText: nextChapterResult.chapterText,
+            imageUrl: imageUrl,
+            generationDate: new Date().toISOString(),
+        });
+        
+        await updateDoc(storyRef, {
+            lastChapter: nextChapterNumber,
+        });
+
+        await refetchStory();
+        await refetchChapters();
+
+        setCurrentChapter(nextChapterNumber);
+
+        toast({
+            title: 'Chapter Generated!',
+            description: `Chapter ${nextChapterNumber} of "${story.title}" has been written.`,
+        });
+
+    } catch (error: any) {
+        console.error("Next chapter generation failed:", error);
+        toast({
+            variant: 'destructive',
+            title: 'Generation Failed',
+            description: error.message || 'Could not generate the next chapter. Please try again.',
+        });
+    } finally {
+        setIsGenerating(false);
+    }
   };
   
-  if (isStoryLoading || areChaptersLoading) {
+  if (isStoryLoading || areChaptersLoading || isPetLoading || isPersonaLoading) {
     return <div className="flex h-screen items-center justify-center">Loading story...</div>;
   }
 
@@ -129,5 +206,3 @@ export default function StoryDetailsPage() {
     </div>
   );
 }
-
-    
