@@ -128,7 +128,8 @@ export default function StoryDetailsPage() {
         
         await updateDoc(storyRef, storyUpdates);
 
-        await refetchStory();
+        refetchStory();
+        refetchChapters();
 
         setCurrentChapter(nextChapterNumber);
 
@@ -168,6 +169,7 @@ export default function StoryDetailsPage() {
             storyTitle: story.title,
             storyTone: story.tone,
             likes: 0,
+            likedBy: [],
             publishedDate: new Date().toISOString(),
         };
 
@@ -340,8 +342,10 @@ export default function StoryDetailsPage() {
                </Button>
             )}
             {story.publishedStoryId && (
-                <Button variant="secondary" disabled>
-                    <CheckCircle2 className="mr-2" /> Published
+                <Button variant="secondary" asChild>
+                    <Link href={`/gallery/${story.publishedStoryId}`}>
+                        <CheckCircle2 className="mr-2" /> View in Gallery
+                    </Link>
                 </Button>
             )}
         </div>
