@@ -277,6 +277,7 @@
         "storyTone": { "type": "string", "description": "The tone of the story." },
         "firstChapter": { "$ref": "#/backend/entities/AIChapter" },
         "likes": { "type": "number", "description": "The total number of likes." },
+        "likedBy": { "type": "array", "items": { "type": "string" }, "description": "An array of user IDs who have liked the story." },
         "publishedDate": { "type": "string", "format": "date-time", "description": "When the story was published." }
       },
       "required": ["id", "authorId", "authorName", "petName", "personaTheme", "personaImage", "storyTitle", "storyTone", "firstChapter", "likes", "publishedDate"]
