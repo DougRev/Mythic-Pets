@@ -16,12 +16,11 @@ import {
 } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
 import { useCollection, useDoc } from '@/firebase';
-import { doc, collection, query, orderBy } from 'firebase/firestore';
+import { doc, collection, query, orderBy, getDocs, writeBatch } from 'firebase/firestore';
 import { RegenerateImageDialog } from '@/components/RegenerateImageDialog';
 import { RegenerateLoreDialog } from '@/components/RegenerateLoreDialog';
 import { ShareDialog } from '@/components/ShareDialog';
 import { DeleteDialog } from '@/components/DeleteDialog';
-import { deleteDocumentAndSubcollections } from '@/firebase/delete-collection';
 import { useToast } from '@/hooks/use-toast';
 
 export default function PersonaDetailsPage() {
@@ -56,7 +55,27 @@ export default function PersonaDetailsPage() {
   const handleDeletePersona = async () => {
     if (!personaRef || !firestore) return;
     try {
-      await deleteDocumentAndSubcollections(firestore, personaRef);
+      const batch = writeBatch(firestore);
+      
+      // 1. Get all stories for the persona
+      const storiesSnapshot = await getDocs(collection(personaRef, 'aiStories'));
+      
+      for (const storyDoc of storiesSnapshot.docs) {
+        // 2. For each story, get and delete all chapters
+        const chaptersSnapshot = await getDocs(collection(storyDoc.ref, 'chapters'));
+        chaptersSnapshot.forEach(chapterDoc => {
+          batch.delete(chapterDoc.ref);
+        });
+        
+        // 3. Delete the story itself
+        batch.delete(storyDoc.ref);
+      }
+      
+      // 4. Delete the persona document
+      batch.delete(personaRef);
+
+      await batch.commit();
+
       toast({
         title: 'Persona Deleted',
         description: `The "${persona.theme}" persona for ${pet.name} has been deleted.`,
@@ -75,12 +94,24 @@ export default function PersonaDetailsPage() {
     if (!personaRef || !firestore) return;
     try {
       const storyRef = doc(personaRef, 'aiStories', storyId);
-      await deleteDocumentAndSubcollections(firestore, storyRef);
+      const batch = writeBatch(firestore);
+      
+      // Delete all chapters in the story
+      const chaptersSnapshot = await getDocs(collection(storyRef, 'chapters'));
+      chaptersSnapshot.forEach(chapterDoc => {
+        batch.delete(chapterDoc.ref);
+      });
+      
+      // Delete the story document itself
+      batch.delete(storyRef);
+      
+      await batch.commit();
+
       toast({
         title: 'Story Deleted',
         description: `The story "${storyTitle}" has been deleted.`
       });
-      refetchStories();
+      refetchStories(); // Refresh the list of stories
     } catch (error: any) {
        toast({
         variant: 'destructive',

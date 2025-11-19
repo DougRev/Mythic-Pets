@@ -10,9 +10,8 @@ import { CreatePetDialog } from '@/components/CreatePetDialog';
 import { DeleteDialog } from '@/components/DeleteDialog';
 import { useAuth } from '@/hooks/useAuth';
 import { useCollection } from '@/firebase';
-import { collection, query, doc } from 'firebase/firestore';
+import { collection, query, doc, writeBatch, getDocs } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { deleteDocumentAndSubcollections } from '@/firebase/delete-collection';
 import React from 'react';
 
 export default function PetSelectionPage() {
@@ -31,7 +30,31 @@ export default function PetSelectionPage() {
     if (!user || !firestore) return;
     try {
         const petDocRef = doc(firestore, 'users', user.uid, 'petProfiles', petId);
-        await deleteDocumentAndSubcollections(firestore, petDocRef);
+        const batch = writeBatch(firestore);
+
+        // 1. Get all personas for the pet
+        const personasSnapshot = await getDocs(collection(petDocRef, 'aiPersonas'));
+        for (const personaDoc of personasSnapshot.docs) {
+          // 2. For each persona, get all stories
+          const storiesSnapshot = await getDocs(collection(personaDoc.ref, 'aiStories'));
+          for (const storyDoc of storiesSnapshot.docs) {
+            // 3. For each story, get and delete all chapters
+            const chaptersSnapshot = await getDocs(collection(storyDoc.ref, 'chapters'));
+            chaptersSnapshot.forEach(chapterDoc => {
+              batch.delete(chapterDoc.ref);
+            });
+            // 4. Delete the story
+            batch.delete(storyDoc.ref);
+          }
+          // 5. Delete the persona
+          batch.delete(personaDoc.ref);
+        }
+
+        // 6. Delete the pet profile itself
+        batch.delete(petDocRef);
+
+        await batch.commit();
+
         toast({
             title: 'Pet Deleted',
             description: `${petName} and all their personas have been deleted.`,
