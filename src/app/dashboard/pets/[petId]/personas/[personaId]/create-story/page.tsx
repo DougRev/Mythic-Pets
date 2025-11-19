@@ -46,10 +46,19 @@ const storyFormSchema = z.object({
   tone: z.string({
     required_error: 'Please select a tone for the story.',
   }),
+  storyLength: z.string({
+    required_error: 'Please select a length for the story.',
+  }),
   prompt: z.string().max(1000).optional(),
 });
 
 type StoryFormValues = z.infer<typeof storyFormSchema>;
+
+const storyLengths = {
+    'Short': '~3 chapters',
+    'Medium': '~5 chapters',
+    'Epic': '~7 chapters',
+}
 
 export default function CreateStoryPage() {
   const router = useRouter();
@@ -77,6 +86,7 @@ export default function CreateStoryPage() {
     resolver: zodResolver(storyFormSchema),
     defaultValues: {
         tone: 'Epic',
+        storyLength: 'Short',
         prompt: '',
     },
   });
@@ -100,6 +110,7 @@ export default function CreateStoryPage() {
         tone: data.tone as any,
         prompt: data.prompt,
         personaImage: persona.imageUrl,
+        storyLength: data.storyLength,
       });
 
       if (!storyResult || !storyResult.title || !storyResult.chapterText || !storyResult.chapterImage) {
@@ -112,6 +123,8 @@ export default function CreateStoryPage() {
         aiPersonaId: personaId,
         title: storyResult.title,
         tone: data.tone,
+        storyLength: data.storyLength,
+        status: 'in-progress',
         generationDate: new Date().toISOString(),
         isFavorite: false,
         lastChapter: 1,
@@ -199,6 +212,31 @@ export default function CreateStoryPage() {
                             ))}
                         </SelectContent>
                         </Select>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="storyLength"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Story Length</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                            <SelectTrigger>
+                            <SelectValue placeholder="Select a length..." />
+                            </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            {Object.entries(storyLengths).map(([value, label]) => (
+                            <SelectItem key={value} value={value}>
+                                {value} <span className="text-muted-foreground ml-2">{label}</span>
+                            </SelectItem>
+                            ))}
+                        </SelectContent>
+                        </Select>
+                        <FormDescription>This helps the AI create a structured narrative arc.</FormDescription>
                         <FormMessage />
                     </FormItem>
                     )}

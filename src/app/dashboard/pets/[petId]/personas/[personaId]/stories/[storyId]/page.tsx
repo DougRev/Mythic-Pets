@@ -7,7 +7,7 @@ import { useCollection, useDoc } from '@/firebase';
 import { doc, collection, query, orderBy, addDoc, updateDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { ArrowLeft, Loader2, Wand2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Wand2, CheckCircle2 } from 'lucide-react';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 import { continueAiStory } from '@/ai/flows/continue-ai-story';
@@ -56,6 +56,7 @@ export default function StoryDetailsPage() {
 
   useEffect(() => {
     if (story) {
+        // Navigate to the last read or latest chapter
         setCurrentChapter(story.lastChapter);
     }
   }, [story]);
@@ -77,20 +78,22 @@ export default function StoryDetailsPage() {
             .sort((a, b) => a.chapterNumber - b.chapterNumber)
             .map(c => `Chapter ${c.chapterNumber}: ${c.chapterTitle}\n${c.chapterText}`)
             .join('\n\n');
+        
+        const nextChapterNumber = story.lastChapter + 1;
 
         const nextChapterResult = await continueAiStory({
             petName: pet.name,
             persona: `Theme: ${persona.theme}\nLore: ${persona.loreText}`,
             tone: story.tone,
             previousChapters: previousChaptersText,
-            personaImage: persona.imageUrl
+            personaImage: persona.imageUrl,
+            storyLength: story.storyLength,
+            currentChapter: nextChapterNumber
         });
 
         if (!nextChapterResult || !nextChapterResult.chapterTitle || !nextChapterResult.chapterText || !nextChapterResult.chapterImage) {
             throw new Error('AI generation failed to return a complete next chapter.');
         }
-
-        const nextChapterNumber = story.lastChapter + 1;
 
         const imagePath = `users/${user.uid}/stories/${storyId}/${uuidv4()}`;
         const imageUrl = await uploadFile(storage, imagePath, nextChapterResult.chapterImage);
@@ -104,17 +107,25 @@ export default function StoryDetailsPage() {
             generationDate: new Date().toISOString(),
         });
         
-        await updateDoc(storyRef, {
+        const storyUpdates: { lastChapter: number, status?: string } = {
             lastChapter: nextChapterNumber,
-        });
+        };
+
+        if (nextChapterResult.isFinalChapter) {
+            storyUpdates.status = 'completed';
+        }
+        
+        await updateDoc(storyRef, storyUpdates);
 
         await refetchStory();
 
         setCurrentChapter(nextChapterNumber);
 
         toast({
-            title: 'Chapter Generated!',
-            description: `Chapter ${nextChapterNumber} of "${story.title}" has been written.`,
+            title: nextChapterResult.isFinalChapter ? 'Story Concluded!' : 'Chapter Generated!',
+            description: nextChapterResult.isFinalChapter 
+                ? `The epic tale of "${story.title}" is now complete.`
+                : `Chapter ${nextChapterNumber} of "${story.title}" has been written.`,
         });
 
     } catch (error: any) {
@@ -143,6 +154,8 @@ export default function StoryDetailsPage() {
      return <div className="flex h-screen items-center justify-center">Chapter {currentChapter} not found.</div>;
   }
 
+  const isStoryCompleted = story.status === 'completed';
+
   return (
     <div className="container mx-auto max-w-4xl py-8 px-4 md:px-6">
       <Button variant="ghost" onClick={() => router.push(`/dashboard/pets/${petId}/personas/${personaId}`)} className="mb-4">
@@ -152,7 +165,7 @@ export default function StoryDetailsPage() {
 
       <div className="text-center mb-8">
         <h1 className="font-headline text-4xl font-bold">{story.title}</h1>
-        <p className="text-muted-foreground">A {story.tone} tale</p>
+        <p className="text-muted-foreground">A {story.storyLength}, {story.tone} tale</p>
       </div>
 
       <div className="grid md:grid-cols-2 gap-8">
@@ -166,6 +179,13 @@ export default function StoryDetailsPage() {
                 <p>{chapterData.chapterText}</p>
             </div>
             </CardContent>
+             {isStoryCompleted && chapterData.chapterNumber === story.lastChapter && (
+                <CardFooter>
+                    <div className="w-full text-center text-lg font-semibold text-muted-foreground flex items-center justify-center gap-2">
+                        <CheckCircle2 /> The End
+                    </div>
+                </CardFooter>
+             )}
         </Card>
         <div className="md:col-span-1 flex flex-col gap-4">
             <Card className="overflow-hidden">
@@ -193,13 +213,15 @@ export default function StoryDetailsPage() {
                     Next Chapter
                 </Button>
             </div>
-             <Button onClick={handleGenerateNextChapter} disabled={isGenerating}>
-                {isGenerating ? (
-                    <><Loader2 className="mr-2 animate-spin" /> Generating...</>
-                ) : (
-                    <><Wand2 className="mr-2" /> Generate Next Chapter</>
-                )}
-            </Button>
+            {!isStoryCompleted && (
+                 <Button onClick={handleGenerateNextChapter} disabled={isGenerating}>
+                    {isGenerating ? (
+                        <><Loader2 className="mr-2 animate-spin" /> Generating...</>
+                    ) : (
+                        <><Wand2 className="mr-2" /> Generate Next Chapter</>
+                    )}
+                </Button>
+            )}
         </div>
       </div>
     </div>

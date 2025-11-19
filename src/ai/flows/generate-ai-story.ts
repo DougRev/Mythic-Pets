@@ -24,6 +24,7 @@ const GenerateAiStoryInputSchema = z.object({
       "The persona image of the pet, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
     ),
   prompt: z.string().optional().describe('Optional user prompt for creative direction.'),
+  storyLength: z.string().describe("The desired length of the story (e.g., 'Short (~3 chapters)', 'Medium (~5 chapters)', 'Epic (~7 chapters)').")
 });
 export type GenerateAiStoryInput = z.infer<typeof GenerateAiStoryInputSchema>;
 
@@ -56,10 +57,12 @@ const generateStoryPrompt = ai.definePrompt({
   prompt: `You are a creative story writer specializing in stories about pets.
 
   Based on the pet's name, persona, and the user's preferences, you will generate the first chapter of a story. The story should feature the pet as the main character.
+  The user wants this to be a {{storyLength}} story. This is the first chapter, so it should set up the beginning of a story with a clear narrative arc in mind.
 
   Pet Name: {{{petName}}}
   Persona: {{{persona}}}
   Tone: {{{tone}}}
+  Story Length: {{{storyLength}}}
   Creative Direction: {{{prompt}}}
   
   Please provide an overall title for the story, a title for the first chapter, and the chapter text. The chapter text should be around 200-300 words.`,
@@ -114,5 +117,3 @@ const generateAiStoryFlow = ai.defineFlow(
     };
   }
 );
-
-    

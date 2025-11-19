@@ -17,11 +17,13 @@ const ContinueAiStoryInputSchema = z.object({
   tone: z.string().describe('The tone of the story (e.g., "Wholesome", "Funny").'),
   petName: z.string().describe('The name of the pet.'),
   previousChapters: z.string().describe('The text of all previous chapters to provide context.'),
-   personaImage: z
+  personaImage: z
     .string()
     .describe(
       "The persona image of the pet, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
     ),
+  storyLength: z.string().describe("The desired total length of the story."),
+  currentChapter: z.number().describe("The current chapter number."),
 });
 export type ContinueAiStoryInput = z.infer<typeof ContinueAiStoryInputSchema>;
 
@@ -33,6 +35,7 @@ const ContinueAiStoryOutputSchema = z.object({
     .describe(
       "The AI-generated image for the new chapter as a data URI. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
     ),
+  isFinalChapter: z.boolean().describe("Whether this generated chapter should be the final chapter of the story."),
 });
 export type ContinueAiStoryOutput = z.infer<typeof ContinueAiStoryOutputSchema>;
 
@@ -48,19 +51,22 @@ const generateNextChapterTextPrompt = ai.definePrompt({
   output: {schema: z.object({
     chapterTitle: z.string().describe('The title for this new chapter.'),
     chapterText: z.string().describe('The text content for this new chapter.'),
+    isFinalChapter: z.boolean().describe("Set to true if this chapter should conclude the story, based on the story's length and current progress."),
   })},
   prompt: `You are a creative story writer continuing a story about a pet.
 
   Based on the pet's persona, the story's tone, and the content of the previous chapters, you will generate the next chapter of the story. The pet should be the main character.
+  The user wants this to be a {{storyLength}} story. This is chapter {{currentChapter}}. Based on the narrative arc, decide if this chapter should be the final chapter and set 'isFinalChapter' accordingly. For example, a 'Short' story should be around 3 chapters, 'Medium' around 5, and 'Epic' around 7.
 
   Pet Name: {{{petName}}}
   Persona: {{{persona}}}
   Tone: {{{tone}}}
+  Story Length: {{{storyLength}}}
   
   Here are the previous chapters to provide context:
   {{{previousChapters}}}
   
-  Please generate a title and text for the next chapter. The chapter text should be around 200-300 words and continue the narrative logically.`,
+  Please generate a title and text for the next chapter, and determine if it's the final one. The chapter text should be around 200-300 words.`,
 });
 
 const generateNextChapterImagePrompt = ai.definePrompt({
@@ -108,6 +114,7 @@ const continueAiStoryFlow = ai.defineFlow(
       chapterTitle: textOutput.chapterTitle,
       chapterText: textOutput.chapterText,
       chapterImage: media.url,
+      isFinalChapter: textOutput.isFinalChapter,
     };
   }
 );
