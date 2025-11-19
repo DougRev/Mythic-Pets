@@ -9,6 +9,7 @@ import { useCollection } from '@/firebase';
 import { collection, query, orderBy, runTransaction, doc, arrayUnion, arrayRemove, increment } from 'firebase/firestore';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { errorEmitter, FirestorePermissionError } from '@/firebase';
 
 export default function GalleryPage() {
   const { firestore, user } = useAuth();
@@ -33,43 +34,45 @@ export default function GalleryPage() {
 
     const storyRef = doc(firestore, 'publishedStories', storyId);
 
-    try {
-      await runTransaction(firestore, async (transaction) => {
-        const storyDoc = await transaction.get(storyRef);
-        if (!storyDoc.exists()) {
-          throw 'Story does not exist!';
-        }
+    runTransaction(firestore, async (transaction) => {
+      const storyDoc = await transaction.get(storyRef);
+      if (!storyDoc.exists()) {
+        throw 'Story does not exist!';
+      }
 
-        const storyData = storyDoc.data();
-        const likedBy = storyData.likedBy || [];
-        const userHasLiked = likedBy.includes(user.uid);
-        
-        let newLikedBy;
-        let newLikes;
+      const storyData = storyDoc.data();
+      const likedBy = storyData.likedBy || [];
+      const userHasLiked = likedBy.includes(user.uid);
+      
+      let newLikedBy;
+      let newLikes;
 
-        if (userHasLiked) {
-          // Unlike the story
-          newLikedBy = arrayRemove(user.uid);
-          newLikes = increment(-1);
-        } else {
-          // Like the story
-          newLikedBy = arrayUnion(user.uid);
-          newLikes = increment(1);
-        }
+      if (userHasLiked) {
+        // Unlike the story
+        newLikedBy = arrayRemove(user.uid);
+        newLikes = increment(-1);
+      } else {
+        // Like the story
+        newLikedBy = arrayUnion(user.uid);
+        newLikes = increment(1);
+      }
 
-        transaction.update(storyRef, { 
-          likedBy: newLikedBy,
-          likes: newLikes
+      transaction.update(storyRef, { 
+        likedBy: newLikedBy,
+        likes: newLikes
+      });
+    }).catch((error) => {
+        const permissionError = new FirestorePermissionError({
+          path: storyRef.path,
+          operation: 'update',
+          requestResourceData: {
+            // This is a simplified representation of the intended update
+            likes: 'increment/decrement',
+            likedBy: 'arrayUnion/arrayRemove'
+          }
         });
-      });
-    } catch (error) {
-      console.error('Like transaction failed: ', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Could not update like status.',
-      });
-    }
+        errorEmitter.emit('permission-error', permissionError);
+    });
   };
 
 
@@ -141,5 +144,3 @@ export default function GalleryPage() {
     </div>
   );
 }
-
-    
