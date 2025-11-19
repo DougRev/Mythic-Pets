@@ -61,7 +61,7 @@ service cloud.firestore {
                   allow get, list, delete: if isOwner(userId);
 
                   allow create: if isOwner(userId);
-                  allow update: if isOwner(userId);
+                  allow update: if isOwner(userId) && (request.resource.data.keys().hasOnly(['publishedStoryId']) || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isFavorite', 'lastChapter', 'status', 'publishedStoryId']));
 
                   match /chapters/{chapterId} {
                     allow read, write, delete: if isOwner(userId);
