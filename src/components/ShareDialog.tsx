@@ -5,8 +5,7 @@ import Image from 'next/image';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Share2, Download, Copy } from 'lucide-react';
-import { createShareImage } from '@/ai/flows/create-share-image';
+import { Share2, Download, Copy } from 'lucide-react';
 
 interface ShareDialogProps {
   children: React.ReactNode;
@@ -17,9 +16,6 @@ interface ShareDialogProps {
 
 export function ShareDialog({ children, title, body, imageUrl }: ShareDialogProps) {
   const { toast } = useToast();
-  const [open, setOpen] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [shareableImageUrl, setShareableImageUrl] = useState<string | null>(null);
   const [isShareApiAvailable, setIsShareApiAvailable] = useState(false);
 
   useEffect(() => {
@@ -29,46 +25,13 @@ export function ShareDialog({ children, title, body, imageUrl }: ShareDialogProp
     }
   }, []);
 
-  const handleOpenChange = (isOpen: boolean) => {
-    setOpen(isOpen);
-    if (isOpen) {
-      // Reset state when dialog opens
-      setShareableImageUrl(null);
-      handleGenerateImage();
-    }
-  };
-
-  const handleGenerateImage = async () => {
-    setIsGenerating(true);
-    try {
-      const result = await createShareImage({
-        title: title,
-        body: body,
-        imageUrl: imageUrl,
-        footerText: 'Created with Mythic Pets',
-      });
-      if (!result.shareImageUrl) {
-        throw new Error('AI failed to return a sharable image.');
-      }
-      setShareableImageUrl(result.shareImageUrl);
-    } catch (error: any) {
-      console.error('Share image generation failed:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Generation Failed',
-        description: 'Could not create a sharable image. Please try again.',
-      });
-      setOpen(false); // Close dialog on error
-    } finally {
-      setIsGenerating(false);
-    }
-  };
 
   const handleShare = async () => {
-    if (!navigator.share || !shareableImageUrl) return;
+    if (!navigator.share || !imageUrl) return;
 
     try {
-      const response = await fetch(shareableImageUrl);
+      // Fetch the image to share it as a file. This is more robust than sharing a URL.
+      const response = await fetch(imageUrl);
       const blob = await response.blob();
       const file = new File([blob], 'mythic-pet.png', { type: 'image/png' });
 
@@ -91,9 +54,11 @@ export function ShareDialog({ children, title, body, imageUrl }: ShareDialogProp
   };
 
   const handleDownload = () => {
-    if (!shareableImageUrl) return;
+    if (!imageUrl) return;
     const link = document.createElement('a');
-    link.href = shareableImageUrl;
+    link.href = imageUrl;
+    // To trigger download, we might need to fetch the image and create a blob URL if CORS issues arise.
+    // For now, a direct download link is simpler.
     link.download = `mythic-pet-${title.toLowerCase().replace(/\s+/g, '-')}.png`;
     document.body.appendChild(link);
     link.click();
@@ -101,7 +66,7 @@ export function ShareDialog({ children, title, body, imageUrl }: ShareDialogProp
   };
   
   const handleCopyToClipboard = () => {
-     const caption = `Check out my pet's mythic persona: ${title}! Created with #MythicPets.`;
+     const caption = `Check out my pet's mythic persona: ${title}! Created with #MythicPets. \n\n${body}`;
      navigator.clipboard.writeText(caption).then(() => {
         toast({ title: 'Copied to Clipboard!', description: 'Social media caption is ready to paste.'});
      }, (err) => {
@@ -110,7 +75,7 @@ export function ShareDialog({ children, title, body, imageUrl }: ShareDialogProp
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
@@ -120,34 +85,26 @@ export function ShareDialog({ children, title, body, imageUrl }: ShareDialogProp
           </DialogDescription>
         </DialogHeader>
         <div className="py-4 flex items-center justify-center">
-          {isGenerating && (
-            <div className="w-full aspect-square flex flex-col items-center justify-center bg-muted rounded-lg">
-              <Loader2 className="h-12 w-12 animate-spin text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">Creating sharable image...</p>
-            </div>
-          )}
-          {!isGenerating && shareableImageUrl && (
             <Image
-              src={shareableImageUrl}
+              src={imageUrl}
               alt="Sharable image of pet persona"
               width={500}
               height={500}
               className="rounded-lg shadow-md aspect-square object-contain"
             />
-          )}
         </div>
         <DialogFooter className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <Button onClick={handleCopyToClipboard} variant="outline" disabled={isGenerating || !shareableImageUrl}>
+            <Button onClick={handleCopyToClipboard} variant="outline">
                 <Copy className="mr-2 h-4 w-4" />
                 Copy Caption
             </Button>
             {isShareApiAvailable ? (
-                 <Button onClick={handleShare} disabled={isGenerating || !shareableImageUrl}>
+                 <Button onClick={handleShare}>
                     <Share2 className="mr-2 h-4 w-4" />
                     Share
                 </Button>
             ) : (
-                <Button onClick={handleDownload} disabled={isGenerating || !shareableImageUrl}>
+                <Button onClick={handleDownload}>
                     <Download className="mr-2 h-4 w-4" />
                     Download Image
                 </Button>
