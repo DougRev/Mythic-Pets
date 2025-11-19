@@ -86,7 +86,10 @@ service cloud.firestore {
         allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
         
         // Allow any signed-in user to update ONLY the 'likes' and 'likedBy' fields
-        allow update: if isSignedIn() && isLikingOrUnliking(request.resource.data, resource.data);
+        allow update: if isSignedIn() 
+                      && request.resource.data.keys().hasOnly(['likes', 'likedBy'])
+                      && (request.resource.data.likes == resource.data.likes + 1 || request.resource.data.likes == resource.data.likes - 1)
+                      && (request.resource.data.likedBy == resource.data.likedBy.concat([request.auth.uid]) || request.resource.data.likedBy.concat([request.auth.uid]) == resource.data.likedBy);
 
         // Only the author can delete their published story
         allow delete: if isSignedIn() && resource.data.authorId == request.auth.uid;
@@ -110,24 +113,4 @@ service cloud.firestore {
     let allowedFields = ['displayName', 'photoURL', 'regenerationCredits'];
     return data.keys().hasAll(allowedFields);
   }
-  
-  // Enforces that an update operation is only for liking/unliking a story.
-  function isLikingOrUnliking(requestData, existingData) {
-      // Check that no other fields are being changed
-      let otherFieldsUnchanged = requestData.diff(existingData).affectedKeys()
-                                  .removeAll(['likes', 'likedBy']).size() == 0;
-      
-      // Ensure likes count is only incremented or decremented by 1
-      let likesCountChange = requestData.likes - existingData.likes;
-      let isLikesValid = likesCountChange == 1 || likesCountChange == -1;
-
-      // Ensure likedBy array is only modified by adding or removing the current user's UID
-      let currentUID = request.auth.uid;
-      let userAdded = requestData.likedBy == existingData.likedBy.concat([currentUID]);
-      let userRemoved = requestData.likedBy.concat([currentUID]) == existingData.likedBy;
-
-      return otherFieldsUnchanged && isLikesValid && (userAdded || userRemoved);
-  }
 }
-
-    
