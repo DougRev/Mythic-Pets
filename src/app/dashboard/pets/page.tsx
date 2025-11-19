@@ -3,24 +3,48 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
-import { PlusCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { PlusCircle, Trash2 } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { CreatePetDialog } from '@/components/CreatePetDialog';
+import { DeleteDialog } from '@/components/DeleteDialog';
 import { useAuth } from '@/hooks/useAuth';
 import { useCollection } from '@/firebase';
-import { collection, query } from 'firebase/firestore';
+import { collection, query, doc } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
+import { deleteDocumentAndSubcollections } from '@/ai/flows/delete-collection-flow';
 import React from 'react';
 
 export default function PetSelectionPage() {
   const { user, firestore } = useAuth();
+  const { toast } = useToast();
 
   const petsQuery = React.useMemo(() => {
     if (!user || !firestore) return null;
     return query(collection(firestore, 'users', user.uid, 'petProfiles'));
   }, [firestore, user]);
 
-  const { data: pets, isLoading } = useCollection<any>(petsQuery);
+  const { data: pets, isLoading, refetch: refetchPets } = useCollection<any>(petsQuery);
   const petAvatarDefault = PlaceHolderImages.find(p => p.id === 'pet-avatar-default');
+
+  const handleDeletePet = async (petId: string, petName: string) => {
+    if (!user || !firestore) return;
+    try {
+        const petDocRef = doc(firestore, 'users', user.uid, 'petProfiles', petId);
+        await deleteDocumentAndSubcollections({ docPath: petDocRef.path });
+        toast({
+            title: 'Pet Deleted',
+            description: `${petName} and all their personas have been deleted.`,
+        });
+        refetchPets();
+    } catch (error: any) {
+        toast({
+            variant: 'destructive',
+            title: 'Deletion Failed',
+            description: error.message || `Could not delete ${petName}.`,
+        });
+    }
+  };
 
   if (isLoading) {
     return <div className="container mx-auto max-w-4xl py-8 px-4 md:px-6">Loading pets...</div>;
@@ -35,18 +59,18 @@ export default function PetSelectionPage() {
             Choose a pet to view their mythic personas.
             </p>
         </div>
-        <CreatePetDialog>
-          <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2">
+        <CreatePetDialog onPetCreated={refetchPets}>
+          <Button>
             <PlusCircle className="mr-2 h-4 w-4" />
             Add New Pet
-          </button>
+          </Button>
         </CreatePetDialog>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {pets && pets.map((pet) => (
-          <Link key={pet.id} href={`/dashboard/pets/${pet.id}`} className="group">
-            <Card className="overflow-hidden transition-all duration-200 ease-in-out group-hover:shadow-lg group-hover:-translate-y-1">
+          <Card key={pet.id} className="group/item overflow-hidden transition-all duration-200 ease-in-out hover:shadow-lg hover:-translate-y-1">
+            <Link href={`/dashboard/pets/${pet.id}`} className="group">
               <CardContent className="p-0">
                 <div className="relative aspect-square">
                   <Image
@@ -56,16 +80,28 @@ export default function PetSelectionPage() {
                     className="object-cover"
                     data-ai-hint={pet.name}
                   />
+                   <div className="absolute top-1 right-1 z-10">
+                        <DeleteDialog
+                            onConfirm={() => handleDeletePet(pet.id, pet.name)}
+                            title={`Delete ${pet.name}?`}
+                            description="Are you sure you want to delete this pet? This will also delete all of their personas and stories forever."
+                        >
+                            <Button variant="destructive" size="icon" className="h-8 w-8 opacity-0 group-hover/item:opacity-100 transition-opacity" onClick={(e) => {e.preventDefault(); e.stopPropagation();}}>
+                                <Trash2 className="h-4 w-4" />
+                                <span className="sr-only">Delete pet</span>
+                            </Button>
+                        </DeleteDialog>
+                    </div>
                 </div>
                 <div className="p-4">
                   <h3 className="font-bold text-lg text-center">{pet.name}</h3>
                 </div>
               </CardContent>
-            </Card>
-          </Link>
+            </Link>
+          </Card>
         ))}
         {/* Add new pet card */}
-        <CreatePetDialog>
+        <CreatePetDialog onPetCreated={refetchPets}>
           <Card className="h-full border-2 border-dashed bg-transparent hover:border-primary hover:bg-muted/50 transition-colors duration-200 cursor-pointer">
             <CardContent className="flex flex-col items-center justify-center h-full p-4">
                 <div className="flex flex-col items-center justify-center text-muted-foreground">

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { Upload, PawPrint, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -22,9 +22,14 @@ type PetDetails = {
   photoDataUri: string | null;
 };
 
+interface CreatePetDialogProps {
+  children: React.ReactNode;
+  onPetCreated?: () => void;
+}
+
 const petAvatarDefault = PlaceHolderImages.find(p => p.id === 'pet-avatar-default');
 
-export function CreatePetDialog({ children }: { children: React.ReactNode }) {
+export function CreatePetDialog({ children, onPetCreated }: CreatePetDialogProps) {
   const { toast } = useToast();
   const { user, isUserLoading, firestore, storage } = useAuth();
 
@@ -32,12 +37,6 @@ export function CreatePetDialog({ children }: { children: React.ReactNode }) {
   const [isSaving, setIsSaving] = useState(false);
   const [pet, setPet] = useState<PetDetails>({ name: '', species: '', breed: '', photoDataUri: null });
 
-  useEffect(() => {
-    if (open) {
-      // Log the origin when the dialog opens, to help debug CORS issues.
-      console.log('CORS_ORIGIN_URL_TO_ALLOW:', window.location.origin);
-    }
-  }, [open]);
 
   const handlePetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPet({ ...pet, [e.target.name]: e.target.value });
@@ -85,6 +84,7 @@ export function CreatePetDialog({ children }: { children: React.ReactNode }) {
       toast({ title: 'Pet Created!', description: `${pet.name} has been added to your family.` });
       setPet({ name: '', species: '', breed: '', photoDataUri: null }); // Reset form
       setOpen(false); // Close dialog
+      onPetCreated?.();
 
     } catch (error: any) {
       console.error("Error creating pet:", error);

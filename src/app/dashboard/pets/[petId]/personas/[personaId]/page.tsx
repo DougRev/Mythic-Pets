@@ -4,7 +4,7 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, Bot, Edit, Share2, Sparkles, Trash2, BookOpen, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Bot, Share2, Sparkles, BookOpen, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -20,10 +20,14 @@ import { doc, collection, query, orderBy } from 'firebase/firestore';
 import { RegenerateImageDialog } from '@/components/RegenerateImageDialog';
 import { RegenerateLoreDialog } from '@/components/RegenerateLoreDialog';
 import { ShareDialog } from '@/components/ShareDialog';
+import { DeleteDialog } from '@/components/DeleteDialog';
+import { deleteDocumentAndSubcollections } from '@/ai/flows/delete-collection-flow';
+import { useToast } from '@/hooks/use-toast';
 
 export default function PersonaDetailsPage() {
   const router = useRouter();
   const params = useParams();
+  const { toast } = useToast();
   const petId = params.petId as string;
   const personaId = params.personaId as string;
   const { user, firestore } = useAuth();
@@ -47,7 +51,43 @@ export default function PersonaDetailsPage() {
     return query(collection(personaRef, 'aiStories'), orderBy('generationDate', 'desc'));
   }, [personaRef]);
 
-  const { data: stories, isLoading: areStoriesLoading } = useCollection<any>(storiesQuery);
+  const { data: stories, isLoading: areStoriesLoading, refetch: refetchStories } = useCollection<any>(storiesQuery);
+
+  const handleDeletePersona = async () => {
+    if (!personaRef) return;
+    try {
+      await deleteDocumentAndSubcollections({ docPath: personaRef.path });
+      toast({
+        title: 'Persona Deleted',
+        description: `The "${persona.theme}" persona for ${pet.name} has been deleted.`,
+      });
+      router.push(`/dashboard/pets/${petId}`);
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Deletion Failed',
+        description: error.message || 'Could not delete the persona. Please try again.',
+      });
+    }
+  };
+  
+  const handleDeleteStory = async (storyId: string) => {
+    if (!personaRef) return;
+    try {
+      const storyRef = doc(personaRef, 'aiStories', storyId);
+      await deleteDocumentAndSubcollections({ docPath: storyRef.path });
+      toast({
+        title: 'Story Deleted',
+      });
+      refetchStories();
+    } catch (error: any) {
+       toast({
+        variant: 'destructive',
+        title: 'Deletion Failed',
+        description: error.message || 'Could not delete the story. Please try again.',
+      });
+    }
+  };
 
   if (isPersonaLoading || isPetLoading) {
     return <div className="flex h-screen items-center justify-center">Loading persona...</div>;
@@ -89,7 +129,13 @@ export default function PersonaDetailsPage() {
             >
               <Button variant="outline"><Share2 className="mr-2"/>Share</Button>
             </ShareDialog>
-            <Button variant="outline" disabled><Trash2 className="mr-2"/>Delete</Button>
+            <DeleteDialog
+              onConfirm={handleDeletePersona}
+              title="Delete Persona"
+              description={`Are you sure you want to delete the "${persona.theme}" persona? This will also delete all associated stories and cannot be undone.`}
+            >
+              <Button variant="destructive">Delete</Button>
+            </DeleteDialog>
           </div>
         </div>
 
@@ -127,16 +173,26 @@ export default function PersonaDetailsPage() {
               {stories && stories.length > 0 && (
                 <div className="space-y-2">
                   {stories.map(story => (
-                    <Link key={story.id} href={`/dashboard/pets/${petId}/personas/${personaId}/stories/${story.id}`} className="block p-4 border rounded-lg hover:bg-muted transition-colors">
-                      <h4 className="font-bold flex items-center gap-2"><BookOpen className="h-4 w-4" />{story.title}</h4>
-                      <p className="text-sm text-muted-foreground pl-6">{story.lastChapter} {story.lastChapter > 1 ? 'chapters' : 'chapter'}</p>
-                    </Link>
+                    <div key={story.id} className="group/item flex items-center justify-between p-4 border rounded-lg hover:bg-muted transition-colors">
+                      <Link href={`/dashboard/pets/${petId}/personas/${personaId}/stories/${story.id}`} className="flex-grow">
+                        <h4 className="font-bold flex items-center gap-2"><BookOpen className="h-4 w-4" />{story.title}</h4>
+                        <p className="text-sm text-muted-foreground pl-6">{story.lastChapter} {story.lastChapter > 1 ? 'chapters' : 'chapter'}</p>
+                      </Link>
+                       <DeleteDialog
+                        onConfirm={() => handleDeleteStory(story.id)}
+                        title="Delete Story"
+                        description={`Are you sure you want to delete the story "${story.title}"? This cannot be undone.`}
+                      >
+                         <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover/item:opacity-100 transition-opacity">
+                            <span className="sr-only">Delete story</span>
+                         </Button>
+                      </DeleteDialog>
+                    </div>
                   ))}
                 </div>
               )}
               <Button asChild className="w-full mt-4">
                   <Link href={`/dashboard/pets/${petId}/personas/${personaId}/create-story`}>
-                    <Edit className="mr-2"/>
                     {stories && stories.length > 0 ? 'Create Another Story' : 'Create First Story'}
                   </Link>
               </Button>

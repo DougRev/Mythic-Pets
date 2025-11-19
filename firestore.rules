@@ -38,36 +38,33 @@ service cloud.firestore {
          * @path /users/{userId}/petProfiles/{petProfileId}
          */
         match /petProfiles/{petProfileId} {
-          allow get, list: if isOwner(userId);
+          allow get, list, delete: if isOwner(userId);
 
           allow create: if isOwner(userId) && request.resource.data.userProfileId == userId;
           allow update: if isExistingOwner(userId) && request.resource.data.userProfileId == userId;
-          allow delete: if isExistingOwner(userId);
 
             /**
              * @description Enforces access control for AI personas. Only the owner of the user profile can access the AI personas.
              * @path /users/{userId}/petProfiles/{petProfileId}/aiPersonas/{aiPersonaId}
              */
             match /aiPersonas/{aiPersonaId} {
-              allow get, list: if isOwner(userId);
+              allow get, list, delete: if isOwner(userId);
 
               allow create: if isOwner(userId);
               allow update: if isExistingOwner(userId);
-              allow delete: if isExistingOwner(userId);
 
                 /**
                  * @description Enforces access control for AI stories. Only the owner of the user profile can access the AI stories.
                  * @path /users/{userId}/petProfiles/{petProfileId}/aiPersonas/{aiPersonaId}/aiStories/{aiStoryId}
                  */
                 match /aiStories/{aiStoryId} {
-                  allow get, list: if isOwner(userId);
+                  allow get, list, delete: if isOwner(userId);
 
                   allow create: if isOwner(userId);
                   allow update: if isExistingOwner(userId);
-                  allow delete: if isExistingOwner(userId);
 
                   match /chapters/{chapterId} {
-                    allow read, write: if isOwner(userId);
+                    allow read, write, delete: if isOwner(userId);
                   }
                 }
             }

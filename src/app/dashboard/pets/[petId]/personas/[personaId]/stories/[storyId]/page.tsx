@@ -4,15 +4,16 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useCollection, useDoc } from '@/firebase';
-import { doc, collection, query, orderBy, addDoc, updateDoc, setDoc, writeBatch } from 'firebase/firestore';
+import { doc, collection, query, orderBy, addDoc, updateDoc, writeBatch } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { ArrowLeft, Loader2, Wand2, CheckCircle2, UploadCloud } from 'lucide-react';
+import { ArrowLeft, Loader2, Wand2, CheckCircle2, UploadCloud, Edit, Save, XCircle } from 'lucide-react';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 import { continueAiStory } from '@/ai/flows/continue-ai-story';
 import { uploadFile } from '@/firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
+import { Textarea } from '@/components/ui/textarea';
 
 export default function StoryDetailsPage() {
   const params = useParams();
@@ -27,6 +28,8 @@ export default function StoryDetailsPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [currentChapter, setCurrentChapter] = useState(1);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedText, setEditedText] = useState('');
 
   // Memoized references
   const petRef = React.useMemo(() => {
@@ -53,14 +56,21 @@ export default function StoryDetailsPage() {
   const { data: pet, isLoading: isPetLoading } = useDoc<any>(petRef);
   const { data: persona, isLoading: isPersonaLoading } = useDoc<any>(personaRef);
   const { data: story, isLoading: isStoryLoading, refetch: refetchStory } = useDoc<any>(storyRef);
-  const { data: chapters, isLoading: areChaptersLoading } = useCollection<any>(chaptersQuery);
+  const { data: chapters, isLoading: areChaptersLoading, refetch: refetchChapters } = useCollection<any>(chaptersQuery);
+
+  const chapterData = chapters?.find(c => c.chapterNumber === currentChapter);
 
   useEffect(() => {
     if (story) {
-        // Navigate to the last read or latest chapter
         setCurrentChapter(story.lastChapter);
     }
   }, [story]);
+  
+  useEffect(() => {
+      if (isEditing && chapterData) {
+        setEditedText(chapterData.chapterText);
+      }
+  }, [isEditing, chapterData]);
 
 
   const handleGenerateNextChapter = async () => {
@@ -149,11 +159,6 @@ export default function StoryDetailsPage() {
 
     setIsPublishing(true);
     try {
-        const firstChapter = chapters.find(c => c.chapterNumber === 1);
-        if (!firstChapter) {
-            throw new Error("First chapter is missing, cannot publish.");
-        }
-        
         const publishedStoryData = {
             authorId: user.uid,
             authorName: user.displayName || 'Anonymous',
@@ -164,34 +169,26 @@ export default function StoryDetailsPage() {
             storyTone: story.tone,
             likes: 0,
             publishedDate: new Date().toISOString(),
-            // We no longer denormalize the first chapter here
         };
 
-        // Use a batch write to ensure atomicity
         const batch = writeBatch(firestore);
-
-        // 1. Create the main published story document
         const publishedStoryRef = doc(collection(firestore, 'publishedStories'));
         batch.set(publishedStoryRef, publishedStoryData);
 
-        // 2. Copy all chapters to the new subcollection
         const publishedChaptersCol = collection(publishedStoryRef, 'chapters');
         chapters.forEach(chapter => {
             const newChapterRef = doc(publishedChaptersCol);
             batch.set(newChapterRef, chapter);
         });
         
-        // 3. Link the original story to the published one
         batch.update(storyRef, { publishedStoryId: publishedStoryRef.id });
-
-        // Commit the batch
         await batch.commit();
 
         toast({
             title: 'Story Published!',
             description: `"${story.title}" is now live in the gallery for everyone to see.`,
         });
-        refetchStory(); // Refresh to get the new publishedStoryId
+        refetchStory();
     } catch (error: any) {
         console.error("Publishing failed:", error);
         toast({
@@ -203,6 +200,26 @@ export default function StoryDetailsPage() {
         setIsPublishing(false);
     }
   };
+
+  const handleSaveEdit = async () => {
+      if (!storyRef || !chapterData) return;
+      setIsGenerating(true); // Reuse loading state
+      try {
+        const chapterDocRef = doc(storyRef, 'chapters', chapterData.id);
+        await updateDoc(chapterDocRef, { chapterText: editedText });
+        toast({ title: 'Chapter Saved!', description: 'Your edits have been saved.' });
+        refetchChapters(); // Refresh chapters to show new text
+        setIsEditing(false);
+      } catch (error: any) {
+        toast({
+            variant: 'destructive',
+            title: 'Save Failed',
+            description: error.message || 'Could not save your changes.',
+        });
+      } finally {
+        setIsGenerating(false);
+      }
+  };
   
   if (isStoryLoading || areChaptersLoading || isPetLoading || isPersonaLoading) {
     return <div className="flex h-screen items-center justify-center">Loading story...</div>;
@@ -211,8 +228,6 @@ export default function StoryDetailsPage() {
   if (!story || !chapters || chapters.length === 0) {
     return <div className="flex h-screen items-center justify-center">Story or chapters not found.</div>;
   }
-
-  const chapterData = chapters.find(c => c.chapterNumber === currentChapter);
 
   if (!chapterData) {
      return <div className="flex h-screen items-center justify-center">Chapter {currentChapter} not found.</div>;
@@ -235,15 +250,44 @@ export default function StoryDetailsPage() {
       <div className="grid md:grid-cols-2 gap-8">
         <Card className="md:col-span-1">
             <CardHeader>
-                <CardTitle className="font-headline text-2xl">{chapterData.chapterTitle}</CardTitle>
-                <CardDescription>Chapter {chapterData.chapterNumber}</CardDescription>
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle className="font-headline text-2xl">{chapterData.chapterTitle}</CardTitle>
+                  <CardDescription>Chapter {chapterData.chapterNumber}</CardDescription>
+                </div>
+                {!isEditing && (
+                    <Button variant="outline" size="icon" onClick={() => setIsEditing(true)}>
+                        <Edit className="h-4 w-4" />
+                        <span className="sr-only">Edit Chapter</span>
+                    </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
-            <div className="prose dark:prose-invert max-w-none whitespace-pre-wrap">
-                <p>{chapterData.chapterText}</p>
-            </div>
+                {isEditing ? (
+                    <div className="space-y-4">
+                        <Textarea
+                            value={editedText}
+                            onChange={(e) => setEditedText(e.target.value)}
+                            className="w-full h-64 resize-none"
+                        />
+                        <div className="flex justify-end gap-2">
+                            <Button variant="ghost" onClick={() => setIsEditing(false)} disabled={isGenerating}>
+                                <XCircle className="mr-2" /> Cancel
+                            </Button>
+                             <Button onClick={handleSaveEdit} disabled={isGenerating}>
+                                {isGenerating ? <Loader2 className="mr-2 animate-spin" /> : <Save className="mr-2" />}
+                                Save
+                            </Button>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="prose dark:prose-invert max-w-none whitespace-pre-wrap">
+                        <p>{chapterData.chapterText}</p>
+                    </div>
+                )}
             </CardContent>
-             {isStoryCompleted && chapterData.chapterNumber === story.lastChapter && (
+             {isStoryCompleted && chapterData.chapterNumber === story.lastChapter && !isEditing && (
                 <CardFooter>
                     <div className="w-full text-center text-lg font-semibold text-muted-foreground flex items-center justify-center gap-2">
                         <CheckCircle2 /> The End
@@ -264,21 +308,21 @@ export default function StoryDetailsPage() {
             <div className="grid grid-cols-2 gap-2">
                 <Button 
                     onClick={() => setCurrentChapter(c => c - 1)} 
-                    disabled={currentChapter <= 1}
+                    disabled={currentChapter <= 1 || isEditing}
                     variant="outline"
                 >
                     Previous Chapter
                 </Button>
                 <Button 
                     onClick={() => setCurrentChapter(c => c + 1)}
-                    disabled={currentChapter >= story.lastChapter}
+                    disabled={currentChapter >= story.lastChapter || isEditing}
                     variant="outline"
                 >
                     Next Chapter
                 </Button>
             </div>
             {!isStoryCompleted && (
-                 <Button onClick={handleGenerateNextChapter} disabled={isGenerating}>
+                 <Button onClick={handleGenerateNextChapter} disabled={isGenerating || isEditing}>
                     {isGenerating ? (
                         <><Loader2 className="mr-2 animate-spin" /> Generating...</>
                     ) : (
@@ -287,7 +331,7 @@ export default function StoryDetailsPage() {
                 </Button>
             )}
              {isStoryCompleted && !story.publishedStoryId && (
-                <Button onClick={handlePublish} disabled={isPublishing}>
+                <Button onClick={handlePublish} disabled={isPublishing || isEditing}>
                    {isPublishing ? (
                        <><Loader2 className="mr-2 animate-spin" /> Publishing...</>
                    ) : (
