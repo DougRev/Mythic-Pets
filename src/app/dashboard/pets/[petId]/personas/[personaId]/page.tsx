@@ -18,6 +18,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useCollection, useDoc } from '@/firebase';
 import { doc, collection, query, orderBy } from 'firebase/firestore';
 import { RegenerateImageDialog } from '@/components/RegenerateImageDialog';
+import { RegenerateLoreDialog } from '@/components/RegenerateLoreDialog';
 
 export default function PersonaDetailsPage() {
   const router = useRouter();
@@ -99,9 +100,11 @@ export default function PersonaDetailsPage() {
                 </h3>
                 <p className="text-muted-foreground whitespace-pre-wrap">{persona.loreText}</p>
               </div>
-               <Button variant="outline" className="w-full" disabled>
-                <Sparkles className="mr-2" /> Regenerate Lore
-              </Button>
+              <RegenerateLoreDialog persona={persona} pet={pet} onRegenerationComplete={refetchPersona}>
+                <Button variant="outline" className="w-full">
+                  <Sparkles className="mr-2" /> Regenerate Lore
+                </Button>
+              </RegenerateLoreDialog>
             </CardContent>
           </Card>
           
@@ -138,5 +141,3 @@ export default function PersonaDetailsPage() {
     </div>
   );
 }
-
-    
