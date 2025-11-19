@@ -12,7 +12,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useCollection } from '@/firebase';
 import { collection, query, doc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { deleteDocumentAndSubcollections } from '@/ai/flows/delete-collection-flow';
+import { deleteDocumentAndSubcollections } from '@/firebase/delete-collection';
 import React from 'react';
 
 export default function PetSelectionPage() {
@@ -31,7 +31,7 @@ export default function PetSelectionPage() {
     if (!user || !firestore) return;
     try {
         const petDocRef = doc(firestore, 'users', user.uid, 'petProfiles', petId);
-        await deleteDocumentAndSubcollections({ docPath: petDocRef.path });
+        await deleteDocumentAndSubcollections(firestore, petDocRef);
         toast({
             title: 'Pet Deleted',
             description: `${petName} and all their personas have been deleted.`,

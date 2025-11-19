@@ -21,7 +21,7 @@ import { RegenerateImageDialog } from '@/components/RegenerateImageDialog';
 import { RegenerateLoreDialog } from '@/components/RegenerateLoreDialog';
 import { ShareDialog } from '@/components/ShareDialog';
 import { DeleteDialog } from '@/components/DeleteDialog';
-import { deleteDocumentAndSubcollections } from '@/ai/flows/delete-collection-flow';
+import { deleteDocumentAndSubcollections } from '@/firebase/delete-collection';
 import { useToast } from '@/hooks/use-toast';
 
 export default function PersonaDetailsPage() {
@@ -54,9 +54,9 @@ export default function PersonaDetailsPage() {
   const { data: stories, isLoading: areStoriesLoading, refetch: refetchStories } = useCollection<any>(storiesQuery);
 
   const handleDeletePersona = async () => {
-    if (!personaRef) return;
+    if (!personaRef || !firestore) return;
     try {
-      await deleteDocumentAndSubcollections({ docPath: personaRef.path });
+      await deleteDocumentAndSubcollections(firestore, personaRef);
       toast({
         title: 'Persona Deleted',
         description: `The "${persona.theme}" persona for ${pet.name} has been deleted.`,
@@ -72,10 +72,10 @@ export default function PersonaDetailsPage() {
   };
   
   const handleDeleteStory = async (storyId: string, storyTitle: string) => {
-    if (!personaRef) return;
+    if (!personaRef || !firestore) return;
     try {
       const storyRef = doc(personaRef, 'aiStories', storyId);
-      await deleteDocumentAndSubcollections({ docPath: storyRef.path });
+      await deleteDocumentAndSubcollections(firestore, storyRef);
       toast({
         title: 'Story Deleted',
         description: `The story "${storyTitle}" has been deleted.`
