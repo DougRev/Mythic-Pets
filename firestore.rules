@@ -85,19 +85,20 @@ service cloud.firestore {
         // Only the authenticated author can publish a story
         allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
         
-        // Allow any signed-in user to update the document.
-        // This is safe because our client-side transaction only ever modifies the 'likes' and 'likedBy' fields.
-        // Other operations like 'create' and 'delete' are still properly restricted to the author.
+        // Allow any signed-in user to update the document (for liking).
         allow update: if isSignedIn();
 
         // Only the author can delete their published story
         allow delete: if isSignedIn() && resource.data.authorId == request.auth.uid;
 
-        // Anyone can read chapters of a published story
+        // Chapter rules for public stories
         match /chapters/{chapterId} {
+            // Anyone can read chapters of a published story
             allow get, list: if true;
-            // Nobody can write to the public copy of chapters
-            allow write: if false;
+            // Allow creation of chapters only by signed-in users (implicitly protected by parent create rule)
+            allow create: if isSignedIn();
+            // Nobody can update or delete the public copy of chapters after creation
+            allow update, delete: if false;
         }
     }
   }
