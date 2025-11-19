@@ -154,70 +154,65 @@ export default function StoryDetailsPage() {
     }
   };
 
-  const handlePublish = async () => {
+  const handlePublish = () => {
     if (!story || !chapters || !pet || !persona || !user || !firestore || !storyRef) {
         toast({ variant: 'destructive', title: 'Error', description: 'Missing required data to publish.' });
         return;
     }
 
     setIsPublishing(true);
-    try {
-        const batch = writeBatch(firestore);
-        
-        // 1. Create the new published story document
-        const publishedStoryRef = doc(collection(firestore, 'publishedStories'));
-        const publishedStoryData = {
-            authorId: user.uid,
-            authorName: user.displayName || 'Anonymous',
-            petName: pet.name,
-            personaTheme: persona.theme,
-            personaImage: persona.imageUrl,
-            storyTitle: story.title,
-            storyTone: story.tone,
-            likes: 0,
-            likedBy: [],
-            publishedDate: new Date().toISOString(),
-            id: publishedStoryRef.id,
-        };
-        batch.set(publishedStoryRef, publishedStoryData);
 
-        // 2. Copy all chapters to the new published story
-        const publishedChaptersCol = collection(publishedStoryRef, 'chapters');
-        chapters.forEach(chapter => {
-            const newChapterRef = doc(publishedChaptersCol);
-            // Ensure the chapter copy doesn't have an unpredictable ID field from the original
-            const chapterCopy = { ...chapter };
-            delete (chapterCopy as any).id;
-            batch.set(newChapterRef, chapterCopy);
-        });
-        
-        // 3. Update the original story to link to the published version
-        batch.update(storyRef, { publishedStoryId: publishedStoryRef.id });
+    const batch = writeBatch(firestore);
+    
+    // 1. Create the new published story document
+    const publishedStoryRef = doc(collection(firestore, 'publishedStories'));
+    const publishedStoryData = {
+        authorId: user.uid,
+        authorName: user.displayName || 'Anonymous',
+        petName: pet.name,
+        personaTheme: persona.theme,
+        personaImage: persona.imageUrl,
+        storyTitle: story.title,
+        storyTone: story.tone,
+        likes: 0,
+        likedBy: [],
+        publishedDate: new Date().toISOString(),
+        id: publishedStoryRef.id,
+    };
+    batch.set(publishedStoryRef, publishedStoryData);
 
-        // 4. Commit all changes atomically
-        await batch.commit();
+    // 2. Copy all chapters to the new published story
+    const publishedChaptersCol = collection(publishedStoryRef, 'chapters');
+    chapters.forEach(chapter => {
+        const newChapterRef = doc(publishedChaptersCol);
+        const chapterCopy = { ...chapter };
+        delete (chapterCopy as any).id;
+        batch.set(newChapterRef, chapterCopy);
+    });
+    
+    // 3. Update the original story to link to the published version
+    batch.update(storyRef, { publishedStoryId: publishedStoryRef.id });
 
+    // 4. Commit all changes atomically
+    batch.commit()
+      .then(() => {
         toast({
             title: 'Story Published!',
             description: `"${story.title}" is now live in the gallery for everyone to see.`,
         });
         refetchStory(); // Refresh story to get the publishedStoryId
-    } catch (error: any) {
-        console.error("Publishing failed:", error);
+      })
+      .catch((error) => {
         const permissionError = new FirestorePermissionError({
-            path: '/publishedStories/' + (Math.random().toString(36).substring(2, 15)), // Fake path for context
-            operation: 'create',
-            requestResourceData: 'Multiple documents in a batch write.'
+            path: publishedStoryRef.path, // Use the path of the document we tried to create
+            operation: 'create', // The batch write is primarily a create operation for the public story
+            requestResourceData: publishedStoryData, // Provide the data that was denied
         });
         errorEmitter.emit('permission-error', permissionError);
-        toast({
-            variant: 'destructive',
-            title: 'Publishing Failed',
-            description: error.message || 'Could not publish the story. Please try again.',
-        });
-    } finally {
+      })
+      .finally(() => {
         setIsPublishing(false);
-    }
+      });
   };
 
   const handleSaveEdit = async () => {
