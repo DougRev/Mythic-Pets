@@ -4,7 +4,7 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, Bot, Share2, Sparkles, BookOpen, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Bot, Share2, Sparkles, BookOpen, RefreshCw, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -71,13 +71,14 @@ export default function PersonaDetailsPage() {
     }
   };
   
-  const handleDeleteStory = async (storyId: string) => {
+  const handleDeleteStory = async (storyId: string, storyTitle: string) => {
     if (!personaRef) return;
     try {
       const storyRef = doc(personaRef, 'aiStories', storyId);
       await deleteDocumentAndSubcollections({ docPath: storyRef.path });
       toast({
         title: 'Story Deleted',
+        description: `The story "${storyTitle}" has been deleted.`
       });
       refetchStories();
     } catch (error: any) {
@@ -120,21 +121,21 @@ export default function PersonaDetailsPage() {
           </Card>
            <div className="mt-4 grid grid-cols-3 gap-2">
             <RegenerateImageDialog persona={persona} pet={pet} onRegenerationComplete={refetchPersona}>
-              <Button variant="outline"><RefreshCw className="mr-2"/>Regen Image</Button>
+              <Button variant="outline" className="w-full"><RefreshCw className="mr-2 h-4 w-4"/>Image</Button>
             </RegenerateImageDialog>
             <ShareDialog
               title={persona.theme}
               body={persona.loreText}
               imageUrl={persona.imageUrl}
             >
-              <Button variant="outline"><Share2 className="mr-2"/>Share</Button>
+              <Button variant="outline" className="w-full"><Share2 className="mr-2 h-4 w-4"/>Share</Button>
             </ShareDialog>
             <DeleteDialog
               onConfirm={handleDeletePersona}
               title="Delete Persona"
               description={`Are you sure you want to delete the "${persona.theme}" persona? This will also delete all associated stories and cannot be undone.`}
             >
-              <Button variant="destructive">Delete</Button>
+              <Button variant="destructive-outline" className="w-full">Delete</Button>
             </DeleteDialog>
           </div>
         </div>
@@ -155,7 +156,7 @@ export default function PersonaDetailsPage() {
               </div>
               <RegenerateLoreDialog persona={persona} pet={pet} onRegenerationComplete={refetchPersona}>
                 <Button variant="outline" className="w-full">
-                  <Sparkles className="mr-2" /> Regenerate Lore
+                  <Sparkles className="mr-2 h-4 w-4" /> Regenerate Lore
                 </Button>
               </RegenerateLoreDialog>
             </CardContent>
@@ -173,17 +174,18 @@ export default function PersonaDetailsPage() {
               {stories && stories.length > 0 && (
                 <div className="space-y-2">
                   {stories.map(story => (
-                    <div key={story.id} className="group/item flex items-center justify-between p-4 border rounded-lg hover:bg-muted transition-colors">
-                      <Link href={`/dashboard/pets/${petId}/personas/${personaId}/stories/${story.id}`} className="flex-grow">
+                    <div key={story.id} className="group/item flex items-center justify-between p-4 -mx-4 rounded-lg hover:bg-muted transition-colors">
+                       <Link href={`/dashboard/pets/${petId}/personas/${personaId}/stories/${story.id}`} className="flex-grow">
                         <h4 className="font-bold flex items-center gap-2"><BookOpen className="h-4 w-4" />{story.title}</h4>
                         <p className="text-sm text-muted-foreground pl-6">{story.lastChapter} {story.lastChapter > 1 ? 'chapters' : 'chapter'}</p>
                       </Link>
                        <DeleteDialog
-                        onConfirm={() => handleDeleteStory(story.id)}
+                        onConfirm={() => handleDeleteStory(story.id, story.title)}
                         title="Delete Story"
                         description={`Are you sure you want to delete the story "${story.title}"? This cannot be undone.`}
                       >
                          <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover/item:opacity-100 transition-opacity">
+                            <Trash2 className="h-4 w-4" />
                             <span className="sr-only">Delete story</span>
                          </Button>
                       </DeleteDialog>

@@ -138,19 +138,20 @@ export function ShareDialog({ children, title, body, imageUrl }: ShareDialogProp
         </div>
         <DialogFooter className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <Button onClick={handleCopyToClipboard} variant="outline" disabled={isGenerating || !shareableImageUrl}>
-                <Copy className="mr-2" />
+                <Copy className="mr-2 h-4 w-4" />
                 Copy Caption
             </Button>
-            {isShareApiAvailable && (
+            {isShareApiAvailable ? (
                  <Button onClick={handleShare} disabled={isGenerating || !shareableImageUrl}>
-                    <Share2 className="mr-2" />
+                    <Share2 className="mr-2 h-4 w-4" />
                     Share
                 </Button>
+            ) : (
+                <Button onClick={handleDownload} disabled={isGenerating || !shareableImageUrl}>
+                    <Download className="mr-2 h-4 w-4" />
+                    Download Image
+                </Button>
             )}
-             <Button onClick={handleDownload} disabled={isGenerating || !shareableImageUrl} className={!isShareApiAvailable ? "col-span-1" : ""}>
-                <Download className="mr-2" />
-                Download Image
-            </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

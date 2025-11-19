@@ -40,8 +40,10 @@ export function DeleteDialog({
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={(e) => { e.preventDefault(); e.stopPropagation(); onConfirm(); }}>
-            <Trash2 className="mr-2" />
+          <AlertDialogAction 
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onConfirm(); }}>
+            <Trash2 className="mr-2 h-4 w-4" />
             Confirm Delete
           </AlertDialogAction>
         </AlertDialogFooter>
