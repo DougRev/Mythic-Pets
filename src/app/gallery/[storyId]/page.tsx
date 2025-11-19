@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -9,7 +8,7 @@ import { useDoc, useCollection } from '@/firebase';
 import { doc, collection, query, orderBy } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, CheckCircle2 } from 'lucide-react';
 import Image from 'next/image';
 
 export default function PublicStoryPage() {
@@ -30,23 +29,17 @@ export default function PublicStoryPage() {
   // Data fetching for the main story document
   const { data: story, isLoading: isStoryLoading } = useDoc<any>(storyRef);
 
-  // Memoized reference to the original story's chapters collection
+  // Memoized reference to the chapters subcollection
   const chaptersQuery = React.useMemo(() => {
-    if(!story || !firestore) return null;
-    // Path to the original chapters: /users/{authorId}/petProfiles/{petProfileId}/aiPersonas/{aiPersonaId}/aiStories/{originalStoryId}/chapters
-    // We need to reconstruct this path. Let's assume the necessary IDs are stored or can be inferred.
-    // The problem is that the publishedStory object doesn't have all these IDs.
-    // The `firstChapter` field is a denormalized copy.
-    // For a full multi-chapter story view, we'd need to fetch from the original path.
-    // Let's assume for now we only show the first chapter which is denormalized.
-    // A better long-term solution would be to publish all chapters into a subcollection of the published story.
-    return null; // For now, we will just use the denormalized firstChapter.
-  }, [story, firestore]);
+    if(!storyRef) return null;
+    return query(collection(storyRef, 'chapters'), orderBy('chapterNumber'));
+  }, [storyRef]);
   
-  // We'll use the denormalized `firstChapter` from the `story` object.
-  const chapterData = story?.firstChapter;
+  const { data: chapters, isLoading: areChaptersLoading } = useCollection<any>(chaptersQuery);
 
-  if (isStoryLoading) {
+  const lastChapterNumber = chapters ? Math.max(...chapters.map(c => c.chapterNumber)) : 1;
+
+  if (isStoryLoading || areChaptersLoading) {
     return <div className="flex h-screen items-center justify-center"><Loader2 className="animate-spin mr-2"/> Loading story...</div>;
   }
 
@@ -62,6 +55,8 @@ export default function PublicStoryPage() {
     );
   }
   
+  const chapterData = chapters?.find(c => c.chapterNumber === currentChapter);
+
   if (!chapterData) {
      return <div className="flex h-screen items-center justify-center">Chapter data is missing from this story.</div>;
   }
@@ -89,9 +84,13 @@ export default function PublicStoryPage() {
                 <p>{chapterData.chapterText}</p>
             </div>
             </CardContent>
-             <CardFooter>
-                <p className="text-sm text-muted-foreground italic">Note: Only the first chapter is available in the public gallery for now.</p>
-             </CardFooter>
+             {chapterData.chapterNumber === lastChapterNumber && (
+                <CardFooter>
+                    <div className="w-full text-center text-lg font-semibold text-muted-foreground flex items-center justify-center gap-2">
+                        <CheckCircle2 /> The End
+                    </div>
+                </CardFooter>
+             )}
         </Card>
         <div className="md:col-span-1 flex flex-col gap-4">
             <Card className="overflow-hidden">
@@ -103,6 +102,22 @@ export default function PublicStoryPage() {
                     className="aspect-square w-full object-cover"
                 />
             </Card>
+            <div className="grid grid-cols-2 gap-2">
+                <Button 
+                    onClick={() => setCurrentChapter(c => c - 1)} 
+                    disabled={currentChapter <= 1}
+                    variant="outline"
+                >
+                    Previous Chapter
+                </Button>
+                <Button 
+                    onClick={() => setCurrentChapter(c => c + 1)}
+                    disabled={currentChapter >= lastChapterNumber}
+                    variant="outline"
+                >
+                    Next Chapter
+                </Button>
+            </div>
         </div>
       </div>
     </div>

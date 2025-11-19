@@ -92,6 +92,13 @@ service cloud.firestore {
 
         // Only the author can delete their published story
         allow delete: if isSignedIn() && resource.data.authorId == request.auth.uid;
+
+        // Anyone can read chapters of a published story
+        match /chapters/{chapterId} {
+            allow get, list: if true;
+            // Nobody can write to the public copy of chapters
+            allow write: if false;
+        }
     }
   }
 

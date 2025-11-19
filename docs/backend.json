@@ -275,12 +275,11 @@
         "personaImage": { "type": "string", "description": "URL of the main persona image." },
         "storyTitle": { "type": "string", "description": "The title of the story." },
         "storyTone": { "type": "string", "description": "The tone of the story." },
-        "firstChapter": { "$ref": "#/backend/entities/AIChapter" },
         "likes": { "type": "number", "description": "The total number of likes." },
         "likedBy": { "type": "array", "items": { "type": "string" }, "description": "An array of user IDs who have liked the story." },
         "publishedDate": { "type": "string", "format": "date-time", "description": "When the story was published." }
       },
-      "required": ["id", "authorId", "authorName", "petName", "personaTheme", "personaImage", "storyTitle", "storyTone", "firstChapter", "likes", "publishedDate"]
+      "required": ["id", "authorId", "authorName", "petName", "personaTheme", "personaImage", "storyTitle", "storyTone", "likes", "publishedDate"]
     }
   },
   "auth": {
@@ -428,10 +427,28 @@
             }
           ]
         }
+      },
+      {
+        "path": "/publishedStories/{publishedStoryId}/chapters/{chapterId}",
+        "definition": {
+          "entityName": "AIChapter",
+          "schema": {
+            "$ref": "#/backend/entities/AIChapter"
+          },
+          "description": "Subcollection of chapters for a specific published story. Each document is a copy of the original chapter. This collection is public read-only.",
+          "params": [
+            {
+              "name": "publishedStoryId",
+              "description": "The unique identifier for the published story."
+            },
+            {
+              "name": "chapterId",
+              "description": "The unique identifier for the chapter."
+            }
+          ]
+        }
       }
     ],
     "reasoning": "The Firestore data structure is designed to support the Mythic Pets application, focusing on user profiles, pet profiles, AI personas, and AI-generated stories. The structure prioritizes authorization independence and simplifies security rules, adhering to the core design principles.\n\n**Authorization Independence:**\n\n*   User-owned data (PetProfiles, AIPersonas, AIStories) is nested under the `/users/{userId}` path, ensuring that access control is based on the user's ID. This eliminates the need for `get()` calls in security rules to check ownership.\n\n**Public Data:**\n\n*   A new top-level collection, `/publishedStories`, is introduced for the public gallery. This separates public data from private user data, simplifying security rules. Data in this collection is denormalized to allow for efficient loading of the gallery without needing complex joins or multiple reads.\n\n**Access Modeling:**\n\n*   Private Data: User profiles and all associated data (pets, personas, stories) are stored under the `/users/{userId}` path, providing path-based ownership.\n*   Public Data: Stories intended for public viewing are copied to `/publishedStories`.\n\n**QAPs (Rules are not Filters):**\n\n*   The structure supports secure `list` operations. Rules can allow listing of all documents under `/users/{userId}` for an owner, and all documents under `/publishedStories` for any user."
   }
 }
-
-    

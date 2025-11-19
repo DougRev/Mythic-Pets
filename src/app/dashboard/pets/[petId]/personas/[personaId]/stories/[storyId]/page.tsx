@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useCollection, useDoc } from '@/firebase';
-import { doc, collection, query, orderBy, addDoc, updateDoc, setDoc } from 'firebase/firestore';
+import { doc, collection, query, orderBy, addDoc, updateDoc, setDoc, writeBatch } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { ArrowLeft, Loader2, Wand2, CheckCircle2, UploadCloud } from 'lucide-react';
@@ -162,16 +162,30 @@ export default function StoryDetailsPage() {
             personaImage: persona.imageUrl,
             storyTitle: story.title,
             storyTone: story.tone,
-            firstChapter: firstChapter, // Storing the full first chapter object
             likes: 0,
             publishedDate: new Date().toISOString(),
+            // We no longer denormalize the first chapter here
         };
 
-        const publishedStoryRef = doc(collection(firestore, 'publishedStories'));
-        await setDoc(publishedStoryRef, publishedStoryData);
+        // Use a batch write to ensure atomicity
+        const batch = writeBatch(firestore);
 
-        // Link the original story to the published one
-        await updateDoc(storyRef, { publishedStoryId: publishedStoryRef.id });
+        // 1. Create the main published story document
+        const publishedStoryRef = doc(collection(firestore, 'publishedStories'));
+        batch.set(publishedStoryRef, publishedStoryData);
+
+        // 2. Copy all chapters to the new subcollection
+        const publishedChaptersCol = collection(publishedStoryRef, 'chapters');
+        chapters.forEach(chapter => {
+            const newChapterRef = doc(publishedChaptersCol);
+            batch.set(newChapterRef, chapter);
+        });
+        
+        // 3. Link the original story to the published one
+        batch.update(storyRef, { publishedStoryId: publishedStoryRef.id });
+
+        // Commit the batch
+        await batch.commit();
 
         toast({
             title: 'Story Published!',
