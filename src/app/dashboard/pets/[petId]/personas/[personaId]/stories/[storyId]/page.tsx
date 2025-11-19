@@ -14,6 +14,8 @@ import { continueAiStory } from '@/ai/flows/continue-ai-story';
 import { uploadFile } from '@/firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
 import { Textarea } from '@/components/ui/textarea';
+import Link from 'next/link';
+import { errorEmitter, FirestorePermissionError } from '@/firebase';
 
 export default function StoryDetailsPage() {
   const params = useParams();
@@ -160,6 +162,10 @@ export default function StoryDetailsPage() {
 
     setIsPublishing(true);
     try {
+        const batch = writeBatch(firestore);
+        
+        // 1. Create the new published story document
+        const publishedStoryRef = doc(collection(firestore, 'publishedStories'));
         const publishedStoryData = {
             authorId: user.uid,
             authorName: user.displayName || 'Anonymous',
@@ -171,28 +177,39 @@ export default function StoryDetailsPage() {
             likes: 0,
             likedBy: [],
             publishedDate: new Date().toISOString(),
+            id: publishedStoryRef.id,
         };
-
-        const batch = writeBatch(firestore);
-        const publishedStoryRef = doc(collection(firestore, 'publishedStories'));
         batch.set(publishedStoryRef, publishedStoryData);
 
+        // 2. Copy all chapters to the new published story
         const publishedChaptersCol = collection(publishedStoryRef, 'chapters');
         chapters.forEach(chapter => {
             const newChapterRef = doc(publishedChaptersCol);
-            batch.set(newChapterRef, chapter);
+            // Ensure the chapter copy doesn't have an unpredictable ID field from the original
+            const chapterCopy = { ...chapter };
+            delete (chapterCopy as any).id;
+            batch.set(newChapterRef, chapterCopy);
         });
         
+        // 3. Update the original story to link to the published version
         batch.update(storyRef, { publishedStoryId: publishedStoryRef.id });
+
+        // 4. Commit all changes atomically
         await batch.commit();
 
         toast({
             title: 'Story Published!',
             description: `"${story.title}" is now live in the gallery for everyone to see.`,
         });
-        refetchStory();
+        refetchStory(); // Refresh story to get the publishedStoryId
     } catch (error: any) {
         console.error("Publishing failed:", error);
+        const permissionError = new FirestorePermissionError({
+            path: '/publishedStories/' + (Math.random().toString(36).substring(2, 15)), // Fake path for context
+            operation: 'create',
+            requestResourceData: 'Multiple documents in a batch write.'
+        });
+        errorEmitter.emit('permission-error', permissionError);
         toast({
             variant: 'destructive',
             title: 'Publishing Failed',
