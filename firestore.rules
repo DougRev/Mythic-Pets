@@ -7,12 +7,14 @@
  *   /users/{userId}/petProfiles/{petProfileId}/aiPersonas/{aiPersonaId} - AI personas for each pet profile.
  *   /users/{userId}/petProfiles/{petProfileId}/aiPersonas/{aiPersonaId}/aiStories/{aiStoryId} - AI stories for each AI persona.
  *   /users/{userId}/petProfiles/{petProfileId}/aiPersonas/{aiPersonaId}/aiStories/{aiStoryId}/chapters/{chapterId} - Chapters for each story.
+ *   /publishedStories/{publishedStoryId} - Publicly shared stories for the gallery.
  * @keySecurityDecisions
  *   - Users can only create, read, update, and delete their own data.
- *   - Listing operations are restricted to the owner of the data.
- *   - The 'id' field in each document is used to ensure path consistency and prevent unauthorized data access.
+ *   - The public gallery (`publishedStories`) is read-only for all users, but write access is restricted to the original author.
+ *   - Listing operations are restricted to the owner of the data for private collections.
  * @denormalizationForAuthorization
  *   - User ownership is enforced by nesting all data under the /users/{userId} path, eliminating the need for get() calls to verify ownership.
+ *   - The `authorId` field in `publishedStories` is used to verify ownership for write/delete operations on public content.
  */
 rules_version = '2';
 
@@ -22,15 +24,6 @@ service cloud.firestore {
     /**
      * @description Enforces access control for user profiles. Only the owner can read, update, or delete their profile.
      * @path /users/{userId}
-     * @allow (get, update, delete) User with ID 'user123' can access their own profile.
-     *   - request.auth.uid: 'user123'
-     * @allow (create) User with ID 'user123' can create their own profile.
-     *   - request.auth.uid: 'user123'
-     * @deny (get, update, delete) User with ID 'user456' cannot access profile of 'user123'.
-     *   - request.auth.uid: 'user456'
-     * @deny (create) Unauthenticated user cannot create a profile.
-     *   - request.auth: null
-     * @principle Enforces document ownership for all operations.
      */
     match /users/{userId} {
       allow get: if isOwner(userId);
@@ -39,70 +32,64 @@ service cloud.firestore {
       allow create: if isSignedIn() && request.auth.uid == userId;
       allow update: if isExistingOwner(userId) && isUpdatingAllowedFields(request.resource.data);
       allow delete: if isExistingOwner(userId);
+
+        /**
+         * @description Enforces access control for pet profiles. Only the owner of the user profile can access the pet profiles.
+         * @path /users/{userId}/petProfiles/{petProfileId}
+         */
+        match /petProfiles/{petProfileId} {
+          allow get, list: if isOwner(userId);
+
+          allow create: if isOwner(userId) && request.resource.data.userProfileId == userId;
+          allow update: if isExistingOwner(userId) && request.resource.data.userProfileId == userId;
+          allow delete: if isExistingOwner(userId);
+
+            /**
+             * @description Enforces access control for AI personas. Only the owner of the user profile can access the AI personas.
+             * @path /users/{userId}/petProfiles/{petProfileId}/aiPersonas/{aiPersonaId}
+             */
+            match /aiPersonas/{aiPersonaId} {
+              allow get, list: if isOwner(userId);
+
+              allow create: if isOwner(userId);
+              allow update: if isExistingOwner(userId);
+              allow delete: if isExistingOwner(userId);
+
+                /**
+                 * @description Enforces access control for AI stories. Only the owner of the user profile can access the AI stories.
+                 * @path /users/{userId}/petProfiles/{petProfileId}/aiPersonas/{aiPersonaId}/aiStories/{aiStoryId}
+                 */
+                match /aiStories/{aiStoryId} {
+                  allow get, list: if isOwner(userId);
+
+                  allow create: if isOwner(userId);
+                  allow update: if isExistingOwner(userId);
+                  allow delete: if isExistingOwner(userId);
+
+                  match /chapters/{chapterId} {
+                    allow read, write: if isOwner(userId);
+                  }
+                }
+            }
+        }
     }
     
-    match /pets/{petId} {
-      allow read: if isOwner(resource.data.userId);
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if isOwner(resource.data.userId);
-    }
-
     /**
-     * @description Enforces access control for pet profiles. Only the owner of the user profile can access the pet profiles.
-     * @path /users/{userId}/petProfiles/{petProfileId}
-     * @allow (get, list, create, update, delete) User with ID 'user123' can manage pet profiles under their user profile.
-     *   - request.auth.uid: 'user123'
-     * @deny (get, list, create, update, delete) User with ID 'user456' cannot access pet profiles under user 'user123'.
-     *   - request.auth.uid: 'user456'
-     * @principle Enforces document ownership for all operations.
+     * @description Enforces access control for the public story gallery.
+     * @path /publishedStories/{publishedStoryId}
      */
-    match /users/{userId}/petProfiles/{petProfileId} {
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
+    match /publishedStories/{publishedStoryId} {
+        // Anyone can read stories in the gallery
+        allow get, list: if true;
 
-      allow create: if isOwner(userId) && request.resource.data.userProfileId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userProfileId == userId;
-      allow delete: if isExistingOwner(userId);
-    }
+        // Only the authenticated author can publish a story
+        allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
 
-    /**
-     * @description Enforces access control for AI personas. Only the owner of the user profile can access the AI personas.
-     * @path /users/{userId}/petProfiles/{petProfileId}/aiPersonas/{aiPersonaId}
-     * @allow (get, list, create, update, delete) User with ID 'user123' can manage AI personas under their pet profiles.
-     *   - request.auth.uid: 'user123'
-     * @deny (get, list, create, update, delete) User with ID 'user456' cannot access AI personas under user 'user123'.
-     *   - request.auth.uid: 'user456'
-     * @principle Enforces document ownership for all operations.
-     */
-    match /users/{userId}/petProfiles/{petProfileId}/aiPersonas/{aiPersonaId} {
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
+        // Only the author can delete their published story
+        allow delete: if isSignedIn() && resource.data.authorId == request.auth.uid;
 
-      allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
-    }
-
-    /**
-     * @description Enforces access control for AI stories. Only the owner of the user profile can access the AI stories.
-     * @path /users/{userId}/petProfiles/{petProfileId}/aiPersonas/{aiPersonaId}/aiStories/{aiStoryId}
-     * @allow (get, list, create, update, delete) User with ID 'user123' can manage AI stories under their AI personas.
-     *   - request.auth.uid: 'user123'
-     * @deny (get, list, create, update, delete) User with ID 'user456' cannot access AI stories under user 'user123'.
-     *   - request.auth.uid: 'user456'
-     * @principle Enforces document ownership for all operations.
-     */
-    match /users/{userId}/petProfiles/{petProfileId}/aiPersonas/{aiPersonaId}/aiStories/{aiStoryId} {
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-
-      allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
-
-      match /chapters/{chapterId} {
-        allow read, write: if isOwner(userId);
-      }
+        // No updates are allowed to prevent tampering, deletion and re-publishing is the intended flow.
+        allow update: if false;
     }
   }
 

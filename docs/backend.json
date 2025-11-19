@@ -203,6 +203,10 @@
             "type": "string",
             "description": "The current status of the story.",
             "enum": ["in-progress", "completed"]
+        },
+        "publishedStoryId": {
+          "type": "string",
+          "description": "The ID of the corresponding document in the /publishedStories collection, if it has been published."
         }
       },
       "required": [
@@ -256,6 +260,26 @@
         "imageUrl",
         "generationDate"
       ]
+    },
+    "PublishedStory": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "PublishedStory",
+      "type": "object",
+      "description": "Represents a publicly shared story in the gallery. This is a denormalized object for efficient querying.",
+      "properties": {
+        "id": { "type": "string", "description": "Unique ID for the published story." },
+        "authorId": { "type": "string", "description": "The User ID of the original author." },
+        "authorName": { "type": "string", "description": "The display name of the author." },
+        "petName": { "type": "string", "description": "The name of the pet." },
+        "personaTheme": { "type": "string", "description": "The theme of the persona (e.g. 'Superhero')." },
+        "personaImage": { "type": "string", "description": "URL of the main persona image." },
+        "storyTitle": { "type": "string", "description": "The title of the story." },
+        "storyTone": { "type": "string", "description": "The tone of the story." },
+        "firstChapter": { "$ref": "#/backend/entities/AIChapter" },
+        "likes": { "type": "number", "description": "The total number of likes." },
+        "publishedDate": { "type": "string", "format": "date-time", "description": "When the story was published." }
+      },
+      "required": ["id", "authorId", "authorName", "petName", "personaTheme", "personaImage", "storyTitle", "storyTone", "firstChapter", "likes", "publishedDate"]
     }
   },
   "auth": {
@@ -387,8 +411,26 @@
             }
           ]
         }
+      },
+      {
+        "path": "/publishedStories/{publishedStoryId}",
+        "definition": {
+          "entityName": "PublishedStory",
+          "schema": {
+            "$ref": "#/backend/entities/PublishedStory"
+          },
+          "description": "A public collection of stories shared by users to the gallery. Anyone can read these, but only the author can create or delete their own.",
+          "params": [
+            {
+              "name": "publishedStoryId",
+              "description": "The unique identifier for the published story."
+            }
+          ]
+        }
       }
     ],
-    "reasoning": "The Firestore data structure is designed to support the Mythic Pets application, focusing on user profiles, pet profiles, AI personas, and AI-generated stories. The structure prioritizes authorization independence and simplifies security rules, adhering to the core design principles.\n\n**Authorization Independence:**\n\n*   User-owned data (PetProfiles, AIPersonas, AIStories) is nested under the `/users/{userId}` path, ensuring that access control is based on the user's ID. This eliminates the need for `get()` calls in security rules to check ownership.\n*   No `members` map is necessary as the user implicitly owns all data under their user ID.\n\n**Structural Segregation:**\n\n*   Each data type (UserProfile, PetProfile, AIPersona, AIStory) is stored in its own collection or subcollection, ensuring that security rules are homogeneous within each collection.\n\n**Access Modeling:**\n\n*   Private Data: User profiles and all associated data (pets, personas, stories) are stored under the `/users/{userId}` path, providing path-based ownership.\n*   Hierarchical Paths: The structure uses nested paths to represent the relationships between users, pets, personas, and stories (e.g., `/users/{userId}/petProfiles/{petProfileId}/aiPersonas/{aiPersonaId}/aiStories/{aiStoryId}`).\n\n**QAPs (Rules are not Filters):**\n\n*   The structure supports secure `list` operations because all documents within a subcollection have the same ownership based on the user ID. Rules can allow listing of all documents under `/users/{userId}` without needing to filter based on document content.\n\n**Example Security Rules:**\n\n```\nmatch /users/{userId} {\n  allow read, update, delete: if request.auth.uid == userId;\n  allow create: if request.auth.uid != null;\n\n  match /petProfiles/{petProfileId} {\n    allow read, write: if request.auth.uid == userId;\n\n    match /aiPersonas/{aiPersonaId} {\n      allow read, write: if request.auth.uid == userId;\n\n      match /aiStories/{aiStoryId} {\n        allow read, write: if request.auth.uid == userId;\n\n         match /chapters/{chapterId} {\n           allow read, write: if request.auth.uid == userId;\n         }\n      }\n    }\n  }\n}\n```"
+    "reasoning": "The Firestore data structure is designed to support the Mythic Pets application, focusing on user profiles, pet profiles, AI personas, and AI-generated stories. The structure prioritizes authorization independence and simplifies security rules, adhering to the core design principles.\n\n**Authorization Independence:**\n\n*   User-owned data (PetProfiles, AIPersonas, AIStories) is nested under the `/users/{userId}` path, ensuring that access control is based on the user's ID. This eliminates the need for `get()` calls in security rules to check ownership.\n\n**Public Data:**\n\n*   A new top-level collection, `/publishedStories`, is introduced for the public gallery. This separates public data from private user data, simplifying security rules. Data in this collection is denormalized to allow for efficient loading of the gallery without needing complex joins or multiple reads.\n\n**Access Modeling:**\n\n*   Private Data: User profiles and all associated data (pets, personas, stories) are stored under the `/users/{userId}` path, providing path-based ownership.\n*   Public Data: Stories intended for public viewing are copied to `/publishedStories`.\n\n**QAPs (Rules are not Filters):**\n\n*   The structure supports secure `list` operations. Rules can allow listing of all documents under `/users/{userId}` for an owner, and all documents under `/publishedStories` for any user."
   }
 }
+
+    

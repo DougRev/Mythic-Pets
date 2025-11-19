@@ -4,10 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useCollection, useDoc } from '@/firebase';
-import { doc, collection, query, orderBy, addDoc, updateDoc } from 'firebase/firestore';
+import { doc, collection, query, orderBy, addDoc, updateDoc, setDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { ArrowLeft, Loader2, Wand2, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Wand2, CheckCircle2, UploadCloud } from 'lucide-react';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 import { continueAiStory } from '@/ai/flows/continue-ai-story';
@@ -25,6 +25,7 @@ export default function StoryDetailsPage() {
   const storyId = params.storyId as string;
   
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
   const [currentChapter, setCurrentChapter] = useState(1);
 
   // Memoized references
@@ -139,6 +140,55 @@ export default function StoryDetailsPage() {
         setIsGenerating(false);
     }
   };
+
+  const handlePublish = async () => {
+    if (!story || !chapters || !pet || !persona || !user || !firestore) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Missing required data to publish.' });
+        return;
+    }
+
+    setIsPublishing(true);
+    try {
+        const firstChapter = chapters.find(c => c.chapterNumber === 1);
+        if (!firstChapter) {
+            throw new Error("First chapter is missing, cannot publish.");
+        }
+        
+        const publishedStoryData = {
+            authorId: user.uid,
+            authorName: user.displayName || 'Anonymous',
+            petName: pet.name,
+            personaTheme: persona.theme,
+            personaImage: persona.imageUrl,
+            storyTitle: story.title,
+            storyTone: story.tone,
+            firstChapter: firstChapter, // Storing the full first chapter object
+            likes: 0,
+            publishedDate: new Date().toISOString(),
+        };
+
+        const publishedStoryRef = doc(collection(firestore, 'publishedStories'));
+        await setDoc(publishedStoryRef, publishedStoryData);
+
+        // Link the original story to the published one
+        await updateDoc(storyRef, { publishedStoryId: publishedStoryRef.id });
+
+        toast({
+            title: 'Story Published!',
+            description: `"${story.title}" is now live in the gallery for everyone to see.`,
+        });
+        refetchStory(); // Refresh to get the new publishedStoryId
+    } catch (error: any) {
+        console.error("Publishing failed:", error);
+        toast({
+            variant: 'destructive',
+            title: 'Publishing Failed',
+            description: error.message || 'Could not publish the story. Please try again.',
+        });
+    } finally {
+        setIsPublishing(false);
+    }
+  };
   
   if (isStoryLoading || areChaptersLoading || isPetLoading || isPersonaLoading) {
     return <div className="flex h-screen items-center justify-center">Loading story...</div>;
@@ -222,8 +272,24 @@ export default function StoryDetailsPage() {
                     )}
                 </Button>
             )}
+             {isStoryCompleted && !story.publishedStoryId && (
+                <Button onClick={handlePublish} disabled={isPublishing}>
+                   {isPublishing ? (
+                       <><Loader2 className="mr-2 animate-spin" /> Publishing...</>
+                   ) : (
+                       <><UploadCloud className="mr-2" /> Publish to Gallery</>
+                   )}
+               </Button>
+            )}
+            {story.publishedStoryId && (
+                <Button variant="secondary" disabled>
+                    <CheckCircle2 className="mr-2" /> Published
+                </Button>
+            )}
         </div>
       </div>
     </div>
   );
 }
+
+    
