@@ -62,7 +62,8 @@ const artStyles = [
     'Oil Painting',
     'Steampunk',
     'Vaporwave',
-    'Pixel Art'
+    'Pixel Art',
+    'Other...'
 ];
 
 const personaFormSchema = z.object({
@@ -73,6 +74,7 @@ const personaFormSchema = z.object({
   imageStyle: z.string({
     required_error: 'Please select an art style.',
   }),
+  customImageStyle: z.string().optional(),
   prompt: z.string().max(500).optional(),
 }).refine(data => {
     if (data.theme === 'Other...') {
@@ -82,6 +84,14 @@ const personaFormSchema = z.object({
 }, {
     message: 'Please enter a custom theme.',
     path: ['customTheme'],
+}).refine(data => {
+    if (data.imageStyle === 'Other...') {
+        return !!data.customImageStyle && data.customImageStyle.length > 0;
+    }
+    return true;
+}, {
+    message: 'Please enter a custom art style.',
+    path: ['customImageStyle'],
 });
 
 type PersonaFormValues = z.infer<typeof personaFormSchema>;
@@ -107,10 +117,12 @@ export default function CreatePersonaPage() {
     defaultValues: {
       prompt: '',
       customTheme: '',
+      customImageStyle: '',
     },
   });
 
   const watchedTheme = form.watch('theme');
+  const watchedImageStyle = form.watch('imageStyle');
 
   const onSubmit = async (data: PersonaFormValues) => {
     if (!pet || !user || !firestore || !storage) {
@@ -130,12 +142,13 @@ export default function CreatePersonaPage() {
     setIsGenerating(true);
     try {
       const theme = data.theme === 'Other...' ? data.customTheme : data.theme;
+      const imageStyle = data.imageStyle === 'Other...' ? data.customImageStyle : data.imageStyle;
 
       // 1. Generate Persona Image & Lore
       const personaResult = await generateAiPersona({
         photoDataUri: pet.photoURL, // Assuming photoURL is a data URI
         theme: theme!,
-        imageStyle: data.imageStyle,
+        imageStyle: imageStyle!,
         petName: pet.name,
         prompt: data.prompt,
       });
@@ -152,7 +165,7 @@ export default function CreatePersonaPage() {
       const newPersona = {
         petProfileId: petId,
         theme: theme,
-        imageStyle: data.imageStyle,
+        imageStyle: imageStyle,
         imageUrl: imageUrl,
         loreText: personaResult.loreText,
         generationDate: new Date().toISOString(),
@@ -295,6 +308,21 @@ export default function CreatePersonaPage() {
                         </FormItem>
                         )}
                     />
+                     {watchedImageStyle === 'Other...' && (
+                         <FormField
+                            control={form.control}
+                            name="customImageStyle"
+                            render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Custom Art Style</FormLabel>
+                                <FormControl>
+                                <Input placeholder="e.g., Watercolor, Art Deco" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+                    )}
                     <FormField
                         control={form.control}
                         name="prompt"
@@ -333,3 +361,5 @@ export default function CreatePersonaPage() {
     </div>
   );
 }
+
+    
