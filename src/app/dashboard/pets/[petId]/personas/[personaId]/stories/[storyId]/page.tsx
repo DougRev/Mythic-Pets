@@ -186,7 +186,7 @@ export default function StoryDetailsPage() {
     chapters.forEach(chapter => {
         const newChapterRef = doc(publishedChaptersCol);
         const chapterCopy = { ...chapter };
-        delete (chapterCopy as any).id;
+        delete (chapterCopy as any).id; // Remove the local 'id' field before writing to Firestore
         batch.set(newChapterRef, chapterCopy);
     });
     
