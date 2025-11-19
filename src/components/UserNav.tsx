@@ -56,10 +56,12 @@ export function UserNav() {
               <span>Account</span>
             </DropdownMenuItem>
           </Link>
-          <DropdownMenuItem>
-            <Gem className="mr-2 h-4 w-4" />
-            <span>Upgrade to Pro</span>
-          </DropdownMenuItem>
+          <Link href="/dashboard/upgrade">
+            <DropdownMenuItem>
+              <Gem className="mr-2 h-4 w-4" />
+              <span>Upgrade to Pro</span>
+            </DropdownMenuItem>
+          </Link>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={signOut}>
