@@ -24,7 +24,7 @@ export function ShareDialog({ children, title, body, imageUrl }: ShareDialogProp
 
   useEffect(() => {
     // The Web Share API is only available in secure contexts (HTTPS) and on certain browsers.
-    if (typeof window !== 'undefined' && navigator.share) {
+    if (typeof window !== 'undefined' && 'share' in navigator) {
       setIsShareApiAvailable(true);
     }
   }, []);
