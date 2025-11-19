@@ -37,6 +37,10 @@
         "planType": {
           "type": "string",
           "description": "Type of subscription plan the user has (e.g., 'free', 'pro')."
+        },
+        "regenerationCredits": {
+          "type": "number",
+          "description": "Number of regeneration credits available for the user."
         }
       },
       "required": [
@@ -45,7 +49,8 @@
         "displayName",
         "creationDate",
         "lastLogin",
-        "planType"
+        "planType",
+        "regenerationCredits"
       ]
     },
     "PetProfile": {
@@ -375,4 +380,5 @@
     "reasoning": "The Firestore data structure is designed to support the Mythic Pets application, focusing on user profiles, pet profiles, AI personas, and AI-generated stories. The structure prioritizes authorization independence and simplifies security rules, adhering to the core design principles.\n\n**Authorization Independence:**\n\n*   User-owned data (PetProfiles, AIPersonas, AIStories) is nested under the `/users/{userId}` path, ensuring that access control is based on the user's ID. This eliminates the need for `get()` calls in security rules to check ownership.\n*   No `members` map is necessary as the user implicitly owns all data under their user ID.\n\n**Structural Segregation:**\n\n*   Each data type (UserProfile, PetProfile, AIPersona, AIStory) is stored in its own collection or subcollection, ensuring that security rules are homogeneous within each collection.\n\n**Access Modeling:**\n\n*   Private Data: User profiles and all associated data (pets, personas, stories) are stored under the `/users/{userId}` path, providing path-based ownership.\n*   Hierarchical Paths: The structure uses nested paths to represent the relationships between users, pets, personas, and stories (e.g., `/users/{userId}/petProfiles/{petProfileId}/aiPersonas/{aiPersonaId}/aiStories/{aiStoryId}`).\n\n**QAPs (Rules are not Filters):**\n\n*   The structure supports secure `list` operations because all documents within a subcollection have the same ownership based on the user ID. Rules can allow listing of all documents under `/users/{userId}` without needing to filter based on document content.\n\n**Example Security Rules:**\n\n```\nmatch /users/{userId} {\n  allow read, update, delete: if request.auth.uid == userId;\n  allow create: if request.auth.uid != null;\n\n  match /petProfiles/{petProfileId} {\n    allow read, write: if request.auth.uid == userId;\n\n    match /aiPersonas/{aiPersonaId} {\n      allow read, write: if request.auth.uid == userId;\n\n      match /aiStories/{aiStoryId} {\n        allow read, write: if request.auth.uid == userId;\n\n         match /chapters/{chapterId} {\n           allow read, write: if request.auth.uid == userId;\n         }\n      }\n    }\n  }\n}\n```"
   }
 }
+
     

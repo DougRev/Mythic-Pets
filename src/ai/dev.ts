@@ -4,3 +4,6 @@ config();
 import '@/ai/flows/regenerate-content.ts';
 import '@/ai/flows/generate-ai-story.ts';
 import '@/ai/flows/generate-ai-persona.ts';
+import '@/ai/flows/regenerate-image.ts';
+
+    

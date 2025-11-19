@@ -4,7 +4,7 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, Bot, Edit, Share2, Sparkles, Trash2, BookOpen } from 'lucide-react';
+import { ArrowLeft, Bot, Edit, Share2, Sparkles, Trash2, BookOpen, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -17,6 +17,7 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { useCollection, useDoc } from '@/firebase';
 import { doc, collection, query, orderBy } from 'firebase/firestore';
+import { RegenerateImageDialog } from '@/components/RegenerateImageDialog';
 
 export default function PersonaDetailsPage() {
   const router = useRouter();
@@ -25,26 +26,32 @@ export default function PersonaDetailsPage() {
   const personaId = params.personaId as string;
   const { user, firestore } = useAuth();
   
+  const petRef = React.useMemo(() => {
+    if (!user || !firestore || !petId) return null;
+    return doc(firestore, 'users', user.uid, 'petProfiles', petId);
+  }, [firestore, user, petId]);
+  
   const personaRef = React.useMemo(() => {
-    if (!user || !firestore || !petId || !personaId) return null;
-    return doc(firestore, 'users', user.uid, 'petProfiles', petId, 'aiPersonas', personaId);
-  }, [firestore, user, petId, personaId]);
+    if (!petRef || !personaId) return null;
+    return doc(petRef, 'aiPersonas', personaId);
+  }, [petRef, personaId]);
 
-  const { data: persona, isLoading: isPersonaLoading } = useDoc<any>(personaRef);
+  const { data: pet, isLoading: isPetLoading } = useDoc<any>(petRef);
+  const { data: persona, isLoading: isPersonaLoading, refetch: refetchPersona } = useDoc<any>(personaRef);
+
 
   const storiesQuery = React.useMemo(() => {
     if (!personaRef) return null;
-    // Order stories by generation date, newest first
     return query(collection(personaRef, 'aiStories'), orderBy('generationDate', 'desc'));
   }, [personaRef]);
 
   const { data: stories, isLoading: areStoriesLoading } = useCollection<any>(storiesQuery);
 
-  if (isPersonaLoading) {
+  if (isPersonaLoading || isPetLoading) {
     return <div className="flex h-screen items-center justify-center">Loading persona...</div>;
   }
 
-  if (!persona) {
+  if (!persona || !pet) {
     return <div className="flex h-screen items-center justify-center">Persona not found.</div>;
   }
 
@@ -65,12 +72,16 @@ export default function PersonaDetailsPage() {
                 width={600}
                 height={600}
                 className="aspect-square w-full object-cover"
+                key={persona.imageUrl} // Re-renders the image when URL changes
               />
             </CardContent>
           </Card>
-           <div className="mt-4 grid grid-cols-2 gap-2">
+           <div className="mt-4 grid grid-cols-3 gap-2">
+            <RegenerateImageDialog persona={persona} pet={pet} onRegenerationComplete={refetchPersona}>
+              <Button variant="outline"><RefreshCw className="mr-2"/>Regen Image</Button>
+            </RegenerateImageDialog>
             <Button variant="outline"><Share2 className="mr-2"/>Share</Button>
-            <Button variant="outline"><Trash2 className="mr-2"/>Delete</Button>
+            <Button variant="outline" disabled><Trash2 className="mr-2"/>Delete</Button>
           </div>
         </div>
 
@@ -88,7 +99,7 @@ export default function PersonaDetailsPage() {
                 </h3>
                 <p className="text-muted-foreground whitespace-pre-wrap">{persona.loreText}</p>
               </div>
-               <Button variant="outline" className="w-full">
+               <Button variant="outline" className="w-full" disabled>
                 <Sparkles className="mr-2" /> Regenerate Lore
               </Button>
             </CardContent>
@@ -127,3 +138,5 @@ export default function PersonaDetailsPage() {
     </div>
   );
 }
+
+    
