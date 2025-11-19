@@ -112,14 +112,15 @@ export default function GalleryPage() {
                 <Link key={story.id} href={`/gallery/${story.id}`} className="group">
                     <Card className="flex flex-col overflow-hidden h-full transition-all duration-200 ease-in-out group-hover:shadow-xl group-hover:-translate-y-1">
                         <CardHeader className="p-0">
-                        <Image
-                            src={story.personaImage}
-                            alt={story.storyTitle}
-                            width={400}
-                            height={300}
-                            data-ai-hint={story.personaTheme}
-                            className="aspect-4/3 w-full object-cover"
-                        />
+                          <div className="relative aspect-square w-full">
+                            <Image
+                                src={story.personaImage}
+                                alt={story.storyTitle}
+                                fill
+                                data-ai-hint={story.personaTheme}
+                                className="object-cover"
+                            />
+                          </div>
                         </CardHeader>
                         <CardContent className="flex-1 p-4">
                         <CardTitle className="font-headline text-lg leading-tight mb-1">{story.storyTitle}</CardTitle>
