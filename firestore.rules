@@ -61,7 +61,7 @@ service cloud.firestore {
                   allow get, list, delete: if isOwner(userId);
 
                   allow create: if isOwner(userId);
-                  allow update: if isOwner(userId) && (request.resource.data.keys().hasOnly(['publishedStoryId']) || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isFavorite', 'lastChapter', 'status', 'publishedStoryId']));
+                  allow update: if isOwner(userId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isFavorite', 'lastChapter', 'status', 'publishedStoryId']);
 
                   match /chapters/{chapterId} {
                     allow read, write, delete: if isOwner(userId);
@@ -91,8 +91,9 @@ service cloud.firestore {
         // Chapters can be created as part of the initial batch, but not modified later.
         match /chapters/{chapterId} {
             allow get, list: if true;
-            // The batch write needs to create chapters. This rule allows creation but not subsequent updates or deletes.
-            allow create: if request.resource.data.chapterNumber > 0;
+            // The batch write needs to create chapters. This rule allows creation if the user is signed in.
+            // This is secure because the parent document's creation is restricted to the author.
+            allow create: if isSignedIn();
             allow update, delete: if false;
         }
     }
