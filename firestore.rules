@@ -30,8 +30,8 @@ service cloud.firestore {
       allow list: if false; // Listing users is not permitted
 
       allow create: if isSignedIn() && request.auth.uid == userId;
-      allow update: if isExistingOwner(userId) && isUpdatingAllowedFields(request.resource.data);
-      allow delete: if isExistingOwner(userId);
+      allow update: if isOwner(userId) && isUpdatingAllowedFields(request.resource.data, resource.data);
+      allow delete: if isOwner(userId);
 
         /**
          * @description Enforces access control for pet profiles. Only the owner of the user profile can access the pet profiles.
@@ -41,7 +41,7 @@ service cloud.firestore {
           allow get, list, delete: if isOwner(userId);
 
           allow create: if isOwner(userId) && request.resource.data.userProfileId == userId;
-          allow update: if isExistingOwner(userId) && request.resource.data.userProfileId == userId;
+          allow update: if isOwner(userId) && request.resource.data.userProfileId == userId;
 
             /**
              * @description Enforces access control for AI personas. Only the owner of the user profile can access the AI personas.
@@ -51,7 +51,7 @@ service cloud.firestore {
               allow get, list, delete: if isOwner(userId);
 
               allow create: if isOwner(userId);
-              allow update: if isExistingOwner(userId);
+              allow update: if isOwner(userId);
 
                 /**
                  * @description Enforces access control for AI stories. Only the owner of the user profile can access the AI stories.
@@ -61,7 +61,7 @@ service cloud.firestore {
                   allow get, list, delete: if isOwner(userId);
 
                   allow create: if isOwner(userId);
-                  allow update: if isExistingOwner(userId);
+                  allow update: if isOwner(userId);
 
                   match /chapters/{chapterId} {
                     allow read, write, delete: if isOwner(userId);
@@ -108,12 +108,17 @@ service cloud.firestore {
     return isSignedIn() && request.auth.uid == userId;
   }
 
-  function isExistingOwner(userId) {
-    return isOwner(userId) && resource != null;
-  }
-  
-  function isUpdatingAllowedFields(data) {
-    let allowedFields = ['displayName', 'photoURL', 'regenerationCredits'];
-    return data.keys().hasAll(allowedFields);
+  function isUpdatingAllowedFields(newData, oldData) {
+    let allowedFields = ['displayName', 'photoURL', 'regenerationCredits', 'planType', 'stripeCustomerId'];
+    let unchangedFields = ['id', 'email', 'creationDate', 'lastLogin'];
+
+    // Check if only allowed fields are being changed
+    let changingAllowedOnly = newData.keys().hasOnly(oldData.keys().concat(allowedFields));
+    
+    // Check if immutable fields are not being changed
+    let immutableFieldsUnchanged = unchangedFields.size() == 0 ||
+      unchangedFields.every(field => newData[field] == oldData[field]);
+
+    return changingAllowedOnly && immutableFieldsUnchanged;
   }
 }

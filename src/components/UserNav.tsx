@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -14,9 +15,18 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Gem, LogOut, User as UserIcon } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useDoc } from '@/firebase';
+import { doc } from 'firebase/firestore';
 
 export function UserNav() {
-  const { user, signOut } = useAuth();
+  const { user, signOut, firestore } = useAuth();
+
+  const userProfileRef = React.useMemo(() => {
+    if (!user || !firestore) return null;
+    return doc(firestore, 'users', user.uid);
+  }, [firestore, user]);
+
+  const { data: userProfile } = useDoc<any>(userProfileRef);
 
   if (!user) {
     return null;
@@ -56,12 +66,14 @@ export function UserNav() {
               <span>Account</span>
             </DropdownMenuItem>
           </Link>
-          <Link href="/dashboard/upgrade">
-            <DropdownMenuItem>
-              <Gem className="mr-2 h-4 w-4" />
-              <span>Upgrade to Pro</span>
-            </DropdownMenuItem>
-          </Link>
+          {userProfile?.planType !== 'pro' && (
+            <Link href="/dashboard/upgrade">
+              <DropdownMenuItem>
+                <Gem className="mr-2 h-4 w-4" />
+                <span>Upgrade to Pro</span>
+              </DropdownMenuItem>
+            </Link>
+          )}
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={signOut}>
