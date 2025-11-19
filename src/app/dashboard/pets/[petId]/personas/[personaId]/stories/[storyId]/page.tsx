@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useCollection, useDoc } from '@/firebase';
-import { doc, collection, query, orderBy, addDoc, updateDoc, setDoc, writeBatch } from 'firebase/firestore';
+import { doc, collection, query, orderBy, addDoc, updateDoc, writeBatch } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { ArrowLeft, Loader2, Wand2, CheckCircle2, UploadCloud } from 'lucide-react';
@@ -13,6 +13,8 @@ import { useToast } from '@/hooks/use-toast';
 import { continueAiStory } from '@/ai/flows/continue-ai-story';
 import { uploadFile } from '@/firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
+import { errorEmitter, FirestorePermissionError } from '@/firebase';
+
 
 export default function StoryDetailsPage() {
   const params = useParams();
@@ -53,7 +55,7 @@ export default function StoryDetailsPage() {
   const { data: pet, isLoading: isPetLoading } = useDoc<any>(petRef);
   const { data: persona, isLoading: isPersonaLoading } = useDoc<any>(personaRef);
   const { data: story, isLoading: isStoryLoading, refetch: refetchStory } = useDoc<any>(storyRef);
-  const { data: chapters, isLoading: areChaptersLoading } = useCollection<any>(chaptersQuery);
+  const { data: chapters, isLoading: areChaptersLoading, refetch: refetchChapters } = useCollection<any>(chaptersQuery);
 
   useEffect(() => {
     if (story) {
@@ -118,7 +120,8 @@ export default function StoryDetailsPage() {
         
         await updateDoc(storyRef, storyUpdates);
 
-        await refetchStory();
+        refetchStory();
+        refetchChapters();
 
         setCurrentChapter(nextChapterNumber);
 
@@ -148,60 +151,62 @@ export default function StoryDetailsPage() {
     }
 
     setIsPublishing(true);
-    try {
-        const firstChapter = chapters.find(c => c.chapterNumber === 1);
-        if (!firstChapter) {
-            throw new Error("First chapter is missing, cannot publish.");
-        }
-        
-        const publishedStoryData = {
-            authorId: user.uid,
-            authorName: user.displayName || 'Anonymous',
-            petName: pet.name,
-            personaTheme: persona.theme,
-            personaImage: persona.imageUrl,
-            storyTitle: story.title,
-            storyTone: story.tone,
-            likes: 0,
-            publishedDate: new Date().toISOString(),
-            // We no longer denormalize the first chapter here
-        };
+    
+    // Create the main published story document
+    const publishedStoryRef = doc(collection(firestore, 'publishedStories'));
+    const publishedStoryId = publishedStoryRef.id;
 
-        // Use a batch write to ensure atomicity
-        const batch = writeBatch(firestore);
+    const publishedStoryData = {
+        authorId: user.uid,
+        authorName: user.displayName || 'Anonymous',
+        petName: pet.name,
+        personaTheme: persona.theme,
+        personaImage: persona.imageUrl,
+        storyTitle: story.title,
+        storyTone: story.tone,
+        likes: 0,
+        likedBy: [],
+        publishedDate: new Date().toISOString(),
+        id: publishedStoryId,
+    };
+    
+    // Use a batch write to ensure atomicity
+    const batch = writeBatch(firestore);
 
-        // 1. Create the main published story document
-        const publishedStoryRef = doc(collection(firestore, 'publishedStories'));
-        batch.set(publishedStoryRef, publishedStoryData);
+    // 1. Create the main published story document
+    batch.set(publishedStoryRef, publishedStoryData);
 
-        // 2. Copy all chapters to the new subcollection
-        const publishedChaptersCol = collection(publishedStoryRef, 'chapters');
-        chapters.forEach(chapter => {
-            const newChapterRef = doc(publishedChaptersCol);
-            batch.set(newChapterRef, chapter);
-        });
-        
-        // 3. Link the original story to the published one
-        batch.update(storyRef, { publishedStoryId: publishedStoryRef.id });
+    // 2. Copy all chapters to the new subcollection
+    const publishedChaptersCol = collection(publishedStoryRef, 'chapters');
+    chapters.forEach(chapter => {
+        const chapterCopy = { ...chapter };
+        delete (chapterCopy as any).id; // Remove local ID before writing
+        const newChapterRef = doc(publishedChaptersCol);
+        batch.set(newChapterRef, chapterCopy);
+    });
+    
+    // 3. Link the original story to the published one
+    batch.update(storyRef, { publishedStoryId: publishedStoryId });
 
-        // Commit the batch
-        await batch.commit();
-
+    // Commit the batch
+    batch.commit()
+      .then(() => {
         toast({
             title: 'Story Published!',
             description: `"${story.title}" is now live in the gallery for everyone to see.`,
         });
         refetchStory(); // Refresh to get the new publishedStoryId
-    } catch (error: any) {
-        console.error("Publishing failed:", error);
-        toast({
-            variant: 'destructive',
-            title: 'Publishing Failed',
-            description: error.message || 'Could not publish the story. Please try again.',
-        });
-    } finally {
         setIsPublishing(false);
-    }
+      })
+      .catch((error) => {
+        const permissionError = new FirestorePermissionError({
+            path: publishedStoryRef.path, 
+            operation: 'create',
+            requestResourceData: publishedStoryData,
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        setIsPublishing(false);
+      });
   };
   
   if (isStoryLoading || areChaptersLoading || isPetLoading || isPersonaLoading) {

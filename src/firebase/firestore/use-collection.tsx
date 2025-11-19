@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Query,
   onSnapshot,
+  getDocs,
   DocumentData,
   FirestoreError,
   QuerySnapshot,
@@ -23,6 +24,7 @@ export interface UseCollectionResult<T> {
   data: WithId<T>[] | null; // Document data with ID, or null.
   isLoading: boolean;       // True if loading.
   error: FirestoreError | Error | null; // Error object, or null.
+  refetch: () => Promise<void>; // Function to manually refetch the collection.
 }
 
 /* Internal implementation of Query:
@@ -61,6 +63,43 @@ export function useCollection<T = any>(
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<FirestoreError | Error | null>(null);
 
+  const getPath = (target: any): string => {
+     if (target.type === 'collection') {
+        return (target as CollectionReference).path;
+     }
+     // This is a hack to get the path from a query. It might break in future Firebase versions.
+     return (target as unknown as InternalQuery)._query.path.canonicalString();
+  }
+
+  const refetch = useCallback(async () => {
+    if (!memoizedTargetRefOrQuery) {
+      setData(null);
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const snapshot = await getDocs(memoizedTargetRefOrQuery);
+      const results: ResultItemType[] = [];
+      for (const doc of snapshot.docs) {
+          results.push({ ...(doc.data() as T), id: doc.id });
+      }
+      setData(results);
+      setError(null);
+    } catch (e: any) {
+       const contextualError = new FirestorePermissionError({
+          operation: 'list',
+          path: getPath(memoizedTargetRefOrQuery),
+        })
+
+        setError(contextualError)
+        setData(null)
+        errorEmitter.emit('permission-error', contextualError);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [memoizedTargetRefOrQuery]);
+
   useEffect(() => {
     if (!memoizedTargetRefOrQuery) {
       setData(null);
@@ -85,15 +124,9 @@ export function useCollection<T = any>(
         setIsLoading(false);
       },
       (error: FirestoreError) => {
-        // This logic extracts the path from either a ref or a query
-        const path: string =
-          memoizedTargetRefOrQuery.type === 'collection'
-            ? (memoizedTargetRefOrQuery as CollectionReference).path
-            : (memoizedTargetRefOrQuery as unknown as InternalQuery)._query.path.canonicalString()
-
         const contextualError = new FirestorePermissionError({
           operation: 'list',
-          path,
+          path: getPath(memoizedTargetRefOrQuery),
         })
 
         setError(contextualError)
@@ -108,5 +141,5 @@ export function useCollection<T = any>(
     return () => unsubscribe();
   }, [memoizedTargetRefOrQuery]); // Re-run if the target query/reference changes.
 
-  return { data, isLoading, error };
+  return { data, isLoading, error, refetch };
 }
