@@ -52,7 +52,7 @@ export default function StoryDetailsPage() {
   const { data: pet, isLoading: isPetLoading } = useDoc<any>(petRef);
   const { data: persona, isLoading: isPersonaLoading } = useDoc<any>(personaRef);
   const { data: story, isLoading: isStoryLoading, refetch: refetchStory } = useDoc<any>(storyRef);
-  const { data: chapters, isLoading: areChaptersLoading, refetch: refetchChapters } = useCollection<any>(chaptersQuery);
+  const { data: chapters, isLoading: areChaptersLoading } = useCollection<any>(chaptersQuery);
 
   useEffect(() => {
     if (story) {
@@ -109,7 +109,6 @@ export default function StoryDetailsPage() {
         });
 
         await refetchStory();
-        await refetchChapters();
 
         setCurrentChapter(nextChapterNumber);
 
