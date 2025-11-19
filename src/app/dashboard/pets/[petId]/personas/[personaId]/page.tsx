@@ -53,24 +53,24 @@ export default function PersonaDetailsPage() {
   const { data: stories, isLoading: areStoriesLoading, refetch: refetchStories } = useCollection<any>(storiesQuery);
 
   const handleDeletePersona = async () => {
-    if (!personaRef || !firestore) return;
+    if (!personaRef || !firestore || !pet) return;
     try {
       const batch = writeBatch(firestore);
-      
+
       // 1. Get all stories for the persona
       const storiesSnapshot = await getDocs(collection(personaRef, 'aiStories'));
-      
+
       for (const storyDoc of storiesSnapshot.docs) {
         // 2. For each story, get and delete all chapters
         const chaptersSnapshot = await getDocs(collection(storyDoc.ref, 'chapters'));
         chaptersSnapshot.forEach(chapterDoc => {
           batch.delete(chapterDoc.ref);
         });
-        
+
         // 3. Delete the story itself
         batch.delete(storyDoc.ref);
       }
-      
+
       // 4. Delete the persona document
       batch.delete(personaRef);
 
@@ -129,6 +129,8 @@ export default function PersonaDetailsPage() {
     return <div className="flex h-screen items-center justify-center">Persona not found.</div>;
   }
 
+  const remixPath = `/dashboard/pets/${pet.id}/create-persona?theme=${encodeURIComponent(persona.theme)}&imageStyle=${encodeURIComponent(persona.imageStyle)}`;
+
   return (
     <div className="container mx-auto max-w-4xl py-8 px-4 md:px-6">
       <Button variant="ghost" onClick={() => router.push(`/dashboard/pets/${petId}`)} className="mb-4">
@@ -158,6 +160,7 @@ export default function PersonaDetailsPage() {
               title={persona.theme}
               body={persona.loreText}
               imageUrl={persona.imageUrl}
+              remixPath={remixPath}
             >
               <Button variant="outline" className="w-full"><Share2 className="mr-2 h-4 w-4"/>Share</Button>
             </ShareDialog>

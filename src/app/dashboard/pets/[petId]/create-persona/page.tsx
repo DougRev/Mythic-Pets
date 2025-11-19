@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -100,10 +100,15 @@ type PersonaFormValues = z.infer<typeof personaFormSchema>;
 export default function CreatePersonaPage() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const petId = params.petId as string;
   const { toast } = useToast();
   const { user, firestore, storage } = useAuth();
   const [isGenerating, setIsGenerating] = useState(false);
+
+  // Get remix params from URL
+  const themeParam = searchParams.get('theme');
+  const imageStyleParam = searchParams.get('imageStyle');
 
   const petRef = React.useMemo(() => {
     if (!user || !firestore || !petId) return null;
@@ -118,8 +123,19 @@ export default function CreatePersonaPage() {
       prompt: '',
       customTheme: '',
       customImageStyle: '',
+      theme: themeParam || '',
+      imageStyle: imageStyleParam || '',
     },
   });
+
+  useEffect(() => {
+      if (themeParam) {
+          form.setValue('theme', themeParam);
+      }
+      if (imageStyleParam) {
+          form.setValue('imageStyle', imageStyleParam);
+      }
+  }, [themeParam, imageStyleParam, form]);
 
   const watchedTheme = form.watch('theme');
   const watchedImageStyle = form.watch('imageStyle');
@@ -233,7 +249,7 @@ export default function CreatePersonaPage() {
                 <CardHeader>
                 <CardTitle>Create a New Persona</CardTitle>
                 <CardDescription>
-                    Define a new mythic identity for {pet.name}.
+                    {themeParam ? `Remixing a persona for ${pet.name}.` : `Define a new mythic identity for ${pet.name}.`}
                 </CardDescription>
                 </CardHeader>
                 <Form {...form}>
@@ -245,7 +261,7 @@ export default function CreatePersonaPage() {
                         render={({ field }) => (
                         <FormItem>
                             <FormLabel>Theme</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                                 <SelectTrigger>
                                 <SelectValue placeholder="Select a theme..." />
@@ -287,7 +303,7 @@ export default function CreatePersonaPage() {
                         render={({ field }) => (
                         <FormItem>
                             <FormLabel>Art Style</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                                 <SelectTrigger>
                                 <SelectValue placeholder="Select an art style..." />
@@ -361,5 +377,3 @@ export default function CreatePersonaPage() {
     </div>
   );
 }
-
-    
