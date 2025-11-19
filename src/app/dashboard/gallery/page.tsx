@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Share2, Heart, Download } from 'lucide-react';
+import { Share2, Heart } from 'lucide-react';
 import { useCollection } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
 import { useAuth } from '@/hooks/useAuth';
@@ -66,12 +66,14 @@ export default function GalleryPage() {
                 <CardTitle className="font-headline text-lg leading-tight mb-1">{story.storyTitle}</CardTitle>
                 <p className="text-sm text-muted-foreground">By {story.authorName}</p>
                 </CardContent>
-                <CardFooter className="p-4 pt-0 flex justify-between">
-                    <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary">
-                        <Heart className="h-5 w-5" />
-                        <span className="sr-only">Favorite</span>
-                    </Button>
-                    <span className="text-sm text-muted-foreground">{story.likes || 0}</span>
+                <CardFooter className="p-4 pt-0 flex justify-between items-center">
+                    <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary">
+                            <Heart className="h-5 w-5" />
+                            <span className="sr-only">Like</span>
+                        </Button>
+                        <span className="text-sm text-muted-foreground">{story.likes || 0}</span>
+                    </div>
                     <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary">
                         <Share2 className="h-5 w-5" />
                         <span className="sr-only">Share</span>
@@ -84,5 +86,3 @@ export default function GalleryPage() {
     </div>
   );
 }
-
-    

@@ -142,7 +142,7 @@ export default function StoryDetailsPage() {
   };
 
   const handlePublish = async () => {
-    if (!story || !chapters || !pet || !persona || !user || !firestore) {
+    if (!story || !chapters || !pet || !persona || !user || !firestore || !storyRef) {
         toast({ variant: 'destructive', title: 'Error', description: 'Missing required data to publish.' });
         return;
     }
@@ -291,5 +291,3 @@ export default function StoryDetailsPage() {
     </div>
   );
 }
-
-    
