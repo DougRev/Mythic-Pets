@@ -18,7 +18,9 @@ const GenerateAiPersonaInputSchema = z.object({
     .describe(
       "A photo of a pet, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'"
     ),
-  theme: z.string().describe('The theme for the AI persona (e.g., Superhero, Detective, Knight).'),
+  theme: z.string().describe('The narrative theme for the AI persona (e.g., Superhero, Detective, Knight).'),
+  imageStyle: z.string().describe('The visual art style for the generated image (e.g., Anime, Photorealistic).'),
+  petName: z.string().describe('The name of the pet.'),
   prompt: z.string().optional().describe('Optional user prompt for more specific direction.'),
 });
 export type GenerateAiPersonaInput = z.infer<typeof GenerateAiPersonaInputSchema>;
@@ -41,11 +43,11 @@ const generateImagePrompt = ai.definePrompt({
   name: 'generateAiPersonaImagePrompt',
   input: {schema: GenerateAiPersonaInputSchema},
   model: googleAI.model('gemini-2.5-flash-image-preview'),
-  prompt: `You are a creative AI that generates AI personas for pets based on user-provided images and themes.
-
-  Based on the following theme: {{{theme}}},
-  And the user's creative direction: {{{prompt}}},
-  Generate a persona image for the pet in this photo: {{media url=photoDataUri}}.`,
+  prompt: `You are a creative AI that generates AI personas for pets.
+  Generate an image of the pet in this photo: {{media url=photoDataUri}}.
+  The image should be in the style of: {{{imageStyle}}}.
+  The theme for the persona is: {{{theme}}}.
+  The user also provided this creative direction: {{{prompt}}}.`,
   config: {
     responseModalities: ['IMAGE'],
   }
@@ -58,12 +60,13 @@ const generateLorePrompt = ai.definePrompt({
         loreText: z.string().describe('A short lore text (100-150 words) describing the pet persona.'),
     })},
     model: googleAI.model('gemini-2.5-flash'),
-    prompt: `You are a creative AI that generates lore for pet personas.
+    prompt: `You are a creative AI that writes lore for pet personas.
+    The pet's name is {{{petName}}}.
+    The theme for the persona is: {{{theme}}}.
+    The user also provided this creative direction: {{{prompt}}}.
 
-    Based on the following theme: {{{theme}}},
-    And the user's creative direction: {{{prompt}}},
-    Write a short lore text (100-150 words) for the pet in this photo: {{media url=photoDataUri}}.
-    The lore should be creative and fit the theme.`,
+    Based on the theme and creative direction, write a short, engaging lore text (100-150 words) for {{{petName}}}.
+    Make sure to feature {{{petName}}} as the main character of the lore.`,
 });
 
 

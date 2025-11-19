@@ -138,11 +138,11 @@ export function CreatePetDialog({ children }: { children: React.ReactNode }) {
             <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                     <Label htmlFor="species">Species</Label>
-                    <Input id="species" name="species" value={pet.species} onChange={handlePetChange} placeholder="Cat" />
+                    <Input id="species" name="species" value={pet.species} onChange={handlePetChange} placeholder="e.g., Dog, Cat" />
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="breed">Breed</Label>
-                    <Input id="breed" name="breed" value={pet.breed} onChange={handlePetChange} placeholder="Maine Coon" />
+                    <Input id="breed" name="breed" value={pet.breed} onChange={handlePetChange} placeholder="e.g., Golden Retriever, Mixed" />
                 </div>
             </div>
         </div>

@@ -42,24 +42,34 @@ import { generateAiPersona } from '@/ai/flows/generate-ai-persona';
 import { uploadFile } from '@/firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
 
-const artStyles = [
+const themes = [
   'Superhero',
   'Detective',
   'Wizard',
   'Cyberpunk',
-  'Steampunk',
-  'Anime',
-  'Cartoon',
   'Fantasy',
   'Sci-Fi',
   'Noir',
+  'Knight',
+];
+
+const artStyles = [
+    'Anime',
+    'Cartoon',
+    'Photorealistic',
+    'Oil Painting',
+    'Steampunk',
+    'Vaporwave',
+    'Pixel Art'
 ];
 
 const personaFormSchema = z.object({
-  theme: z
-    .string({
-      required_error: 'Please select a theme for the persona.',
-    }),
+  theme: z.string({
+    required_error: 'Please select a theme.',
+  }),
+  imageStyle: z.string({
+    required_error: 'Please select an art style.',
+  }),
   prompt: z.string().max(500).optional(),
 });
 
@@ -104,6 +114,8 @@ export default function CreatePersonaPage() {
       const personaResult = await generateAiPersona({
         photoDataUri: pet.photoURL, // Assuming photoURL is a data URI
         theme: data.theme,
+        imageStyle: data.imageStyle,
+        petName: pet.name,
         prompt: data.prompt,
       });
 
@@ -119,7 +131,7 @@ export default function CreatePersonaPage() {
       const newPersona = {
         petProfileId: petId,
         theme: data.theme,
-        imageStyle: data.theme, // Using theme as style for now
+        imageStyle: data.imageStyle,
         imageUrl: imageUrl,
         loreText: personaResult.loreText,
         generationDate: new Date().toISOString(),
@@ -198,11 +210,38 @@ export default function CreatePersonaPage() {
                         name="theme"
                         render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Art Style / Theme</FormLabel>
+                            <FormLabel>Theme</FormLabel>
                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
                                 <SelectTrigger>
                                 <SelectValue placeholder="Select a theme..." />
+                                </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                {themes.map((theme) => (
+                                <SelectItem key={theme} value={theme}>
+                                    {theme}
+                                </SelectItem>
+                                ))}
+                            </SelectContent>
+                            </Select>
+                            <FormDescription>
+                            This sets the narrative genre (e.g., Fantasy, Sci-Fi).
+                            </FormDescription>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="imageStyle"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Art Style</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                                <SelectTrigger>
+                                <SelectValue placeholder="Select an art style..." />
                                 </SelectTrigger>
                             </FormControl>
                             <SelectContent>
@@ -214,7 +253,7 @@ export default function CreatePersonaPage() {
                             </SelectContent>
                             </Select>
                             <FormDescription>
-                            This will define the visual style and story genre.
+                            This defines the visual look of the generated image.
                             </FormDescription>
                             <FormMessage />
                         </FormItem>
@@ -228,13 +267,13 @@ export default function CreatePersonaPage() {
                             <FormLabel>Creative Direction (Optional)</FormLabel>
                             <FormControl>
                             <Textarea
-                                placeholder={`e.g., "Make them a noble knight with golden armor" or "A gritty detective in a rainy city"`}
+                                placeholder={`e.g., "A noble knight with golden armor" or "A gritty detective in a rainy city"`}
                                 className="resize-none"
                                 {...field}
                             />
                             </FormControl>
                             <FormDescription>
-                            Add any specific details you want the AI to include.
+                            Add specific details for the AI to include.
                             </FormDescription>
                             <FormMessage />
                         </FormItem>
