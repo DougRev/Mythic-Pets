@@ -166,7 +166,7 @@ export default function PersonaDetailsPage() {
               title="Delete Persona"
               description={`Are you sure you want to delete the "${persona.theme}" persona? This will also delete all associated stories and cannot be undone.`}
             >
-              <Button variant="destructive-outline" className="w-full">Delete</Button>
+              <Button variant="destructive-outline" className="w-full"><Trash2 className="mr-2 h-4 w-4" />Delete</Button>
             </DeleteDialog>
           </div>
         </div>
