@@ -11,6 +11,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import {googleAI} from '@genkit-ai/google-genai';
+import { Part } from 'genkit';
 
 const RegenerateAiImageInputSchema = z.object({
   petName: z.string().describe('The name of the pet.'),
@@ -38,20 +39,18 @@ const regenerateImagePrompt = ai.definePrompt({
   name: 'regenerateAiPersonaImagePrompt',
   input: {schema: RegenerateAiImageInputSchema},
   model: googleAI.model('gemini-2.5-flash-image-preview'),
-  prompt: `You are a creative AI that regenerates images for pet personas based on user feedback.
-  The original image is provided as context: {{media url=originalImageUrl}}.
-  The pet's name is {{{petName}}}.
-  The theme for the persona is: {{{theme}}}.
-  The art style is: {{{imageStyle}}}.
-  
-  The user has provided the following feedback to correct the image: "{{{feedback}}}"
-  
-  Generate a new image that incorporates the user's feedback while staying true to the original theme and style.
-  IMPORTANT: Do not just copy the original image. You MUST apply the feedback to create a new version.`,
+  prompt: (input: z.infer<typeof RegenerateAiImageInputSchema>) => {
+    const promptParts: Part[] = [
+      { media: { url: input.originalImageUrl } },
+      { text: `Based on the user's feedback, regenerate this image: "${input.feedback}". Keep the pet's name (${input.petName}), theme (${input.theme}), and art style (${input.imageStyle}) consistent, but apply the user's requested changes.` }
+    ];
+    return promptParts;
+  },
   config: {
     responseModalities: ['IMAGE'],
   }
 });
+
 
 const regenerateAiImageFlow = ai.defineFlow(
   {
