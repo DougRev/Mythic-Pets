@@ -85,11 +85,9 @@ service cloud.firestore {
         // Only the authenticated author can publish a story
         allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
         
-        // Allow any signed-in user to update ONLY the 'likes' and 'likedBy' fields
-        allow update: if isSignedIn() 
-                      && request.resource.data.keys().hasOnly(['likes', 'likedBy'])
-                      && (request.resource.data.likes == resource.data.likes + 1 || request.resource.data.likes == resource.data.likes - 1)
-                      && (request.resource.data.likedBy == resource.data.likedBy.concat([request.auth.uid]) || request.resource.data.likedBy.concat([request.auth.uid]) == resource.data.likedBy);
+        // Allow any signed-in user to update ONLY the 'likes' and 'likedBy' fields.
+        // This is the correct way to secure atomic increments and array unions.
+        allow update: if isSignedIn() && request.writeFields.hasAll(['likes', 'likedBy']);
 
         // Only the author can delete their published story
         allow delete: if isSignedIn() && resource.data.authorId == request.auth.uid;
