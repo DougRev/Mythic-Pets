@@ -30,7 +30,7 @@ export function DeleteDialog({
 }: DeleteDialogProps) {
   return (
     <AlertDialog>
-      <AlertDialogTrigger asChild onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+      <AlertDialogTrigger asChild>
         {children}
       </AlertDialogTrigger>
       <AlertDialogContent>
