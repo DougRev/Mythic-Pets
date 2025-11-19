@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Share2, Heart } from 'lucide-react';
@@ -66,7 +67,6 @@ export default function GalleryPage() {
           path: storyRef.path,
           operation: 'update',
           requestResourceData: {
-            // This is a simplified representation of the intended update
             likes: 'increment/decrement',
             likedBy: 'arrayUnion/arrayRemove'
           }
@@ -109,35 +109,37 @@ export default function GalleryPage() {
             {stories.map((story) => {
               const userHasLiked = user && story.likedBy?.includes(user.uid);
               return (
-                <Card key={story.id} className="flex flex-col overflow-hidden">
-                    <CardHeader className="p-0">
-                    <Image
-                        src={story.personaImage}
-                        alt={story.storyTitle}
-                        width={400}
-                        height={300}
-                        data-ai-hint={story.personaTheme}
-                        className="aspect-4/3 w-full object-cover"
-                    />
-                    </CardHeader>
-                    <CardContent className="flex-1 p-4">
-                    <CardTitle className="font-headline text-lg leading-tight mb-1">{story.storyTitle}</CardTitle>
-                    <p className="text-sm text-muted-foreground">By {story.authorName}</p>
-                    </CardContent>
-                    <CardFooter className="p-4 pt-0 flex justify-between items-center">
-                        <div className="flex items-center gap-1">
-                            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary" onClick={() => handleLike(story.id)} disabled={!user}>
-                                <Heart className={`h-5 w-5 ${userHasLiked ? 'text-red-500 fill-current' : ''}`} />
-                                <span className="sr-only">Like</span>
+                <Link key={story.id} href={`/gallery/${story.id}`} className="group">
+                    <Card className="flex flex-col overflow-hidden h-full transition-all duration-200 ease-in-out group-hover:shadow-xl group-hover:-translate-y-1">
+                        <CardHeader className="p-0">
+                        <Image
+                            src={story.personaImage}
+                            alt={story.storyTitle}
+                            width={400}
+                            height={300}
+                            data-ai-hint={story.personaTheme}
+                            className="aspect-4/3 w-full object-cover"
+                        />
+                        </CardHeader>
+                        <CardContent className="flex-1 p-4">
+                        <CardTitle className="font-headline text-lg leading-tight mb-1">{story.storyTitle}</CardTitle>
+                        <p className="text-sm text-muted-foreground">By {story.authorName}</p>
+                        </CardContent>
+                        <CardFooter className="p-4 pt-0 flex justify-between items-center">
+                            <div className="flex items-center gap-1">
+                                <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary z-10 relative" onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleLike(story.id); }} disabled={!user}>
+                                    <Heart className={`h-5 w-5 ${userHasLiked ? 'text-red-500 fill-current' : ''}`} />
+                                    <span className="sr-only">Like</span>
+                                </Button>
+                                <span className="text-sm text-muted-foreground">{story.likes || 0}</span>
+                            </div>
+                            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary z-10 relative" onClick={(e) => { e.preventDefault(); e.stopPropagation(); /* Share logic here */ }}>
+                                <Share2 className="h-5 w-5" />
+                                <span className="sr-only">Share</span>
                             </Button>
-                            <span className="text-sm text-muted-foreground">{story.likes || 0}</span>
-                        </div>
-                        <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary">
-                            <Share2 className="h-5 w-5" />
-                            <span className="sr-only">Share</span>
-                        </Button>
-                    </CardFooter>
-                </Card>
+                        </CardFooter>
+                    </Card>
+                </Link>
             )})}
         </div>
       )}
