@@ -16,7 +16,7 @@ const RegenerateAiImageInputSchema = z.object({
   petName: z.string().describe('The name of the pet.'),
   theme: z.string().describe('The narrative theme for the AI persona (e.g., Superhero, Detective, Knight).'),
   imageStyle: z.string().describe('The visual art style for the generated image (e.g., Anime, Photorealistic).'),
-  originalImageUrl: z.string().describe('The URL of the original image to be regenerated.'),
+  originalImageUrl: z.string().describe('The URL of the original image to be regenerated. This is a reference for the AI.'),
   feedback: z.string().describe('User feedback or specific direction for the new image.'),
 });
 export type RegenerateAiImageInput = z.infer<typeof RegenerateAiImageInputSchema>;
@@ -39,14 +39,15 @@ const regenerateImagePrompt = ai.definePrompt({
   input: {schema: RegenerateAiImageInputSchema},
   model: googleAI.model('gemini-2.5-flash-image-preview'),
   prompt: `You are a creative AI that regenerates images for pet personas based on user feedback.
-  The original image is here: {{media url=originalImageUrl}}.
+  The original image is provided as context: {{media url=originalImageUrl}}.
   The pet's name is {{{petName}}}.
   The theme for the persona is: {{{theme}}}.
   The art style is: {{{imageStyle}}}.
   
   The user has provided the following feedback to correct the image: "{{{feedback}}}"
   
-  Generate a new image that incorporates the user's feedback while staying true to the original theme and style.`,
+  Generate a new image that incorporates the user's feedback while staying true to the original theme and style.
+  IMPORTANT: Do not just copy the original image. You MUST apply the feedback to create a new version.`,
   config: {
     responseModalities: ['IMAGE'],
   }
@@ -59,16 +60,14 @@ const regenerateAiImageFlow = ai.defineFlow(
     outputSchema: RegenerateAiImageOutputSchema,
   },
   async input => {
-    const imageResult = await regenerateImagePrompt(input);
+    const { media } = await regenerateImagePrompt(input);
     
-    if (!imageResult.media?.url) {
-        throw new Error('Failed to regenerate persona image.');
+    if (!media?.url) {
+        throw new Error('Failed to regenerate persona image. The AI did not return an image.');
     }
 
     return {
-      newImageUrl: imageResult.media.url,
+      newImageUrl: media.url,
     };
   }
 );
-
-    
