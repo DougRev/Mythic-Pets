@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useCollection, useDoc } from '@/firebase';
-import { doc, collection, query, orderBy, addDoc, updateDoc, writeBatch, deleteField } from 'firebase/firestore';
+import { doc, collection, query, orderBy, addDoc, updateDoc, writeBatch } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { ArrowLeft, Loader2, Wand2, CheckCircle2, UploadCloud } from 'lucide-react';
@@ -184,7 +184,8 @@ export default function StoryDetailsPage() {
     // 2. Copy all chapters to the new subcollection
     const publishedChaptersCol = collection(publishedStoryRef, 'chapters');
     chapters.forEach(chapter => {
-        const { id, ...chapterData } = chapter; // Exclude local 'id' field
+        // Create a copy of the chapter data, excluding the local 'id' field
+        const { id, ...chapterData } = chapter;
         const newChapterRef = doc(publishedChaptersCol);
         batch.set(newChapterRef, chapterData);
     });

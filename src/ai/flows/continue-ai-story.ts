@@ -51,12 +51,11 @@ const generateNextChapterTextPrompt = ai.definePrompt({
   output: {schema: z.object({
     chapterTitle: z.string().describe('The title for this new chapter.'),
     chapterText: z.string().describe('The text content for this new chapter.'),
-    isFinalChapter: z.boolean().describe("Set to true if this chapter should conclude the story, based on the story's length and current progress."),
   })},
   prompt: `You are a creative story writer continuing a story about a pet.
 
   Based on the pet's persona, the story's tone, and the content of the previous chapters, you will generate the next chapter of the story. The pet should be the main character.
-  The user wants this to be a {{storyLength}} story. This is chapter {{currentChapter}}. Based on the narrative arc, decide if this chapter should be the final chapter and set 'isFinalChapter' accordingly. For example, a 'Short' story should be around 3 chapters, 'Medium' around 5, and 'Epic' around 7.
+  This is chapter {{currentChapter}} of a {{storyLength}} story.
 
   Pet Name: {{{petName}}}
   Persona: {{{persona}}}
@@ -66,7 +65,7 @@ const generateNextChapterTextPrompt = ai.definePrompt({
   Here are the previous chapters to provide context:
   {{{previousChapters}}}
   
-  Please generate a title and text for the next chapter, and determine if it's the final one. The chapter text should be around 200-300 words.`,
+  Please generate a title and text for the next chapter. The chapter text should be around 200-300 words. If this is the final chapter, make sure to conclude the story.`,
 });
 
 const generateNextChapterImagePrompt = ai.definePrompt({
@@ -94,13 +93,21 @@ const continueAiStoryFlow = ai.defineFlow(
     outputSchema: ContinueAiStoryOutputSchema,
   },
   async input => {
-    // 1. Generate story text and title for the next chapter
+    // 1. Determine if this should be the final chapter
+    let isFinalChapter = false;
+    const storyLengthMap = { 'Short': 3, 'Medium': 5, 'Epic': 7 };
+    const targetChapters = storyLengthMap[input.storyLength as keyof typeof storyLengthMap] || 3;
+    if (input.currentChapter >= targetChapters) {
+        isFinalChapter = true;
+    }
+
+    // 2. Generate story text and title for the next chapter
     const { output: textOutput } = await generateNextChapterTextPrompt(input);
     if (!textOutput) {
       throw new Error('Failed to generate next chapter text.');
     }
 
-    // 2. Generate chapter image based on the new text
+    // 3. Generate chapter image based on the new text
     const { media } = await generateNextChapterImagePrompt({
         chapterText: textOutput.chapterText,
         personaImage: input.personaImage
@@ -114,7 +121,7 @@ const continueAiStoryFlow = ai.defineFlow(
       chapterTitle: textOutput.chapterTitle,
       chapterText: textOutput.chapterText,
       chapterImage: media.url,
-      isFinalChapter: textOutput.isFinalChapter,
+      isFinalChapter: isFinalChapter,
     };
   }
 );
