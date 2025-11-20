@@ -63,11 +63,12 @@ service cloud.firestore {
                   allow get, list: if isOwner(userId);
 
                   allow create: if isOwner(userId);
-                  allow update: if isOwner(userId) && (request.resource.data.keys().hasAll(['isFavorite', 'lastChapter', 'status', 'publishedStoryId']));
+                  allow update: if isOwner(userId);
                   allow delete: if isExistingOwner(userId);
 
                   match /chapters/{chapterId} {
-                    allow read, write: if isOwner(userId);
+                    allow get, list: if isOwner(userId);
+                    allow create, update, delete: if isOwner(userId);
                   }
                 }
             }
