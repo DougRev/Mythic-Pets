@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useCollection, useDoc } from '@/firebase';
@@ -121,9 +122,7 @@ export default function StoryDetailsPage() {
         await updateDoc(storyRef, storyUpdates);
 
         refetchStory();
-        if (refetchChapters) {
-          refetchChapters();
-        }
+        refetchChapters();
 
         setCurrentChapter(nextChapterNumber);
 
