@@ -93,41 +93,36 @@ export default function GalleryPage() {
     }
 
     const publicStoryRef = doc(firestore, 'publishedStories', story.id);
-    
-    try {
-        const batch = writeBatch(firestore);
+    const batch = writeBatch(firestore);
 
-        // 1. Get and delete all chapters in the subcollection
-        const chaptersSnapshot = await getDocs(collection(publicStoryRef, 'chapters'));
-        chaptersSnapshot.forEach(chapterDoc => {
-            batch.delete(chapterDoc.ref);
-        });
+    // 1. Get and delete all chapters in the subcollection
+    const chaptersSnapshot = await getDocs(collection(publicStoryRef, 'chapters'));
+    chaptersSnapshot.forEach(chapterDoc => {
+        batch.delete(chapterDoc.ref);
+    });
 
-        // 2. Delete the main public story document
-        batch.delete(publicStoryRef);
+    // 2. Delete the main public story document
+    batch.delete(publicStoryRef);
 
-        // 3. Unlink the original story, if the data is available
-        if(story.originalStoryId && story.petProfileId && story.aiPersonaId) {
-            const privateStoryRef = doc(firestore, 'users', user.uid, 'petProfiles', story.petProfileId, 'aiPersonas', story.aiPersonaId, 'aiStories', story.originalStoryId);
-             batch.update(privateStoryRef, { publishedStoryId: null });
-        }
+    // 3. Unlink the original story, if the data is available
+    if(story.originalStoryId && story.petProfileId && story.aiPersonaId) {
+        const privateStoryRef = doc(firestore, 'users', user.uid, 'petProfiles', story.petProfileId, 'aiPersonas', story.aiPersonaId, 'aiStories', story.originalStoryId);
+          batch.update(privateStoryRef, { publishedStoryId: null });
+    }
 
-
-        await batch.commit();
-        
+    batch.commit()
+      .then(() => {
         toast({ title: 'Story Unpublished', description: `"${story.storyTitle}" has been removed from the gallery.` });
         refetchStories(); // Refresh the gallery view
-
-    } catch (error) {
-        console.error("Failed to delete story: ", error);
+      })
+      .catch((error) => {
         const permissionError = new FirestorePermissionError({
           path: publicStoryRef.path,
           operation: 'delete',
           requestResourceData: story,
         });
         errorEmitter.emit('permission-error', permissionError);
-        toast({ variant: 'destructive', title: 'Deletion Failed', description: 'Could not remove the story from the gallery.' });
-    }
+      });
   };
 
 
