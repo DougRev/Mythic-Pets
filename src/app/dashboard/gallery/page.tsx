@@ -109,7 +109,7 @@ export default function GalleryPage() {
         // 3. Unlink the original story, if the data is available
         if(story.originalStoryId && story.petProfileId && story.aiPersonaId) {
             const privateStoryRef = doc(firestore, 'users', user.uid, 'petProfiles', story.petProfileId, 'aiPersonas', story.aiPersonaId, 'aiStories', story.originalStoryId);
-             batch.update(privateStoryRef, { publishedStoryId: deleteField() });
+             batch.update(privateStoryRef, { publishedStoryId: null });
         }
 
 
