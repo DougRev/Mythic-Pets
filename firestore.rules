@@ -63,7 +63,7 @@ service cloud.firestore {
                   allow get, list: if isOwner(userId);
 
                   allow create: if isOwner(userId);
-                  allow update: if isExistingOwner(userId);
+                  allow update: if isOwner(userId) && (request.resource.data.keys().hasAll(['isFavorite', 'lastChapter', 'status', 'publishedStoryId']));
                   allow delete: if isExistingOwner(userId);
 
                   match /chapters/{chapterId} {
@@ -97,8 +97,10 @@ service cloud.firestore {
             allow get, list: if true;
             // Allow creation of chapters only by signed-in users (implicitly protected by parent create rule)
             allow create: if isSignedIn();
-            // Nobody can update or delete the public copy of chapters after creation
-            allow update, delete: if false;
+            // Allow deletion only by the story's author.
+            allow delete: if get(/databases/$(database)/documents/publishedStories/$(publishedStoryId)).data.authorId == request.auth.uid;
+            // Nobody can update the public copy of chapters after creation
+            allow update: if false;
         }
     }
   }

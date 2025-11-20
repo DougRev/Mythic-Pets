@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useCollection, useDoc } from '@/firebase';
-import { doc, collection, query, orderBy, addDoc, updateDoc, writeBatch } from 'firebase/firestore';
+import { doc, collection, query, orderBy, addDoc, updateDoc, writeBatch, deleteField } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { ArrowLeft, Loader2, Wand2, CheckCircle2, UploadCloud } from 'lucide-react';
@@ -121,7 +121,9 @@ export default function StoryDetailsPage() {
         await updateDoc(storyRef, storyUpdates);
 
         refetchStory();
-        refetchChapters();
+        if (refetchChapters) {
+          refetchChapters();
+        }
 
         setCurrentChapter(nextChapterNumber);
 
@@ -168,6 +170,10 @@ export default function StoryDetailsPage() {
         likedBy: [],
         publishedDate: new Date().toISOString(),
         id: publishedStoryId,
+        // Add references needed for deletion
+        petProfileId: petId,
+        aiPersonaId: personaId,
+        originalStoryId: storyId,
     };
     
     // Use a batch write to ensure atomicity
@@ -180,7 +186,7 @@ export default function StoryDetailsPage() {
     const publishedChaptersCol = collection(publishedStoryRef, 'chapters');
     chapters.forEach(chapter => {
         const chapterCopy = { ...chapter };
-        delete (chapterCopy as any).id; // Remove local ID before writing
+        delete chapterCopy.id; // Remove local ID before writing
         const newChapterRef = doc(publishedChaptersCol);
         batch.set(newChapterRef, chapterCopy);
     });
@@ -301,8 +307,10 @@ export default function StoryDetailsPage() {
                </Button>
             )}
             {story.publishedStoryId && (
-                <Button variant="secondary" disabled>
-                    <CheckCircle2 className="mr-2" /> Published
+                <Button variant="secondary" asChild>
+                    <Link href={`/gallery/${story.publishedStoryId}`}>
+                       <CheckCircle2 className="mr-2" /> View in Gallery
+                    </Link>
                 </Button>
             )}
         </div>
