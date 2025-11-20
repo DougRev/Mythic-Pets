@@ -93,8 +93,7 @@ export default function GalleryPage() {
     }
 
     const publicStoryRef = doc(firestore, 'publishedStories', story.id);
-    const originalStoryRef = doc(firestore, 'users', story.authorId, 'petProfiles', story.petProfileId, 'aiPersonas', story.aiPersonaId, 'aiStories', story.originalStoryId);
-
+    
     try {
         const batch = writeBatch(firestore);
 
@@ -107,8 +106,8 @@ export default function GalleryPage() {
         // 2. Delete the main public story document
         batch.delete(publicStoryRef);
 
-        // 3. Unlink the original story
-        if(story.originalStoryId) {
+        // 3. Unlink the original story, if the data is available
+        if(story.originalStoryId && story.petProfileId && story.aiPersonaId) {
             const privateStoryRef = doc(firestore, 'users', user.uid, 'petProfiles', story.petProfileId, 'aiPersonas', story.aiPersonaId, 'aiStories', story.originalStoryId);
              batch.update(privateStoryRef, { publishedStoryId: deleteField() });
         }
@@ -193,7 +192,7 @@ export default function GalleryPage() {
                             <span className="text-sm text-muted-foreground">{story.likes || 0}</span>
                         </div>
                         <div className="flex items-center">
-                            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary" onClick={(e) => { e.preventDefault(); e.stopPropagation(); /* Share logic here */ }}>
+                            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary">
                                 <Share2 className="h-5 w-5" />
                                 <span className="sr-only">Share</span>
                             </Button>

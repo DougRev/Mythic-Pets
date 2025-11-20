@@ -185,10 +185,9 @@ export default function StoryDetailsPage() {
     // 2. Copy all chapters to the new subcollection
     const publishedChaptersCol = collection(publishedStoryRef, 'chapters');
     chapters.forEach(chapter => {
-        const chapterCopy = { ...chapter };
-        delete chapterCopy.id; // Remove local ID before writing
+        const { id, ...chapterData } = chapter; // Exclude local 'id' field
         const newChapterRef = doc(publishedChaptersCol);
-        batch.set(newChapterRef, chapterCopy);
+        batch.set(newChapterRef, chapterData);
     });
     
     // 3. Link the original story to the published one
