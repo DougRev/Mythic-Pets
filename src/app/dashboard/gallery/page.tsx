@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Share2, Heart, Trash2 } from 'lucide-react';
 import { useCollection } from '@/firebase';
-import { collection, query, orderBy, runTransaction, doc, arrayUnion, arrayRemove, increment, getDocs, writeBatch, updateDoc, deleteField } from 'firebase/firestore';
+import { collection, query, orderBy, runTransaction, doc, arrayUnion, arrayRemove, increment, getDocs, writeBatch, deleteField } from 'firebase/firestore';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { errorEmitter, FirestorePermissionError } from '@/firebase';
@@ -121,6 +121,12 @@ export default function GalleryPage() {
 
     } catch (error) {
         console.error("Failed to delete story: ", error);
+        const permissionError = new FirestorePermissionError({
+          path: publicStoryRef.path,
+          operation: 'delete',
+          requestResourceData: story,
+        });
+        errorEmitter.emit('permission-error', permissionError);
         toast({ variant: 'destructive', title: 'Deletion Failed', description: 'Could not remove the story from the gallery.' });
     }
   };
@@ -194,7 +200,7 @@ export default function GalleryPage() {
                              {isAuthor && (
                                 <AlertDialog>
                                   <AlertDialogTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                                    <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive">
                                       <Trash2 className="h-5 w-5" />
                                       <span className="sr-only">Delete</span>
                                     </Button>
