@@ -8,8 +8,6 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import Stripe from 'stripe';
 
-// Ensure Stripe is initialized only once
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
 const CreateCheckoutSessionInputSchema = z.object({
   userId: z.string().describe('The Firebase UID of the user.'),
@@ -36,16 +34,22 @@ const createCheckoutSessionFlow = ai.defineFlow(
   },
   async ({ userId, userEmail, appUrl }) => {
 
-    if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_PRO_PRICE_ID) {
+    const stripeSecretKey = process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY;
+    const priceId = process.env.STRIPE_PRO_PRICE_ID;
+
+    if (!stripeSecretKey || !priceId) {
       throw new Error('Stripe environment variables are not set.');
     }
+    
+    // Initialize Stripe inside the flow to ensure keys are available.
+    const stripe = new Stripe(stripeSecretKey);
 
     try {
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
         line_items: [
           {
-            price: process.env.STRIPE_PRO_PRICE_ID,
+            price: priceId,
             quantity: 1,
           },
         ],
