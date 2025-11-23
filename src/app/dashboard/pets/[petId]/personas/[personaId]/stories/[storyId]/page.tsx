@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useCollection, useDoc } from '@/firebase';
-import { doc, collection, query, orderBy, addDoc, updateDoc, writeBatch } from 'firebase/firestore';
+import { doc, collection, query, orderBy, addDoc, updateDoc, writeBatch, deleteField } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { ArrowLeft, Loader2, Wand2, CheckCircle2, UploadCloud } from 'lucide-react';
@@ -15,6 +15,9 @@ import { continueAiStory } from '@/ai/flows/continue-ai-story';
 import { uploadFile } from '@/firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
 import { errorEmitter, FirestorePermissionError } from '@/firebase';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 
 export default function StoryDetailsPage() {
@@ -30,6 +33,8 @@ export default function StoryDetailsPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [currentChapter, setCurrentChapter] = useState(1);
+  const [creativePrompt, setCreativePrompt] = useState('');
+  const [isGenerateDialogOpen, setGenerateDialogOpen] = useState(false);
 
   // Memoized references
   const petRef = React.useMemo(() => {
@@ -92,7 +97,8 @@ export default function StoryDetailsPage() {
             previousChapters: previousChaptersText,
             personaImage: persona.imageUrl,
             storyLength: story.storyLength,
-            currentChapter: nextChapterNumber
+            currentChapter: nextChapterNumber,
+            prompt: creativePrompt,
         });
 
         if (!nextChapterResult || !nextChapterResult.chapterTitle || !nextChapterResult.chapterText || !nextChapterResult.chapterImage) {
@@ -125,6 +131,8 @@ export default function StoryDetailsPage() {
         refetchChapters();
 
         setCurrentChapter(nextChapterNumber);
+        setCreativePrompt(''); // Reset prompt
+        setGenerateDialogOpen(false); // Close dialog
 
         toast({
             title: nextChapterResult.isFinalChapter ? 'Story Concluded!' : 'Chapter Generated!',
@@ -184,8 +192,7 @@ export default function StoryDetailsPage() {
     // 2. Copy all chapters to the new subcollection
     const publishedChaptersCol = collection(publishedStoryRef, 'chapters');
     chapters.forEach(chapter => {
-        // Create a copy of the chapter data, excluding the local 'id' field
-        const { id, ...chapterData } = chapter;
+        const { id, ...chapterData } = chapter; // Exclude local 'id'
         const newChapterRef = doc(publishedChaptersCol);
         batch.set(newChapterRef, chapterData);
     });
@@ -288,13 +295,41 @@ export default function StoryDetailsPage() {
                 </Button>
             </div>
             {!isStoryCompleted && (
-                 <Button onClick={handleGenerateNextChapter} disabled={isGenerating}>
-                    {isGenerating ? (
-                        <><Loader2 className="mr-2 animate-spin" /> Generating...</>
-                    ) : (
-                        <><Wand2 className="mr-2" /> Generate Next Chapter</>
-                    )}
-                </Button>
+                 <Dialog open={isGenerateDialogOpen} onOpenChange={setGenerateDialogOpen}>
+                    <DialogTrigger asChild>
+                        <Button disabled={isGenerating}>
+                            <Wand2 className="mr-2" /> Generate Next Chapter
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Generate Next Chapter</DialogTitle>
+                            <DialogDescription>
+                                Add some creative direction for the next chapter, or leave it blank for the AI to decide.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="py-4 space-y-2">
+                            <Label htmlFor="creative-prompt">Creative Direction (Optional)</Label>
+                            <Textarea
+                                id="creative-prompt"
+                                value={creativePrompt}
+                                onChange={(e) => setCreativePrompt(e.target.value)}
+                                placeholder="e.g., Introduce a mysterious new character..."
+                                rows={4}
+                            />
+                        </div>
+                        <DialogFooter>
+                            <Button variant="outline" onClick={() => setGenerateDialogOpen(false)}>Cancel</Button>
+                            <Button onClick={handleGenerateNextChapter} disabled={isGenerating}>
+                                {isGenerating ? (
+                                    <><Loader2 className="mr-2 animate-spin" /> Generating...</>
+                                ) : (
+                                    <><Wand2 className="mr-2" /> Generate</>
+                                )}
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             )}
              {isStoryCompleted && !story.publishedStoryId && (
                 <Button onClick={handlePublish} disabled={isPublishing}>

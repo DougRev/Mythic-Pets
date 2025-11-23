@@ -24,6 +24,7 @@ const ContinueAiStoryInputSchema = z.object({
     ),
   storyLength: z.string().describe("The desired total length of the story."),
   currentChapter: z.number().describe("The current chapter number."),
+  prompt: z.string().optional().describe("Optional user prompt for creative direction for the next chapter."),
 });
 export type ContinueAiStoryInput = z.infer<typeof ContinueAiStoryInputSchema>;
 
@@ -54,13 +55,14 @@ const generateNextChapterTextPrompt = ai.definePrompt({
   })},
   prompt: `You are a creative story writer continuing a story about a pet.
 
-  Based on the pet's persona, the story's tone, and the content of the previous chapters, you will generate the next chapter of the story. The pet should be the main character.
+  Based on the pet's persona, the story's tone, the previous chapters, and optional user direction, you will generate the next chapter of the story. The pet should be the main character.
   This is chapter {{currentChapter}} of a {{storyLength}} story.
 
   Pet Name: {{{petName}}}
   Persona: {{{persona}}}
   Tone: {{{tone}}}
   Story Length: {{{storyLength}}}
+  Creative Direction: {{{prompt}}}
   
   Here are the previous chapters to provide context:
   {{{previousChapters}}}
