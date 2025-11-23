@@ -8,7 +8,7 @@ import { useCollection, useDoc } from '@/firebase';
 import { doc, collection, query, orderBy, addDoc, updateDoc, writeBatch, deleteField } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { ArrowLeft, Loader2, Wand2, CheckCircle2, UploadCloud } from 'lucide-react';
+import { ArrowLeft, Loader2, Wand2, CheckCircle2, UploadCloud, RefreshCw } from 'lucide-react';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 import { continueAiStory } from '@/ai/flows/continue-ai-story';
@@ -18,6 +18,7 @@ import { errorEmitter, FirestorePermissionError } from '@/firebase';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { RegenerateChapterImageDialog } from '@/components/RegenerateChapterImageDialog';
 
 
 export default function StoryDetailsPage() {
@@ -269,14 +270,27 @@ export default function StoryDetailsPage() {
              )}
         </Card>
         <div className="md:col-span-1 flex flex-col gap-4">
-            <Card className="overflow-hidden">
+            <Card className="overflow-hidden relative group">
                 <Image
                     src={chapterData.imageUrl}
                     alt={`Illustration for ${chapterData.chapterTitle}`}
                     width={500}
                     height={500}
                     className="aspect-square w-full object-cover"
+                    key={chapterData.imageUrl}
                 />
+                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <RegenerateChapterImageDialog
+                        chapter={chapterData}
+                        persona={persona}
+                        story={story}
+                        onRegenerationComplete={refetchChapters}
+                    >
+                        <Button variant="secondary">
+                            <RefreshCw className="mr-2" /> Regenerate Image
+                        </Button>
+                    </RegenerateChapterImageDialog>
+                </div>
             </Card>
             <div className="grid grid-cols-2 gap-2">
                 <Button 
