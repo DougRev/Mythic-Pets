@@ -3,13 +3,14 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Pencil } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { CreatePetDialog } from '@/components/CreatePetDialog';
+import { ManagePetDialog } from '@/components/CreatePetDialog';
 import { useAuth } from '@/hooks/useAuth';
 import { useCollection } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import React from 'react';
+import { Button } from '@/components/ui/button';
 
 export default function PetSelectionPage() {
   const { user, firestore } = useAuth();
@@ -35,37 +36,47 @@ export default function PetSelectionPage() {
             Choose a pet to view their mythic personas.
             </p>
         </div>
-        <CreatePetDialog>
+        <ManagePetDialog>
           <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2">
             <PlusCircle className="mr-2 h-4 w-4" />
             Add New Pet
           </button>
-        </CreatePetDialog>
+        </ManagePetDialog>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {pets && pets.map((pet) => (
-          <Link key={pet.id} href={`/dashboard/pets/${pet.id}`} className="group">
-            <Card className="overflow-hidden transition-all duration-200 ease-in-out group-hover:shadow-lg group-hover:-translate-y-1">
-              <CardContent className="p-0">
-                <div className="relative aspect-square">
-                  <Image
-                    src={pet.photoURL || (petAvatarDefault?.imageUrl || '/default-avatar.jpg')}
-                    alt={pet.name}
-                    fill
-                    className="object-cover"
-                    data-ai-hint={pet.name}
-                  />
+          <Card key={pet.id} className="group overflow-hidden transition-all duration-200 ease-in-out hover:shadow-lg hover:-translate-y-1">
+             <div className="relative">
+                <Link href={`/dashboard/pets/${pet.id}`} className="block">
+                    <div className="relative aspect-square">
+                    <Image
+                        src={pet.photoURL || (petAvatarDefault?.imageUrl || '/default-avatar.jpg')}
+                        alt={pet.name}
+                        fill
+                        className="object-cover"
+                        data-ai-hint={pet.name}
+                    />
+                    </div>
+                </Link>
+                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <ManagePetDialog pet={pet}>
+                        <Button variant="secondary" size="icon" className="h-8 w-8">
+                            <Pencil className="h-4 w-4" />
+                            <span className="sr-only">Edit Pet</span>
+                        </Button>
+                    </ManagePetDialog>
                 </div>
-                <div className="p-4">
-                  <h3 className="font-bold text-lg text-center">{pet.name}</h3>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
+             </div>
+            <CardContent className="p-4">
+                <Link href={`/dashboard/pets/${pet.id}`}>
+                    <h3 className="font-bold text-lg text-center truncate">{pet.name}</h3>
+                </Link>
+            </CardContent>
+          </Card>
         ))}
         {/* Add new pet card */}
-        <CreatePetDialog>
+        <ManagePetDialog>
           <Card className="h-full border-2 border-dashed bg-transparent hover:border-primary hover:bg-muted/50 transition-colors duration-200 cursor-pointer">
             <CardContent className="flex flex-col items-center justify-center h-full p-4">
                 <div className="flex flex-col items-center justify-center text-muted-foreground">
@@ -75,7 +86,7 @@ export default function PetSelectionPage() {
               </div>
             </CardContent>
           </Card>
-        </CreatePetDialog>
+        </ManagePetDialog>
       </div>
     </div>
   );

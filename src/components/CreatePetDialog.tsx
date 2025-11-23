@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useAuth } from '@/hooks/useAuth';
-import { addDoc, collection } from 'firebase/firestore';
+import { addDoc, collection, doc, updateDoc } from 'firebase/firestore';
 import { uploadFile } from '@/firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
 import { Textarea } from './ui/textarea';
@@ -23,17 +23,46 @@ type PetDetails = {
   age: number | string;
   bio: string;
   photoDataUri: string | null;
+  photoURL?: string; // Existing photo URL for edits
 };
 
 const petAvatarDefault = PlaceHolderImages.find(p => p.id === 'pet-avatar-default');
 
-export function CreatePetDialog({ children }: { children: React.ReactNode }) {
+interface ManagePetDialogProps {
+    children: React.ReactNode;
+    pet?: any; // Pass existing pet data for editing
+}
+
+export function ManagePetDialog({ children, pet: existingPet }: ManagePetDialogProps) {
   const { toast } = useToast();
   const { user, isUserLoading, firestore, storage } = useAuth();
 
   const [open, setOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [pet, setPet] = useState<PetDetails>({ name: '', species: '', breed: '', age: '', bio: '', photoDataUri: null });
+
+  const isEditMode = !!existingPet;
+
+  useEffect(() => {
+    // If dialog is open, initialize form
+    if (open) {
+      if (isEditMode) {
+        // Pre-fill form for editing
+        setPet({
+          name: existingPet.name || '',
+          species: existingPet.species || '',
+          breed: existingPet.breed || '',
+          age: existingPet.age || '',
+          bio: existingPet.bio || '',
+          photoDataUri: null, // Don't show new preview initially
+          photoURL: existingPet.photoURL, // Keep track of existing URL
+        });
+      } else {
+        // Reset form for creating
+        setPet({ name: '', species: '', breed: '', age: '', bio: '', photoDataUri: null });
+      }
+    }
+  }, [open, isEditMode, existingPet]);
 
   useEffect(() => {
     if (open) {
@@ -59,10 +88,10 @@ export function CreatePetDialog({ children }: { children: React.ReactNode }) {
 
   const handleSavePet = async () => {
     if (!user || !firestore || !storage) {
-      toast({ variant: 'destructive', title: 'Authentication Error', description: 'You must be logged in to create a pet.' });
+      toast({ variant: 'destructive', title: 'Authentication Error', description: 'You must be logged in to manage pets.' });
       return;
     }
-    if (!pet.name || !pet.photoDataUri) {
+    if (!pet.name || (!pet.photoDataUri && !isEditMode)) {
       toast({ variant: 'destructive', title: 'Missing Information', description: 'Please provide your pet\'s name and a photo.' });
       return;
     }
@@ -70,8 +99,13 @@ export function CreatePetDialog({ children }: { children: React.ReactNode }) {
     setIsSaving(true);
 
     try {
-      const imagePath = `users/${user.uid}/pets/${uuidv4()}`;
-      const photoURL = await uploadFile(storage, imagePath, pet.photoDataUri);
+      let finalPhotoURL = isEditMode ? pet.photoURL : '';
+
+      // If a new photo was uploaded, upload it to storage
+      if (pet.photoDataUri) {
+        const imagePath = `users/${user.uid}/pets/${uuidv4()}`;
+        finalPhotoURL = await uploadFile(storage, imagePath, pet.photoDataUri);
+      }
 
       const petData = {
         name: pet.name,
@@ -79,20 +113,26 @@ export function CreatePetDialog({ children }: { children: React.ReactNode }) {
         breed: pet.breed,
         age: Number(pet.age) || 0,
         bio: pet.bio,
-        photoURL: photoURL,
+        photoURL: finalPhotoURL,
         userProfileId: user.uid,
-        createdAt: new Date().toISOString(),
       };
-      
-      const petsCollection = collection(firestore, 'users', user.uid, 'petProfiles');
-      await addDoc(petsCollection, petData);
 
-      toast({ title: 'Pet Created!', description: `${pet.name} has been added to your family.` });
-      setPet({ name: '', species: '', breed: '', age: '', bio: '', photoDataUri: null }); // Reset form
+      if (isEditMode) {
+        // Update existing document
+        const petRef = doc(firestore, 'users', user.uid, 'petProfiles', existingPet.id);
+        await updateDoc(petRef, petData);
+        toast({ title: 'Pet Updated!', description: `${pet.name}'s details have been saved.` });
+      } else {
+        // Create new document
+        const petsCollection = collection(firestore, 'users', user.uid, 'petProfiles');
+        await addDoc(petsCollection, {...petData, createdAt: new Date().toISOString()});
+        toast({ title: 'Pet Created!', description: `${pet.name} has been added to your family.` });
+      }
+      
       setOpen(false); // Close dialog
 
     } catch (error: any) {
-      console.error("Error creating pet:", error);
+      console.error("Error saving pet:", error);
       let description = 'Could not save the pet. Please try again.';
       
       if (error.code === 'storage/unauthorized' || (error.message && error.message.toLowerCase().includes('cors'))) {
@@ -101,7 +141,7 @@ export function CreatePetDialog({ children }: { children: React.ReactNode }) {
 
       toast({ 
         variant: 'destructive', 
-        title: 'Creation Failed', 
+        title: isEditMode ? 'Update Failed' : 'Creation Failed', 
         description: description,
         duration: 9000,
       });
@@ -110,22 +150,24 @@ export function CreatePetDialog({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const previewImageUrl = pet.photoDataUri || (isEditMode ? pet.photoURL : (petAvatarDefault?.imageUrl || ''));
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2"><PawPrint /> Add a New Pet</DialogTitle>
+          <DialogTitle className="flex items-center gap-2"><PawPrint /> {isEditMode ? 'Edit Pet Details' : 'Add a New Pet'}</DialogTitle>
           <DialogDescription>
-            Enter the details for your new companion. Click save when you're done.
+            {isEditMode ? `Update the details for ${existingPet.name}.` : "Enter the details for your new companion."} Click save when you're done.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto pr-4">
             <div className="space-y-2 flex flex-col items-center justify-center">
                 <Label htmlFor="photo" className="text-center sr-only">Reference Photo</Label>
                 <div className="relative aspect-square w-32 rounded-full border-2 border-dashed border-muted-foreground/50 flex items-center justify-center">
-                {pet.photoDataUri ? (
-                    <Image src={pet.photoDataUri} alt="Pet preview" layout="fill" objectFit="cover" className="rounded-full" />
+                {previewImageUrl ? (
+                    <Image src={previewImageUrl} alt="Pet preview" layout="fill" objectFit="cover" className="rounded-full" />
                 ) : (
                     <div className="text-center text-muted-foreground p-4">
                     {petAvatarDefault && <Image src={petAvatarDefault.imageUrl} alt="Default pet avatar" width={40} height={40} className="mx-auto mb-1 opacity-50" />}
