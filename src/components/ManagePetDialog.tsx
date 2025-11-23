@@ -1,0 +1,284 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
+import { Upload, PawPrint, Loader2, Trash2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { useAuth } from '@/hooks/useAuth';
+import { addDoc, collection, doc, updateDoc } from 'firebase/firestore';
+import { uploadFile } from '@/firebase/storage';
+import { deletePet } from '@/firebase/actions';
+import { v4 as uuidv4 } from 'uuid';
+import { Textarea } from './ui/textarea';
+
+
+type PetDetails = {
+  name: string;
+  species: string;
+  breed: string;
+  age: number | string;
+  bio: string;
+  photoDataUri: string | null;
+  photoURL?: string; // Existing photo URL for edits
+};
+
+const petAvatarDefault = PlaceHolderImages.find(p => p.id === 'pet-avatar-default');
+
+interface ManagePetDialogProps {
+    children: React.ReactNode;
+    pet?: any; // Pass existing pet data for editing
+}
+
+export function ManagePetDialog({ children, pet: existingPet }: ManagePetDialogProps) {
+  const { toast } = useToast();
+  const { user, isUserLoading, firestore, storage } = useAuth();
+
+  const [open, setOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [pet, setPet] = useState<PetDetails>({ name: '', species: '', breed: '', age: '', bio: '', photoDataUri: null });
+
+  const isEditMode = !!existingPet;
+
+  useEffect(() => {
+    // If dialog is open, initialize form
+    if (open) {
+      if (isEditMode) {
+        // Pre-fill form for editing
+        setPet({
+          name: existingPet.name || '',
+          species: existingPet.species || '',
+          breed: existingPet.breed || '',
+          age: existingPet.age || '',
+          bio: existingPet.bio || '',
+          photoDataUri: null, // Don't show new preview initially
+          photoURL: existingPet.photoURL, // Keep track of existing URL
+        });
+      } else {
+        // Reset form for creating
+        setPet({ name: '', species: '', breed: '', age: '', bio: '', photoDataUri: null });
+      }
+      setIsDeleting(false);
+    }
+  }, [open, isEditMode, existingPet]);
+
+  useEffect(() => {
+    if (open) {
+      // Log the origin when the dialog opens, to help debug CORS issues.
+      console.log('CORS_ORIGIN_URL_TO_ALLOW:', window.location.origin);
+    }
+  }, [open]);
+
+  const handlePetChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setPet({ ...pet, [e.target.name]: e.target.value });
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setPet({ ...pet, photoDataUri: event.target?.result as string });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSavePet = async () => {
+    if (!user || !firestore || !storage) {
+      toast({ variant: 'destructive', title: 'Authentication Error', description: 'You must be logged in to manage pets.' });
+      return;
+    }
+    if (!pet.name) {
+      toast({ variant: 'destructive', title: 'Missing Information', description: 'Please provide your pet\'s name.' });
+      return;
+    }
+    
+    setIsSaving(true);
+
+    try {
+      let finalPhotoURL = isEditMode ? pet.photoURL : '';
+
+      // If a new photo was uploaded, upload it to storage
+      if (pet.photoDataUri) {
+        const imagePath = `users/${user.uid}/pets/${uuidv4()}`;
+        finalPhotoURL = await uploadFile(storage, imagePath, pet.photoDataUri);
+      }
+
+      const petData = {
+        name: pet.name,
+        species: pet.species,
+        breed: pet.breed,
+        age: Number(pet.age) || 0,
+        bio: pet.bio,
+        photoURL: finalPhotoURL,
+        userProfileId: user.uid,
+      };
+
+      if (isEditMode) {
+        // Update existing document
+        const petRef = doc(firestore, 'users', user.uid, 'petProfiles', existingPet.id);
+        await updateDoc(petRef, petData);
+        toast({ title: 'Pet Updated!', description: `${pet.name}'s details have been saved.` });
+      } else {
+        // Create new document
+        const petsCollection = collection(firestore, 'users', user.uid, 'petProfiles');
+        await addDoc(petsCollection, {...petData, createdAt: new Date().toISOString()});
+        toast({ title: 'Pet Created!', description: `${pet.name} has been added to your family.` });
+      }
+      
+      setOpen(false); // Close dialog
+
+    } catch (error: any) {
+      console.error("Error saving pet:", error);
+      let description = 'Could not save the pet. Please try again.';
+      
+      if (error.code === 'storage/unauthorized' || (error.message && error.message.toLowerCase().includes('cors'))) {
+          description = `A one-time storage permission (CORS) setup is required. Please copy the URL from the console log starting with 'CORS_ORIGIN_URL_TO_ALLOW' and ask me to help you configure CORS.`;
+      }
+
+      toast({ 
+        variant: 'destructive', 
+        title: isEditMode ? 'Update Failed' : 'Creation Failed', 
+        description: description,
+        duration: 9000,
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeletePet = async () => {
+    if (!user || !firestore || !storage || !isEditMode) return;
+
+    setIsDeleting(true);
+    try {
+        await deletePet(firestore, storage, user.uid, existingPet.id);
+        toast({ title: 'Pet Deleted', description: `${existingPet.name} and all their data have been removed.` });
+        setOpen(false);
+    } catch (error: any) {
+        console.error("Error deleting pet:", error);
+        toast({
+            variant: 'destructive',
+            title: 'Deletion Failed',
+            description: 'Could not delete the pet and its associated data. Please try again.',
+        });
+    } finally {
+        setIsDeleting(false);
+    }
+  };
+
+  const previewImageUrl = pet.photoDataUri || (isEditMode ? pet.photoURL : (petAvatarDefault?.imageUrl || ''));
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2"><PawPrint /> {isEditMode ? 'Edit Pet Details' : 'Add a New Pet'}</DialogTitle>
+          <DialogDescription>
+            {isEditMode ? `Update the details for ${existingPet.name}.` : "Enter the details for your new companion."} Click save when you're done.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto pr-4">
+            <div className="space-y-2 flex flex-col items-center justify-center">
+                <Label htmlFor="photo" className="text-center sr-only">Reference Photo</Label>
+                <div className="relative aspect-square w-32 rounded-full border-2 border-dashed border-muted-foreground/50 flex items-center justify-center">
+                {previewImageUrl ? (
+                    <Image src={previewImageUrl} alt="Pet preview" layout="fill" objectFit="cover" className="rounded-full" />
+                ) : (
+                    <div className="text-center text-muted-foreground p-4">
+                    {petAvatarDefault && <Image src={petAvatarDefault.imageUrl} alt="Default pet avatar" width={40} height={40} className="mx-auto mb-1 opacity-50" />}
+                    <Upload className="mx-auto h-6 w-6" />
+                    </div>
+                )}
+                <Input id="photo" type="file" accept="image/*" onChange={handleFileChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                </div>
+                <p className="text-xs text-muted-foreground">Upload a photo</p>
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="name">Pet's Name *</Label>
+                <Input id="name" name="name" value={pet.name} onChange={handlePetChange} placeholder="Captain Fluffy" />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <Label htmlFor="species">Species</Label>
+                    <Input id="species" name="species" value={pet.species} onChange={handlePetChange} placeholder="e.g., Dog, Cat" />
+                </div>
+                 <div className="space-y-2">
+                    <Label htmlFor="age">Age</Label>
+                    <Input id="age" name="age" type="number" value={pet.age} onChange={handlePetChange} placeholder="e.g., 5" />
+                </div>
+            </div>
+             <div className="space-y-2">
+                <Label htmlFor="breed">Breed</Label>
+                <Input id="breed" name="breed" value={pet.breed} onChange={handlePetChange} placeholder="e.g., Golden Retriever, Mixed" />
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="bio">Bio</Label>
+                <Textarea 
+                    id="bio" 
+                    name="bio"
+                    value={pet.bio}
+                    onChange={handlePetChange}
+                    placeholder="Loves long naps in sunbeams and chasing laser dots. Hates baths."
+                    rows={3}
+                />
+                 <p className="text-xs text-muted-foreground">A short, fun description of your pet's personality.</p>
+            </div>
+        </div>
+        <DialogFooter className="sm:justify-between">
+            {isEditMode ? (
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                         <Button variant="destructive" disabled={isDeleting}>
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete Pet
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete {existingPet.name} and all associated data, including personas, stories, and images.
+                        </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleDeletePet}
+                            disabled={isDeleting}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                             {isDeleting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Deleting...</> : 'Confirm Delete'}
+                        </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            ) : (
+                <div></div> // Placeholder to keep the save button on the right
+            )}
+            <Button onClick={handleSavePet} disabled={isSaving || isUserLoading || isDeleting}>
+                {isSaving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</> : 'Save Pet'}
+            </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
