@@ -4,8 +4,19 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, Bot, Edit, Share2, Sparkles, Trash2, BookOpen, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Bot, Edit, Share2, Sparkles, Trash2, BookOpen, RefreshCw, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import {
   Card,
   CardContent,
@@ -20,13 +31,17 @@ import { doc, collection, query, orderBy } from 'firebase/firestore';
 import { RegenerateImageDialog } from '@/components/RegenerateImageDialog';
 import { RegenerateLoreDialog } from '@/components/RegenerateLoreDialog';
 import { ShareDialog } from '@/components/ShareDialog';
+import { useToast } from '@/hooks/use-toast';
+import { deletePersona } from '@/firebase/actions';
 
 export default function PersonaDetailsPage() {
   const router = useRouter();
   const params = useParams();
   const petId = params.petId as string;
   const personaId = params.personaId as string;
-  const { user, firestore } = useAuth();
+  const { user, firestore, storage } = useAuth();
+  const { toast } = useToast();
+  const [isDeleting, setIsDeleting] = React.useState(false);
   
   const petRef = React.useMemo(() => {
     if (!user || !firestore || !petId) return null;
@@ -48,6 +63,25 @@ export default function PersonaDetailsPage() {
   }, [personaRef]);
 
   const { data: stories, isLoading: areStoriesLoading } = useCollection<any>(storiesQuery);
+  
+  const handleDeletePersona = async () => {
+    if (!user || !firestore || !storage) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Could not delete persona. Invalid session.' });
+        return;
+    }
+    setIsDeleting(true);
+    try {
+        await deletePersona(firestore, storage, user.uid, petId, personaId);
+        toast({ title: 'Persona Deleted', description: `The "${persona.theme}" persona has been removed.` });
+        router.push(`/dashboard/pets/${petId}`);
+    } catch (error) {
+        console.error("Failed to delete persona:", error);
+        toast({ variant: 'destructive', title: 'Deletion Failed', description: 'Could not remove the persona and its data.' });
+    } finally {
+        setIsDeleting(false);
+    }
+  }
+
 
   if (isPersonaLoading || isPetLoading) {
     return <div className="flex h-screen items-center justify-center">Loading persona...</div>;
@@ -89,7 +123,28 @@ export default function PersonaDetailsPage() {
             >
               <Button variant="outline"><Share2 className="mr-2"/>Share</Button>
             </ShareDialog>
-            <Button variant="outline" disabled><Trash2 className="mr-2"/>Delete</Button>
+             <AlertDialog>
+                <AlertDialogTrigger asChild>
+                    <Button variant="outline" className="text-destructive hover:bg-destructive/10 hover:text-destructive">
+                        <Trash2 className="mr-2"/>Delete
+                    </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete the 
+                        <span className="font-bold"> {persona.theme}</span> persona and all of its associated stories.
+                    </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDeletePersona} disabled={isDeleting}>
+                        {isDeleting ? <><Loader2 className="mr-2 animate-spin"/> Deleting...</> : 'Confirm Delete'}
+                    </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
 

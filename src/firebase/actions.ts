@@ -84,3 +84,62 @@ export async function deletePet(
     // Commit all batched deletions at once
     await batch.commit();
 }
+
+
+/**
+ * Performs a cascading delete of a persona and all its associated data.
+ * 
+ * @param firestore The Firestore instance.
+ * @param storage The Firebase Storage instance.
+ * @param userId The ID of the user.
+ * @param petId The ID of the pet profile.
+ * @param personaId The ID of the persona to delete.
+ */
+export async function deletePersona(
+    firestore: Firestore,
+    storage: FirebaseStorage,
+    userId: string,
+    petId: string,
+    personaId: string
+) {
+    const batch = writeBatch(firestore);
+    const personaRef = doc(firestore, 'users', userId, 'petProfiles', petId, 'aiPersonas', personaId);
+    
+    // Get persona doc to access its imageUrl
+    const personaDoc = await getDoc(personaRef);
+    if (!personaDoc.exists()) {
+        console.warn("Persona to delete does not exist.");
+        return;
+    }
+    const personaData = personaDoc.data();
+
+    // 1. Delete Stories, Chapters, and their images
+    const storiesCollection = collection(personaRef, 'aiStories');
+    const storiesSnapshot = await getDocs(storiesCollection);
+    
+    for (const storyDoc of storiesSnapshot.docs) {
+        const storyRef = storyDoc.ref;
+        const chaptersCollection = collection(storyRef, 'chapters');
+        const chaptersSnapshot = await getDocs(chaptersCollection);
+
+        for (const chapterDoc of chaptersSnapshot.docs) {
+            const chapterData = chapterDoc.data();
+            if (chapterData.imageUrl) {
+                await deleteFileByUrl(storage, chapterData.imageUrl);
+            }
+            batch.delete(chapterDoc.ref);
+        }
+        batch.delete(storyRef);
+    }
+
+    // 2. Delete the main persona image
+    if (personaData.imageUrl) {
+        await deleteFileByUrl(storage, personaData.imageUrl);
+    }
+    
+    // 3. Delete the persona document
+    batch.delete(personaRef);
+
+    // 4. Commit all batched deletions
+    await batch.commit();
+}
