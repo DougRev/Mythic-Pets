@@ -2,19 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { Upload, PawPrint, Loader2, Trash2 } from 'lucide-react';
+import { Upload, PawPrint, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -23,7 +12,6 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useAuth } from '@/hooks/useAuth';
 import { addDoc, collection, doc, updateDoc } from 'firebase/firestore';
 import { uploadFile } from '@/firebase/storage';
-import { deletePet } from '@/firebase/actions';
 import { v4 as uuidv4 } from 'uuid';
 import { Textarea } from './ui/textarea';
 
@@ -51,7 +39,6 @@ export function ManagePetDialog({ children, pet: existingPet }: ManagePetDialogP
 
   const [open, setOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [pet, setPet] = useState<PetDetails>({ name: '', species: '', breed: '', age: '', bio: '', photoDataUri: null });
 
   const isEditMode = !!existingPet;
@@ -74,7 +61,6 @@ export function ManagePetDialog({ children, pet: existingPet }: ManagePetDialogP
         // Reset form for creating
         setPet({ name: '', species: '', breed: '', age: '', bio: '', photoDataUri: null });
       }
-      setIsDeleting(false);
     }
   }, [open, isEditMode, existingPet]);
 
@@ -164,26 +150,6 @@ export function ManagePetDialog({ children, pet: existingPet }: ManagePetDialogP
     }
   };
 
-  const handleDeletePet = async () => {
-    if (!user || !firestore || !storage || !isEditMode) return;
-
-    setIsDeleting(true);
-    try {
-        await deletePet(firestore, storage, user.uid, existingPet.id);
-        toast({ title: 'Pet Deleted', description: `${existingPet.name} and all their data have been removed.` });
-        setOpen(false);
-    } catch (error: any) {
-        console.error("Error deleting pet:", error);
-        toast({
-            variant: 'destructive',
-            title: 'Deletion Failed',
-            description: 'Could not delete the pet and its associated data. Please try again.',
-        });
-    } finally {
-        setIsDeleting(false);
-    }
-  };
-
   const previewImageUrl = pet.photoDataUri || (isEditMode ? pet.photoURL : (petAvatarDefault?.imageUrl || ''));
 
   return (
@@ -243,40 +209,10 @@ export function ManagePetDialog({ children, pet: existingPet }: ManagePetDialogP
                  <p className="text-xs text-muted-foreground">A short, fun description of your pet's personality.</p>
             </div>
         </div>
-        <DialogFooter className="sm:justify-between">
-            {isEditMode ? (
-                <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                         <Button variant="destructive" disabled={isDeleting}>
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete Pet
-                        </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete {existingPet.name} and all associated data, including personas, stories, and images.
-                        </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                            onClick={handleDeletePet}
-                            disabled={isDeleting}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        >
-                             {isDeleting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Deleting...</> : 'Confirm Delete'}
-                        </AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
-            ) : (
-                <div></div> // Placeholder to keep the save button on the right
-            )}
-            <Button onClick={handleSavePet} disabled={isSaving || isUserLoading || isDeleting}>
-                {isSaving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</> : 'Save Pet'}
-            </Button>
+        <DialogFooter>
+          <Button onClick={handleSavePet} disabled={isSaving || isUserLoading}>
+            {isSaving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</> : 'Save Pet'}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

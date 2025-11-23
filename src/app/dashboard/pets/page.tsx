@@ -3,25 +3,61 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
-import { PlusCircle, Pencil } from 'lucide-react';
+import { PlusCircle, Pencil, Trash2, Loader2 } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { ManagePetDialog } from '@/components/CreatePetDialog';
+import { ManagePetDialog } from '@/components/ManagePetDialog';
 import { useAuth } from '@/hooks/useAuth';
 import { useCollection } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import React from 'react';
 import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useToast } from '@/hooks/use-toast';
+import { deletePet } from '@/firebase/actions';
 
 export default function PetSelectionPage() {
-  const { user, firestore } = useAuth();
+  const { user, firestore, storage } = useAuth();
+  const { toast } = useToast();
+  const [isDeleting, setIsDeleting] = React.useState<string | null>(null);
+
 
   const petsQuery = React.useMemo(() => {
     if (!user || !firestore) return null;
     return query(collection(firestore, 'users', user.uid, 'petProfiles'));
   }, [firestore, user]);
 
-  const { data: pets, isLoading } = useCollection<any>(petsQuery);
+  const { data: pets, isLoading, refetch: refetchPets } = useCollection<any>(petsQuery);
   const petAvatarDefault = PlaceHolderImages.find(p => p.id === 'pet-avatar-default');
+
+  const handleDeletePet = async (petId: string, petName: string) => {
+    if (!user || !firestore || !storage) return;
+
+    setIsDeleting(petId);
+    try {
+        await deletePet(firestore, storage, user.uid, petId);
+        toast({ title: 'Pet Deleted', description: `${petName} and all their data have been removed.` });
+        refetchPets();
+    } catch (error: any) {
+        console.error("Error deleting pet:", error);
+        toast({
+            variant: 'destructive',
+            title: 'Deletion Failed',
+            description: 'Could not delete the pet and its associated data. Please try again.',
+        });
+    } finally {
+        setIsDeleting(null);
+    }
+  };
 
   if (isLoading) {
     return <div className="container mx-auto max-w-4xl py-8 px-4 md:px-6">Loading pets...</div>;
@@ -66,6 +102,38 @@ export default function PetSelectionPage() {
                             <span className="sr-only">Edit Pet</span>
                         </Button>
                     </ManagePetDialog>
+                </div>
+                 <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                         <Button variant="destructive" size="icon" className="h-8 w-8">
+                            <Trash2 className="h-4 w-4" />
+                            <span className="sr-only">Delete Pet</span>
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete{' '}
+                            <span className="font-bold">{pet.name}</span> and all associated data, including personas, stories, and images.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handleDeletePet(pet.id, pet.name)}
+                            disabled={isDeleting === pet.id}
+                          >
+                             {isDeleting === pet.id ? (
+                               <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Deleting...</>
+                             ) : (
+                               'Confirm Delete'
+                             )}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                 </div>
              </div>
             <CardContent className="p-4">
