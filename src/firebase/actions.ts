@@ -3,7 +3,8 @@
 import { 
     collection, 
     doc, 
-    getDocs, 
+    getDocs,
+    getDoc,
     writeBatch, 
     Firestore 
 } from "firebase/firestore";
@@ -27,6 +28,16 @@ export async function deletePet(
     const batch = writeBatch(firestore);
     const petRef = doc(firestore, 'users', userId, 'petProfiles', petId);
 
+    // Get the pet document to access its photoURL before deleting it
+    const petDoc = await getDoc(petRef);
+    if (petDoc.exists()) {
+        const petData = petDoc.data();
+        // Delete the main pet profile image from Storage, if it exists
+        if (petData.photoURL) {
+            await deleteFileByUrl(storage, petData.photoURL);
+        }
+    }
+
     // 1. Delete Personas, Stories, Chapters, and their associated images
     const personasCollection = collection(petRef, 'aiPersonas');
     const personasSnapshot = await getDocs(personasCollection);
@@ -49,7 +60,9 @@ export async function deletePet(
             for (const chapterDoc of chaptersSnapshot.docs) {
                 const chapterData = chapterDoc.data();
                 // Delete chapter image from Storage
-                await deleteFileByUrl(storage, chapterData.imageUrl);
+                if (chapterData.imageUrl) {
+                    await deleteFileByUrl(storage, chapterData.imageUrl);
+                }
                 // Queue chapter document for deletion
                 batch.delete(chapterDoc.ref);
             }
@@ -58,7 +71,9 @@ export async function deletePet(
         }
         
         // Delete persona image from Storage
-        await deleteFileByUrl(storage, personaData.imageUrl);
+        if (personaData.imageUrl) {
+            await deleteFileByUrl(storage, personaData.imageUrl);
+        }
         // Queue persona document for deletion
         batch.delete(personaRef);
     }
