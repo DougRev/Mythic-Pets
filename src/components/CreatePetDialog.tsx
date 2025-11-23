@@ -13,12 +13,15 @@ import { useAuth } from '@/hooks/useAuth';
 import { addDoc, collection } from 'firebase/firestore';
 import { uploadFile } from '@/firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
+import { Textarea } from './ui/textarea';
 
 
 type PetDetails = {
   name: string;
   species: string;
   breed: string;
+  age: number | string;
+  bio: string;
   photoDataUri: string | null;
 };
 
@@ -30,7 +33,7 @@ export function CreatePetDialog({ children }: { children: React.ReactNode }) {
 
   const [open, setOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [pet, setPet] = useState<PetDetails>({ name: '', species: '', breed: '', photoDataUri: null });
+  const [pet, setPet] = useState<PetDetails>({ name: '', species: '', breed: '', age: '', bio: '', photoDataUri: null });
 
   useEffect(() => {
     if (open) {
@@ -39,7 +42,7 @@ export function CreatePetDialog({ children }: { children: React.ReactNode }) {
     }
   }, [open]);
 
-  const handlePetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePetChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setPet({ ...pet, [e.target.name]: e.target.value });
   };
 
@@ -74,6 +77,8 @@ export function CreatePetDialog({ children }: { children: React.ReactNode }) {
         name: pet.name,
         species: pet.species,
         breed: pet.breed,
+        age: Number(pet.age) || 0,
+        bio: pet.bio,
         photoURL: photoURL,
         userProfileId: user.uid,
         createdAt: new Date().toISOString(),
@@ -83,7 +88,7 @@ export function CreatePetDialog({ children }: { children: React.ReactNode }) {
       await addDoc(petsCollection, petData);
 
       toast({ title: 'Pet Created!', description: `${pet.name} has been added to your family.` });
-      setPet({ name: '', species: '', breed: '', photoDataUri: null }); // Reset form
+      setPet({ name: '', species: '', breed: '', age: '', bio: '', photoDataUri: null }); // Reset form
       setOpen(false); // Close dialog
 
     } catch (error: any) {
@@ -108,14 +113,14 @@ export function CreatePetDialog({ children }: { children: React.ReactNode }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2"><PawPrint /> Add a New Pet</DialogTitle>
           <DialogDescription>
             Enter the details for your new companion. Click save when you're done.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
+        <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto pr-4">
             <div className="space-y-2 flex flex-col items-center justify-center">
                 <Label htmlFor="photo" className="text-center sr-only">Reference Photo</Label>
                 <div className="relative aspect-square w-32 rounded-full border-2 border-dashed border-muted-foreground/50 flex items-center justify-center">
@@ -132,7 +137,7 @@ export function CreatePetDialog({ children }: { children: React.ReactNode }) {
                 <p className="text-xs text-muted-foreground">Upload a photo</p>
             </div>
             <div className="space-y-2">
-                <Label htmlFor="name">Pet's Name</Label>
+                <Label htmlFor="name">Pet's Name *</Label>
                 <Input id="name" name="name" value={pet.name} onChange={handlePetChange} placeholder="Captain Fluffy" />
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -140,10 +145,26 @@ export function CreatePetDialog({ children }: { children: React.ReactNode }) {
                     <Label htmlFor="species">Species</Label>
                     <Input id="species" name="species" value={pet.species} onChange={handlePetChange} placeholder="e.g., Dog, Cat" />
                 </div>
-                <div className="space-y-2">
-                    <Label htmlFor="breed">Breed</Label>
-                    <Input id="breed" name="breed" value={pet.breed} onChange={handlePetChange} placeholder="e.g., Golden Retriever, Mixed" />
+                 <div className="space-y-2">
+                    <Label htmlFor="age">Age</Label>
+                    <Input id="age" name="age" type="number" value={pet.age} onChange={handlePetChange} placeholder="e.g., 5" />
                 </div>
+            </div>
+             <div className="space-y-2">
+                <Label htmlFor="breed">Breed</Label>
+                <Input id="breed" name="breed" value={pet.breed} onChange={handlePetChange} placeholder="e.g., Golden Retriever, Mixed" />
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="bio">Bio</Label>
+                <Textarea 
+                    id="bio" 
+                    name="bio"
+                    value={pet.bio}
+                    onChange={handlePetChange}
+                    placeholder="Loves long naps in sunbeams and chasing laser dots. Hates baths."
+                    rows={3}
+                />
+                 <p className="text-xs text-muted-foreground">A short, fun description of your pet's personality.</p>
             </div>
         </div>
         <DialogFooter>
