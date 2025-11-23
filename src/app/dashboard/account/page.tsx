@@ -1,51 +1,97 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Gem, Loader2, CheckCircle2 } from 'lucide-react';
+import { Gem, Loader2, CheckCircle2, Settings } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useDoc } from '@/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+import { createCheckoutSession } from '@/ai/flows/create-checkout-session';
+import { createBillingPortalSession } from '@/firebase/actions';
 
 export default function AccountPage() {
   const { user, firestore } = useAuth();
   const { toast } = useToast();
-  const [isUpgrading, setIsUpgrading] = React.useState(false);
+  const searchParams = useSearchParams();
+  const [isUpgrading, setIsUpgrading] = useState(false);
+  const [isManaging, setIsManaging] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get('success')) {
+      toast({
+        title: 'Upgrade Successful!',
+        description: 'Welcome to the Pro Plan! You now have unlimited creative power.',
+      });
+    }
+    if (searchParams.get('canceled')) {
+      toast({
+        variant: 'destructive',
+        title: 'Upgrade Canceled',
+        description: 'Your upgrade process was canceled. You are still on the Free plan.',
+      });
+    }
+  }, [searchParams, toast]);
 
   const userProfileRef = React.useMemo(() => {
     if (!user || !firestore) return null;
     return doc(firestore, 'users', user.uid);
   }, [firestore, user]);
 
-  const { data: userProfile, isLoading: isProfileLoading, refetch: refetchProfile } = useDoc<any>(userProfileRef);
+  const { data: userProfile, isLoading: isProfileLoading } = useDoc<any>(userProfileRef);
 
   const handleUpgrade = async () => {
-    if (!userProfileRef) return;
+    if (!user) {
+        toast({ variant: 'destructive', title: 'Not signed in', description: 'You must be signed in to upgrade.' });
+        return;
+    };
 
     setIsUpgrading(true);
     try {
-      await updateDoc(userProfileRef, {
-        planType: 'pro',
-        regenerationCredits: -1, // -1 for unlimited
+      const { sessionId, url } = await createCheckoutSession({
+          userId: user.uid,
+          userEmail: user.email!,
+          appUrl: window.location.origin,
       });
-      toast({
-        title: 'Upgrade Successful!',
-        description: 'Welcome to the Pro Plan! You now have unlimited regeneration credits.',
-      });
-      refetchProfile(); // Refresh the user profile data
+
+      if (url) {
+        window.location.href = url;
+      } else {
+        throw new Error('Could not create a checkout session.');
+      }
+
     } catch (error: any) {
       toast({
         variant: 'destructive',
         title: 'Upgrade Failed',
-        description: 'Could not complete the upgrade. Please try again.',
+        description: error.message || 'Could not complete the upgrade. Please try again.',
       });
     } finally {
       setIsUpgrading(false);
+    }
+  };
+
+  const handleManageSubscription = async () => {
+    if (!user || !userProfile?.stripeCustomerId) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Could not find a subscription to manage.' });
+        return;
+    }
+    setIsManaging(true);
+    try {
+        const { url } = await createBillingPortalSession({ 
+            customerId: userProfile.stripeCustomerId,
+            appUrl: window.location.origin
+        });
+        window.location.href = url;
+    } catch (error: any) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Could not open billing portal.' });
+    } finally {
+        setIsManaging(false);
     }
   };
   
@@ -109,13 +155,14 @@ export default function AccountPage() {
                     </p>
                 </div>
                 {isPro ? (
-                    <div className="flex items-center gap-2 text-primary font-semibold">
-                        <CheckCircle2 /> Current Plan
-                    </div>
+                    <Button onClick={handleManageSubscription} disabled={isManaging}>
+                        {isManaging ? <Loader2 className="mr-2 animate-spin"/> : <Settings className="mr-2" />}
+                        {isManaging ? 'Redirecting...' : 'Manage Subscription'}
+                    </Button>
                 ) : (
                     <Button onClick={handleUpgrade} disabled={isUpgrading}>
                         {isUpgrading ? <Loader2 className="mr-2 animate-spin"/> : <Gem className="mr-2" />}
-                        {isUpgrading ? 'Upgrading...' : 'Upgrade to Pro'}
+                        {isUpgrading ? 'Redirecting...' : 'Upgrade to Pro'}
                     </Button>
                 )}
             </div>

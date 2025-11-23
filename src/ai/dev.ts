@@ -10,4 +10,5 @@ import '@/ai/flows/regenerate-lore.ts';
 import '@/ai/flows/continue-ai-story.ts';
 import '@/ai/flows/create-share-image.ts';
 import '@/ai/flows/regenerate-chapter-image.ts';
+import '@/ai/flows/create-checkout-session.ts';
     
