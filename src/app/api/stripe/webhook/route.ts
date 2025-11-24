@@ -1,3 +1,4 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { initializeApp, getApps, cert, ServiceAccount } from 'firebase-admin/app';
@@ -8,28 +9,17 @@ const stripeSecretKey = process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY as string;
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET as string;
 const stripe = new Stripe(stripeSecretKey);
 
-// Safely initialize Firebase Admin SDK
-try {
-  console.log("Attempting to initialize Firebase Admin SDK...");
-  if (!getApps().length) {
-    const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT;
-    if (serviceAccountString) {
-      console.log("Service account string found.");
-      const serviceAccount: ServiceAccount = JSON.parse(serviceAccountString);
-      initializeApp({
-        credential: cert(serviceAccount),
-      });
-      console.log("Firebase Admin SDK initialized successfully with service account.");
-    } else {
-      console.warn("FIREBASE_SERVICE_ACCOUNT env var not set. Attempting to use Application Default Credentials.");
-      initializeApp();
-      console.log("Firebase Admin SDK initialized with Application Default Credentials.");
-    }
-  } else {
-    console.log("Firebase Admin SDK already initialized.");
+// Safely initialize Firebase Admin SDK only if not already initialized.
+// In a Google Cloud environment (like App Hosting), initializeApp() automatically
+// discovers the service account credentials.
+if (!getApps().length) {
+  try {
+    console.log("Initializing Firebase Admin SDK...");
+    initializeApp();
+    console.log("Firebase Admin SDK initialized successfully.");
+  } catch (error: any) {
+    console.error("CRITICAL: Firebase Admin SDK initialization failed:", error.message);
   }
-} catch (error: any) {
-  console.error("CRITICAL: Failed to initialize Firebase Admin SDK:", error.message);
 }
 
 export async function POST(req: NextRequest) {
