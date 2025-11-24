@@ -5,8 +5,11 @@ import { initializeApp, getApp, getApps } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
 // Initialize Stripe
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
+const stripeSecretKey = process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY as string;
+const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET as string;
+
+const stripe = new Stripe(stripeSecretKey);
+
 
 // Initialize Firebase Admin SDK
 // This ensures that we're not re-initializing the app on every hot-reload
@@ -17,7 +20,7 @@ const db = getFirestore();
 
 export async function POST(req: NextRequest) {
   const body = await req.text();
-  const signature = headers().get('Stripe-Signature') as string;
+  const signature = req.headers.get('Stripe-Signature') as string;
 
   let event: Stripe.Event;
 
