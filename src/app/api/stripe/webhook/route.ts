@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { headers } from 'next/headers';
-import { initializeApp, getApp, getApps } from 'firebase-admin/app';
+import { initializeApp, getApp, getApps, ServiceAccount, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
 // Initialize Stripe
@@ -10,11 +10,15 @@ const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET as string;
 
 const stripe = new Stripe(stripeSecretKey);
 
+// Securely parse the service account key from the environment variable
+const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT as string);
 
 // Initialize Firebase Admin SDK
 // This ensures that we're not re-initializing the app on every hot-reload
 if (!getApps().length) {
-    initializeApp();
+    initializeApp({
+        credential: cert(serviceAccount)
+    });
 }
 const db = getFirestore();
 
@@ -40,9 +44,9 @@ export async function POST(req: NextRequest) {
       const userId = session.client_reference_id;
       const stripeCustomerId = session.customer;
 
-      if (!userId || !stripeCustomerId) {
-        console.error('Missing userId or stripeCustomerId from checkout session');
-        return NextResponse.json({ error: 'Missing user or customer ID' }, { status: 400 });
+      if (!userId) {
+        console.error('Missing userId from checkout session metadata');
+        return NextResponse.json({ error: 'Missing user ID' }, { status: 400 });
       }
 
       try {
@@ -50,7 +54,7 @@ export async function POST(req: NextRequest) {
         await userRef.update({
           planType: 'pro',
           regenerationCredits: -1, // unlimited
-          stripeCustomerId: stripeCustomerId,
+          stripeCustomerId: stripeCustomerId || null,
         });
         console.log(`?? User ${userId} successfully upgraded to Pro plan.`);
       } catch (error) {
