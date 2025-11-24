@@ -120,7 +120,10 @@ service cloud.firestore {
   }
   
   function isUpdatingAllowedFields(data) {
-    let allowedFields = ['displayName', 'photoURL', 'regenerationCredits'];
-    return data.keys().hasAll(allowedFields);
+    let allowedFields = ['displayName', 'photoURL', 'regenerationCredits', 'planType', 'stripeCustomerId'];
+    let receivedKeys = data.keys();
+    
+    // Check that every key in the request is in the allowed list
+    return receivedKeys.hasOnly(allowedFields);
   }
 }
