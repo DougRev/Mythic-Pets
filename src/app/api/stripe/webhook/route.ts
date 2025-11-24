@@ -1,36 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { headers } from 'next/headers';
 import { initializeApp, getApp, getApps, ServiceAccount, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
 // Initialize Stripe
 const stripeSecretKey = process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY as string;
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET as string;
-
 const stripe = new Stripe(stripeSecretKey);
 
-// Securely parse the service account key from the environment variable
-let serviceAccount: ServiceAccount;
-try {
-    serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT as string);
-} catch (error) {
-    console.error("Failed to parse FIREBASE_SERVICE_ACCOUNT. Make sure it's a valid JSON string.");
-    // In a real production scenario, you'd want to handle this more gracefully.
-    // For now, we'll let it throw an error during initialization if the variable is missing/invalid.
-}
-
-
 // Initialize Firebase Admin SDK
-// This ensures that we're not re-initializing the app on every hot-reload
-if (!getApps().length) {
-    initializeApp({
-        credential: cert(serviceAccount)
-    });
+try {
+    const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT;
+    if (!serviceAccountString) {
+        throw new Error("FIREBASE_SERVICE_ACCOUNT environment variable is not set.");
+    }
+    const serviceAccount: ServiceAccount = JSON.parse(serviceAccountString);
+
+    if (!getApps().length) {
+        initializeApp({
+            credential: cert(serviceAccount)
+        });
+    }
+} catch (error: any) {
+    console.error("Failed to initialize Firebase Admin SDK:", error.message);
+    // We can't proceed without Firebase Admin, so we'll respond with an error if a request comes in.
 }
-const db = getFirestore();
+
 
 export async function POST(req: NextRequest) {
+  // Check if Firebase was initialized
+  if (!getApps().length) {
+      console.error("Firebase Admin SDK is not initialized. Check server logs for details.");
+      return NextResponse.json({ error: "Server configuration error." }, { status: 500 });
+  }
+
+  const db = getFirestore();
   const body = await req.text();
   const signature = req.headers.get('Stripe-Signature') as string;
 
