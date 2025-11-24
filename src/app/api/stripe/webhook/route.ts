@@ -4,7 +4,7 @@ import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
 // Initialize Stripe
-const stripeSecretKey = process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY as string;
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY as string;
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET as string;
 const stripe = new Stripe(stripeSecretKey);
 
@@ -20,6 +20,7 @@ try {
             });
         } else {
             console.warn("FIREBASE_SERVICE_ACCOUNT env var not set. Attempting to fall back to default credentials.");
+            // This fallback is useful for local development or environments where ADC are configured.
             initializeApp();
         }
     }
