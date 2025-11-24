@@ -11,7 +11,15 @@ const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET as string;
 const stripe = new Stripe(stripeSecretKey);
 
 // Securely parse the service account key from the environment variable
-const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT as string);
+let serviceAccount: ServiceAccount;
+try {
+    serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT as string);
+} catch (error) {
+    console.error("Failed to parse FIREBASE_SERVICE_ACCOUNT. Make sure it's a valid JSON string.");
+    // In a real production scenario, you'd want to handle this more gracefully.
+    // For now, we'll let it throw an error during initialization if the variable is missing/invalid.
+}
+
 
 // Initialize Firebase Admin SDK
 // This ensures that we're not re-initializing the app on every hot-reload
@@ -40,21 +48,26 @@ export async function POST(req: NextRequest) {
     case 'checkout.session.completed':
       const session = event.data.object as Stripe.Checkout.Session;
       
-      // Fulfill the purchase...
       const userId = session.client_reference_id;
-      const stripeCustomerId = session.customer;
+      const stripeCustomerId = typeof session.customer === 'string' ? session.customer : session.customer?.id;
+
 
       if (!userId) {
-        console.error('Missing userId from checkout session metadata');
-        return NextResponse.json({ error: 'Missing user ID' }, { status: 400 });
+        console.error('Missing userId (client_reference_id) from checkout session.');
+        return NextResponse.json({ error: 'Missing user ID from checkout session' }, { status: 400 });
+      }
+
+      if (!stripeCustomerId) {
+        console.error('Missing stripeCustomerId from checkout session.');
+        return NextResponse.json({ error: 'Missing customer ID from checkout session' }, { status: 400 });
       }
 
       try {
         const userRef = db.collection('users').doc(userId);
         await userRef.update({
           planType: 'pro',
-          regenerationCredits: -1, // unlimited
-          stripeCustomerId: stripeCustomerId || null,
+          regenerationCredits: -1, // -1 signifies unlimited
+          stripeCustomerId: stripeCustomerId,
         });
         console.log(`?? User ${userId} successfully upgraded to Pro plan.`);
       } catch (error) {
