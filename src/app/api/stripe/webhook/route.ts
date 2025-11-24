@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { initializeApp, getApp, getApps, ServiceAccount, cert } from 'firebase-admin/app';
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
 // Initialize Stripe
@@ -9,21 +9,25 @@ const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET as string;
 const stripe = new Stripe(stripeSecretKey);
 
 // Initialize Firebase Admin SDK
+// Use a try-catch block to handle initialization safely.
 try {
-    const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT;
-    if (!serviceAccountString) {
-        throw new Error("FIREBASE_SERVICE_ACCOUNT environment variable is not set.");
-    }
-    const serviceAccount: ServiceAccount = JSON.parse(serviceAccountString);
-
+    // When running in a Google Cloud environment (like App Hosting),
+    // the SDK can automatically discover credentials.
+    // We only need to manually set it when a service account env var is present.
     if (!getApps().length) {
-        initializeApp({
-            credential: cert(serviceAccount)
-        });
+        const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT;
+        if (serviceAccountString) {
+            const serviceAccount = JSON.parse(serviceAccountString);
+            initializeApp({
+                credential: cert(serviceAccount)
+            });
+        } else {
+            // This will use the application's default credentials on App Hosting.
+            initializeApp();
+        }
     }
 } catch (error: any) {
     console.error("Failed to initialize Firebase Admin SDK:", error.message);
-    // We can't proceed without Firebase Admin, so we'll respond with an error if a request comes in.
 }
 
 
