@@ -11,9 +11,6 @@ const stripe = new Stripe(stripeSecretKey);
 // Initialize Firebase Admin SDK
 // Use a try-catch block to handle initialization safely.
 try {
-    // When running in a Google Cloud environment (like App Hosting),
-    // the SDK can automatically discover credentials.
-    // We only need to manually set it when a service account env var is present.
     if (!getApps().length) {
         const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT;
         if (serviceAccountString) {
@@ -23,6 +20,8 @@ try {
             });
         } else {
             // This will use the application's default credentials on App Hosting.
+            // This is a fallback and might not have the required permissions.
+            console.warn("FIREBASE_SERVICE_ACCOUNT env var not set. Falling back to default credentials.");
             initializeApp();
         }
     }
