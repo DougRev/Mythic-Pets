@@ -19,9 +19,7 @@ try {
                 credential: cert(serviceAccount)
             });
         } else {
-            // This will use the application's default credentials on App Hosting.
-            // This is a fallback and might not have the required permissions.
-            console.warn("FIREBASE_SERVICE_ACCOUNT env var not set. Falling back to default credentials.");
+            console.warn("FIREBASE_SERVICE_ACCOUNT env var not set. Attempting to fall back to default credentials.");
             initializeApp();
         }
     }
@@ -46,7 +44,7 @@ export async function POST(req: NextRequest) {
   try {
     event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
   } catch (err: any) {
-    console.error(`??  Webhook signature verification failed.`, err.message);
+    console.error(`Webhook signature verification failed.`, err.message);
     return NextResponse.json({ error: `Webhook Error: ${err.message}` }, { status: 400 });
   }
 
@@ -76,7 +74,7 @@ export async function POST(req: NextRequest) {
           regenerationCredits: -1, // -1 signifies unlimited
           stripeCustomerId: stripeCustomerId,
         });
-        console.log(`?? User ${userId} successfully upgraded to Pro plan.`);
+        console.log(`User ${userId} successfully upgraded to Pro plan.`);
       } catch (error) {
         console.error('Failed to update user profile in Firestore:', error);
         return NextResponse.json({ error: 'Database update failed' }, { status: 500 });
