@@ -1,39 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { initializeApp, getApps, cert, ServiceAccount } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
 // Initialize Stripe
-const stripeSecretKey = process.env.STRIPE_SECRET_KEY as string;
+const stripeSecretKey = process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY as string;
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET as string;
 const stripe = new Stripe(stripeSecretKey);
 
-// Initialize Firebase Admin SDK
-// Use a try-catch block to handle initialization safely.
+// Safely initialize Firebase Admin SDK
 try {
-    if (!getApps().length) {
-        const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT;
-        if (serviceAccountString) {
-            const serviceAccount = JSON.parse(serviceAccountString);
-            initializeApp({
-                credential: cert(serviceAccount)
-            });
-        } else {
-            console.warn("FIREBASE_SERVICE_ACCOUNT env var not set. Attempting to fall back to default credentials.");
-            // This fallback is useful for local development or environments where ADC are configured.
-            initializeApp();
-        }
+  if (!getApps().length) {
+    const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT;
+    if (serviceAccountString) {
+      const serviceAccount: ServiceAccount = JSON.parse(serviceAccountString);
+      initializeApp({
+        credential: cert(serviceAccount),
+      });
+    } else {
+      console.warn("FIREBASE_SERVICE_ACCOUNT env var not set. Webhook may not have permission to write to Firestore.");
+      // Fallback for environments with Application Default Credentials
+      initializeApp();
     }
+  }
 } catch (error: any) {
-    console.error("Failed to initialize Firebase Admin SDK:", error.message);
+  console.error("Failed to initialize Firebase Admin SDK:", error.message);
 }
-
 
 export async function POST(req: NextRequest) {
   // Check if Firebase was initialized
   if (!getApps().length) {
-      console.error("Firebase Admin SDK is not initialized. Check server logs for details.");
-      return NextResponse.json({ error: "Server configuration error." }, { status: 500 });
+    console.error("Firebase Admin SDK is not initialized. Check server logs for details.");
+    return NextResponse.json({ error: "Server configuration error." }, { status: 500 });
   }
 
   const db = getFirestore();
@@ -56,7 +54,6 @@ export async function POST(req: NextRequest) {
       
       const userId = session.client_reference_id;
       const stripeCustomerId = typeof session.customer === 'string' ? session.customer : session.customer?.id;
-
 
       if (!userId) {
         console.error('Missing userId (client_reference_id) from checkout session.');
