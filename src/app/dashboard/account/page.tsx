@@ -50,6 +50,8 @@ export default function AccountPage() {
         toast({ variant: 'destructive', title: 'Not signed in', description: 'You must be signed in to upgrade.' });
         return;
     };
+    
+    console.log(`Current window.location.origin: ${window.location.origin}`);
 
     setIsUpgrading(true);
     try {

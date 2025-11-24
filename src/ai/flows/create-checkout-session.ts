@@ -40,6 +40,9 @@ const createCheckoutSessionFlow = ai.defineFlow(
       throw new Error('Stripe PRICE_ID environment variable is not set.');
     }
     
+    // Log the exact webhook URL that needs to be configured in Stripe.
+    console.log(`Stripe Webhook URL to configure: ${appUrl}/api/stripe/webhook`);
+
     try {
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
