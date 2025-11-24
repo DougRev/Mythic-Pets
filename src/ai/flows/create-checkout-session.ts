@@ -7,6 +7,17 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { stripe } from '@/lib/stripe';
+import { getFirestore } from 'firebase-admin/firestore';
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
+
+// Initialize Firebase Admin SDK
+try {
+  if (!getApps().length) {
+    initializeApp();
+  }
+} catch (error: any) {
+  console.error("CRITICAL: Firebase Admin SDK initialization failed:", error.message);
+}
 
 
 const CreateCheckoutSessionInputSchema = z.object({
@@ -42,6 +53,15 @@ const createCheckoutSessionFlow = ai.defineFlow(
     
     // Log the exact webhook URL that needs to be configured in Stripe.
     console.log(`Stripe Webhook URL to configure: ${appUrl}/api/stripe/webhook`);
+
+    // Check if user is already subscribed
+    const db = getFirestore();
+    const userRef = db.collection('users').doc(userId);
+    const userDoc = await userRef.get();
+
+    if (userDoc.exists && userDoc.data()?.planType === 'pro') {
+        throw new Error('User is already subscribed to the Pro plan.');
+    }
 
     try {
       const session = await stripe.checkout.sessions.create({

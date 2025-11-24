@@ -41,6 +41,10 @@
         "regenerationCredits": {
           "type": "number",
           "description": "Number of regeneration credits available for the user."
+        },
+        "stripeCustomerId": {
+          "type": "string",
+          "description": "The user's Stripe Customer ID."
         }
       },
       "required": [
