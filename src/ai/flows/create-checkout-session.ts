@@ -6,7 +6,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import Stripe from 'stripe';
+import { stripe } from '@/lib/stripe';
 
 
 const CreateCheckoutSessionInputSchema = z.object({
@@ -34,16 +34,12 @@ const createCheckoutSessionFlow = ai.defineFlow(
   },
   async ({ userId, userEmail, appUrl }) => {
 
-    const stripeSecretKey = process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY;
     const priceId = process.env.STRIPE_PRO_PRICE_ID;
 
-    if (!stripeSecretKey || !priceId) {
-      throw new Error('Stripe environment variables are not set.');
+    if (!priceId) {
+      throw new Error('Stripe PRICE_ID environment variable is not set.');
     }
     
-    // Initialize Stripe inside the flow to ensure keys are available.
-    const stripe = new Stripe(stripeSecretKey);
-
     try {
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
@@ -57,9 +53,7 @@ const createCheckoutSessionFlow = ai.defineFlow(
         success_url: `${appUrl}/dashboard/account?success=true&session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${appUrl}/dashboard/account?canceled=true`,
         customer_email: userEmail,
-        // Pass the Firebase User ID to the session so we can identify the user in the webhook.
         client_reference_id: userId,
-        // We can also pass it in metadata if we want to attach it to the customer object later.
         metadata: {
             firebaseUID: userId,
         }

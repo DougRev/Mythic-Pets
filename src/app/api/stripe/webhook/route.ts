@@ -1,30 +1,31 @@
-
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { initializeApp, getApps, cert, ServiceAccount } from 'firebase-admin/app';
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
+import { stripe } from '@/lib/stripe';
 
-// Initialize Stripe
-const stripeSecretKey = process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY as string;
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET as string;
-const stripe = new Stripe(stripeSecretKey);
-
-// Safely initialize Firebase Admin SDK only if not already initialized.
-// In a Google Cloud environment (like App Hosting), initializeApp() automatically
-// discovers the service account credentials.
-if (!getApps().length) {
-  try {
+// Initialize Firebase Admin SDK
+// This is safe to run on every request, as it checks if an app is already initialized.
+try {
+  if (!getApps().length) {
     console.log("Initializing Firebase Admin SDK...");
     initializeApp();
     console.log("Firebase Admin SDK initialized successfully.");
-  } catch (error: any) {
-    console.error("CRITICAL: Firebase Admin SDK initialization failed:", error.message);
   }
+} catch (error: any) {
+  console.error("CRITICAL: Firebase Admin SDK initialization failed:", error.message);
 }
+
 
 export async function POST(req: NextRequest) {
   console.log("Stripe webhook POST request received.");
-  
+
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  if (!webhookSecret) {
+      console.error('CRITICAL: STRIPE_WEBHOOK_SECRET is not set.');
+      return NextResponse.json({ error: "Server configuration error: Missing webhook secret." }, { status: 500 });
+  }
+
   // Check if Firebase was initialized
   if (!getApps().length) {
     console.error("Firebase Admin SDK is not initialized. Check server logs for initialization errors.");
