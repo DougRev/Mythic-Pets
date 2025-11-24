@@ -25,6 +25,8 @@ export async function POST(req: NextRequest) {
       console.error('CRITICAL: STRIPE_WEBHOOK_SECRET is not set.');
       return NextResponse.json({ error: "Server configuration error: Missing webhook secret." }, { status: 500 });
   }
+  console.log("Stripe webhook secret is set.");
+
 
   // Check if Firebase was initialized
   if (!getApps().length) {
@@ -80,7 +82,7 @@ export async function POST(req: NextRequest) {
       await userRef.update(updateData);
 
       console.log(`SUCCESS: User ${userId} successfully upgraded to Pro plan in Firestore.`);
-    } catch (error: any) {
+    } catch (error: any)      {
       console.error(`FIRESTORE ERROR: Failed to update user profile for ${userId}.`, error);
       console.error(`Error code: ${error.code}, Message: ${error.message}`);
       return NextResponse.json({ error: 'Database update failed' }, { status: 500 });
