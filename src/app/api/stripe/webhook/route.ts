@@ -5,7 +5,6 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { stripe } from '@/lib/stripe';
 
 // Initialize Firebase Admin SDK
-// This is safe to run on every request, as it checks if an app is already initialized.
 try {
   if (!getApps().length) {
     console.log("Initializing Firebase Admin SDK...");

@@ -10,7 +10,7 @@ import {
 } from "firebase/firestore";
 import { FirebaseStorage } from "firebase/storage";
 import { deleteFileByUrl } from "./storage";
-import Stripe from "stripe";
+import { stripe } from "@/lib/stripe";
 
 /**
  * Performs a cascading delete of a pet and all its associated data in Firestore and Firebase Storage.
@@ -149,17 +149,9 @@ export async function deletePersona(
 /**
  * Creates a Stripe Billing Portal session for a user to manage their subscription.
  * This function must be called from a client-side context that can perform a redirect.
- * NOTE: This is a client-side action that calls a server-side Stripe SDK.
- * In a real-world scenario, this would be a server-side only function
- * and the client would call an API route. For simplicity in this context,
- * we are including it here.
  */
 export async function createBillingPortalSession({ customerId, appUrl }: { customerId: string, appUrl: string }) {
     
-    const stripe = new Stripe(process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY as string, {
-        apiVersion: '2024-06-20',
-    });
-
     const portalSession = await stripe.billingPortal.sessions.create({
         customer: customerId,
         return_url: `${appUrl}/dashboard/account`,
