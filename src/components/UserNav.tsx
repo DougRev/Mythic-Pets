@@ -85,12 +85,14 @@ export function UserNav() {
               <span>Account</span>
             </DropdownMenuItem>
           </Link>
-          <Link href="/dashboard/account">
-            <DropdownMenuItem>
-                <Gem className="mr-2 h-4 w-4" />
-                <span>Upgrade to Pro</span>
-            </DropdownMenuItem>
-          </Link>
+          {userProfile?.planType !== 'pro' && (
+            <Link href="/dashboard/account">
+                <DropdownMenuItem>
+                    <Gem className="mr-2 h-4 w-4" />
+                    <span>Upgrade to Pro</span>
+                </DropdownMenuItem>
+            </Link>
+          )}
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={signOut}>
@@ -101,5 +103,3 @@ export function UserNav() {
     </DropdownMenu>
   );
 }
-
-    
