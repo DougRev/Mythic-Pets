@@ -13,7 +13,7 @@ import { useDoc } from '@/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { createCheckoutSession } from '@/ai/flows/create-checkout-session';
-import { createBillingPortalSession } from '@/firebase/actions';
+import { createBillingPortalSession } from '@/ai/flows/create-billing-portal-session';
 
 export default function AccountPage() {
   const { user, firestore } = useAuth();
@@ -51,6 +51,11 @@ export default function AccountPage() {
         return;
     };
     
+    if (userProfile?.planType === 'pro') {
+        toast({ variant: 'destructive', title: 'Already Subscribed', description: 'You are already on the Pro plan.' });
+        return;
+    }
+
     console.log(`Current window.location.origin: ${window.location.origin}`);
 
     setIsUpgrading(true);
@@ -87,7 +92,7 @@ export default function AccountPage() {
     try {
         const { url } = await createBillingPortalSession({ 
             customerId: userProfile.stripeCustomerId,
-            appUrl: window.location.origin
+            returnUrl: `${window.location.origin}/dashboard/account`
         });
         window.location.href = url;
     } catch (error: any) {
