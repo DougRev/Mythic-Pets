@@ -100,6 +100,7 @@ export default function StoryDetailsPage() {
             storyLength: story.storyLength,
             currentChapter: nextChapterNumber,
             prompt: creativePrompt,
+            userId: user.uid,
         });
 
         if (!nextChapterResult || !nextChapterResult.chapterTitle || !nextChapterResult.chapterText || !nextChapterResult.chapterImage) {
@@ -366,3 +367,5 @@ export default function StoryDetailsPage() {
     </div>
   );
 }
+
+    
