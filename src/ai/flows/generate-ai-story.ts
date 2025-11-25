@@ -11,6 +11,13 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import {googleAI} from '@genkit-ai/google-genai';
+import { getFirestore, Timestamp, FieldValue } from 'firebase-admin/firestore';
+import { initializeApp, getApps } from 'firebase-admin/app';
+
+if (!getApps().length) {
+    initializeApp();
+}
+const db = getFirestore();
 
 const GenerateAiStoryInputSchema = z.object({
   persona: z.string().describe("The pet's persona, including theme and lore."),
@@ -24,7 +31,8 @@ const GenerateAiStoryInputSchema = z.object({
       "The persona image of the pet, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
     ),
   prompt: z.string().optional().describe('Optional user prompt for creative direction.'),
-  storyLength: z.string().describe("The desired length of the story (e.g., 'Short (~3 chapters)', 'Medium (~5 chapters)', 'Epic (~7 chapters)').")
+  storyLength: z.string().describe("The desired length of the story (e.g., 'Short (~3 chapters)', 'Medium (~5 chapters)', 'Epic (~7 chapters)')."),
+  userId: z.string().describe('The ID of the user requesting the generation.'),
 });
 export type GenerateAiStoryInput = z.infer<typeof GenerateAiStoryInputSchema>;
 
@@ -93,6 +101,17 @@ const generateAiStoryFlow = ai.defineFlow(
     outputSchema: GenerateAiStoryOutputSchema,
   },
   async input => {
+    
+    const userRef = db.collection('users').doc(input.userId);
+    const userDoc = await userRef.get();
+    const userData = userDoc.data();
+
+    if (userData?.planType === 'free') {
+        if (userData.generationCredits <= 0) {
+            throw new Error('You have no generation credits remaining. Please upgrade to Pro.');
+        }
+    }
+
     // 1. Generate story text and titles
     const { output: textOutput } = await generateStoryPrompt(input);
     if (!textOutput) {
@@ -108,6 +127,13 @@ const generateAiStoryFlow = ai.defineFlow(
     if (!media?.url) {
       throw new Error('Failed to generate chapter image.');
     }
+    
+    // 3. Deduct credit after successful generation for free users
+    if (userData?.planType === 'free') {
+        await userRef.update({
+            generationCredits: FieldValue.increment(-1),
+        });
+    }
 
     return {
       title: textOutput.title,
@@ -117,3 +143,5 @@ const generateAiStoryFlow = ai.defineFlow(
     };
   }
 );
+
+    

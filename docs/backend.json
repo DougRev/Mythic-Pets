@@ -38,9 +38,9 @@
           "type": "string",
           "description": "Type of subscription plan the user has (e.g., 'free', 'pro')."
         },
-        "regenerationCredits": {
+        "generationCredits": {
           "type": "number",
-          "description": "Number of regeneration credits available for the user."
+          "description": "Number of generation credits available for the user."
         },
         "stripeCustomerId": {
           "type": "string",
@@ -54,7 +54,7 @@
         "creationDate",
         "lastLogin",
         "planType",
-        "regenerationCredits"
+        "generationCredits"
       ]
     },
     "PetProfile": {
@@ -456,3 +456,5 @@
     "reasoning": "The Firestore data structure is designed to support the Mythic Pets application, focusing on user profiles, pet profiles, AI personas, and AI-generated stories. The structure prioritizes authorization independence and simplifies security rules, adhering to the core design principles.\n\n**Authorization Independence:**\n\n*   User-owned data (PetProfiles, AIPersonas, AIStories) is nested under the `/users/{userId}` path, ensuring that access control is based on the user's ID. This eliminates the need for `get()` calls in security rules to check ownership.\n\n**Public Data:**\n\n*   A new top-level collection, `/publishedStories`, is introduced for the public gallery. This separates public data from private user data, simplifying security rules. Data in this collection is denormalized to allow for efficient loading of the gallery without needing complex joins or multiple reads.\n\n**Access Modeling:**\n\n*   Private Data: User profiles and all associated data (pets, personas, stories) are stored under the `/users/{userId}` path, providing path-based ownership.\n*   Public Data: Stories intended for public viewing are copied to `/publishedStories`.\n\n**QAPs (Rules are not Filters):**\n\n*   The structure supports secure `list` operations. Rules can allow listing of all documents under `/users/{userId}` for an owner, and all documents under `/publishedStories` for any user."
   }
 }
+
+    

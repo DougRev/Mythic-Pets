@@ -111,6 +111,7 @@ export default function CreateStoryPage() {
         prompt: data.prompt,
         personaImage: persona.imageUrl,
         storyLength: data.storyLength,
+        userId: user.uid,
       });
 
       if (!storyResult || !storyResult.title || !storyResult.chapterText || !storyResult.chapterImage) {
@@ -278,3 +279,5 @@ export default function CreateStoryPage() {
     </div>
   );
 }
+
+    

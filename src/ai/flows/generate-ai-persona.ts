@@ -11,6 +11,14 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import {googleAI} from '@genkit-ai/google-genai';
+import { getFirestore, Timestamp } from 'firebase-admin/firestore';
+import { initializeApp, getApps } from 'firebase-admin/app';
+import {FieldValue} from 'firebase-admin/firestore';
+
+if (!getApps().length) {
+    initializeApp();
+}
+const db = getFirestore();
 
 const GenerateAiPersonaInputSchema = z.object({
   photoDataUri: z
@@ -22,6 +30,7 @@ const GenerateAiPersonaInputSchema = z.object({
   imageStyle: z.string().describe('The visual art style for the generated image (e.g., Anime, Photorealistic).'),
   petName: z.string().describe('The name of the pet.'),
   prompt: z.string().optional().describe('Optional user prompt for more specific direction.'),
+  userId: z.string().describe('The ID of the user requesting the generation.'),
 });
 export type GenerateAiPersonaInput = z.infer<typeof GenerateAiPersonaInputSchema>;
 
@@ -77,6 +86,17 @@ const generateAiPersonaFlow = ai.defineFlow(
     outputSchema: GenerateAiPersonaOutputSchema,
   },
   async input => {
+
+    const userRef = db.collection('users').doc(input.userId);
+    const userDoc = await userRef.get();
+    const userData = userDoc.data();
+
+    if (userData?.planType === 'free') {
+        if (userData.generationCredits <= 0) {
+            throw new Error('You have no generation credits remaining. Please upgrade to Pro.');
+        }
+    }
+    
     // Run image and lore generation in parallel
     const [imageResult, loreResult] = await Promise.all([
       generateImagePrompt(input),
@@ -86,6 +106,13 @@ const generateAiPersonaFlow = ai.defineFlow(
     if (!imageResult.media?.url || !loreResult.output) {
         throw new Error('Failed to generate persona image or lore.');
     }
+    
+    // Deduct credit after successful generation for free users
+    if (userData?.planType === 'free') {
+        await userRef.update({
+            generationCredits: FieldValue.increment(-1),
+        });
+    }
 
     return {
       personaImage: imageResult.media.url,
@@ -93,3 +120,5 @@ const generateAiPersonaFlow = ai.defineFlow(
     };
   }
 );
+
+    

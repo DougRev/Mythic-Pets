@@ -151,6 +151,7 @@ export default function CreatePersonaPage() {
         imageStyle: imageStyle!,
         petName: pet.name,
         prompt: data.prompt,
+        userId: user.uid,
       });
 
       if (!personaResult || !personaResult.personaImage || !personaResult.loreText) {

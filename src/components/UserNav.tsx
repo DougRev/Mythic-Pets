@@ -50,7 +50,7 @@ export function UserNav() {
         <DropdownMenuItem disabled className="opacity-100">
             {isPro ? <Gem className="mr-2 h-4 w-4 text-primary"/> : <Sparkles className="mr-2 h-4 w-4 text-primary" />}
             <span>
-                {isPro ? 'Unlimited Credits' : `${userProfile.regenerationCredits} Credits Remaining`}
+                {isPro ? 'Unlimited Credits' : `${userProfile.generationCredits} Credits Remaining`}
             </span>
         </DropdownMenuItem>
     );
@@ -101,3 +101,5 @@ export function UserNav() {
     </DropdownMenu>
   );
 }
+
+    

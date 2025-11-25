@@ -52,11 +52,9 @@ export default function AccountPage() {
     };
     
     if (userProfile?.planType === 'pro') {
-        toast({ variant: 'destructive', title: 'Already Subscribed', description: 'You are already on the Pro plan.' });
+        toast({ title: 'Already Subscribed', description: 'You are already on the Pro plan.' });
         return;
     }
-
-    console.log(`Current window.location.origin: ${window.location.origin}`);
 
     setIsUpgrading(true);
     try {
@@ -156,8 +154,8 @@ export default function AccountPage() {
                     <h3 className="font-bold">{isPro ? 'Pro Plan' : 'Free Tier'}</h3>
                     <p className="text-sm text-muted-foreground">
                         {isPro
-                            ? 'You have unlimited regeneration credits.'
-                            : `You have ${userProfile.regenerationCredits || 0} regeneration credits remaining.`
+                            ? 'You have unlimited generation credits.'
+                            : `You have ${userProfile.generationCredits || 0} generation credits remaining.`
                         }
                     </p>
                 </div>
@@ -179,3 +177,5 @@ export default function AccountPage() {
     </div>
   );
 }
+
+    

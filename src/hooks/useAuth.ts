@@ -24,7 +24,7 @@ async function createUserProfile(firestore: any, user: User) {
         creationDate: new Date().toISOString(),
         lastLogin: new Date().toISOString(),
         planType: 'free',
-        regenerationCredits: 5,
+        generationCredits: 5,
     };
     await setDoc(userProfileRef, profileData, { merge: true });
 }

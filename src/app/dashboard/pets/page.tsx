@@ -7,8 +7,8 @@ import { PlusCircle, Pencil, Trash2, Loader2 } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { ManagePetDialog } from '@/components/ManagePetDialog';
 import { useAuth } from '@/hooks/useAuth';
-import { useCollection } from '@/firebase';
-import { collection, query } from 'firebase/firestore';
+import { useCollection, useDoc } from '@/firebase';
+import { collection, query, doc } from 'firebase/firestore';
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,12 +24,19 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { deletePet } from '@/firebase/actions';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 export default function PetSelectionPage() {
   const { user, firestore, storage } = useAuth();
   const { toast } = useToast();
   const [isDeleting, setIsDeleting] = React.useState<string | null>(null);
 
+  const userProfileRef = React.useMemo(() => {
+    if (!user || !firestore) return null;
+    return doc(firestore, 'users', user.uid);
+  }, [firestore, user]);
+
+  const { data: userProfile } = useDoc<any>(userProfileRef);
 
   const petsQuery = React.useMemo(() => {
     if (!user || !firestore) return null;
@@ -38,6 +45,9 @@ export default function PetSelectionPage() {
 
   const { data: pets, isLoading, refetch: refetchPets } = useCollection<any>(petsQuery);
   const petAvatarDefault = PlaceHolderImages.find(p => p.id === 'pet-avatar-default');
+
+  const isFreeTier = userProfile?.planType === 'free';
+  const hasReachedPetLimit = isFreeTier && pets && pets.length >= 1;
 
   const handleDeletePet = async (petId: string, petName: string) => {
     if (!user || !firestore || !storage) return;
@@ -63,6 +73,69 @@ export default function PetSelectionPage() {
     return <div className="container mx-auto max-w-4xl py-8 px-4 md:px-6">Loading pets...</div>;
   }
 
+  const AddPetButton = () => (
+    <TooltipProvider>
+        <Tooltip>
+            <TooltipTrigger asChild>
+                <div className="inline-block">
+                    <ManagePetDialog>
+                        <button 
+                            className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
+                            disabled={hasReachedPetLimit}
+                        >
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Add New Pet
+                        </button>
+                    </ManagePetDialog>
+                </div>
+            </TooltipTrigger>
+            {hasReachedPetLimit && (
+                <TooltipContent>
+                    <p>Upgrade to Pro to add more pets.</p>
+                </TooltipContent>
+            )}
+        </Tooltip>
+    </TooltipProvider>
+  );
+
+  const AddPetCard = () => {
+    if(hasReachedPetLimit) {
+        return (
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Card className="h-full border-2 border-dashed bg-muted/20 cursor-not-allowed">
+                            <CardContent className="flex flex-col items-center justify-center h-full p-4">
+                                <div className="flex flex-col items-center justify-center text-muted-foreground/50">
+                                    {petAvatarDefault && <Image src={petAvatarDefault.imageUrl} alt="Default pet avatar" width={80} height={80} className="mb-4 opacity-60" />}
+                                    <PlusCircle className="h-10 w-10 mb-2" />
+                                    <p className="font-semibold text-center">Add New Pet</p>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                         <p>Upgrade to Pro to add more pets.</p>
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
+        );
+    }
+    return (
+        <ManagePetDialog>
+          <Card className="h-full border-2 border-dashed bg-transparent hover:border-primary hover:bg-muted/50 transition-colors duration-200 cursor-pointer">
+            <CardContent className="flex flex-col items-center justify-center h-full p-4">
+                <div className="flex flex-col items-center justify-center text-muted-foreground">
+                  {petAvatarDefault && <Image src={petAvatarDefault.imageUrl} alt="Default pet avatar" width={80} height={80} className="mb-4 opacity-60" />}
+                  <PlusCircle className="h-10 w-10 mb-2" />
+                  <p className="font-semibold text-center">Add New Pet</p>
+              </div>
+            </CardContent>
+          </Card>
+        </ManagePetDialog>
+    );
+  };
+
   return (
     <div className="container mx-auto max-w-4xl py-8 px-4 md:px-6">
       <div className="flex items-center justify-between mb-8">
@@ -72,12 +145,7 @@ export default function PetSelectionPage() {
             Choose a pet to view their mythic personas.
             </p>
         </div>
-        <ManagePetDialog>
-          <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2">
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Add New Pet
-          </button>
-        </ManagePetDialog>
+        <AddPetButton />
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -144,18 +212,10 @@ export default function PetSelectionPage() {
           </Card>
         ))}
         {/* Add new pet card */}
-        <ManagePetDialog>
-          <Card className="h-full border-2 border-dashed bg-transparent hover:border-primary hover:bg-muted/50 transition-colors duration-200 cursor-pointer">
-            <CardContent className="flex flex-col items-center justify-center h-full p-4">
-                <div className="flex flex-col items-center justify-center text-muted-foreground">
-                  {petAvatarDefault && <Image src={petAvatarDefault.imageUrl} alt="Default pet avatar" width={80} height={80} className="mb-4 opacity-60" />}
-                  <PlusCircle className="h-10 w-10 mb-2" />
-                  <p className="font-semibold text-center">Add New Pet</p>
-              </div>
-            </CardContent>
-          </Card>
-        </ManagePetDialog>
+        <AddPetCard />
       </div>
     </div>
   );
 }
+
+    

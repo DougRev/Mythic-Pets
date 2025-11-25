@@ -35,7 +35,7 @@ export function RegenerateImageDialog({ children, persona, pet, onRegenerationCo
     return doc(firestore, 'users', user.uid);
   }, [firestore, user]);
 
-  const { data: userProfile } = useDoc<any>(userProfileRef);
+  const { data: userProfile, refetch: refetchUserProfile } = useDoc<any>(userProfileRef);
 
   const handleGenerate = async () => {
     if (!user || !userProfileRef || !userProfile || !persona || !pet) {
@@ -43,7 +43,7 @@ export function RegenerateImageDialog({ children, persona, pet, onRegenerationCo
       return;
     }
     
-    if (userProfile.planType === 'free' && userProfile.regenerationCredits <= 0) {
+    if (userProfile.planType === 'free' && userProfile.generationCredits <= 0) {
         toast({
             variant: 'destructive',
             title: 'No Credits Left',
@@ -96,11 +96,12 @@ export function RegenerateImageDialog({ children, persona, pet, onRegenerationCo
 
         // Decrement credits for free users
         if (userProfile?.planType === 'free') {
-            await updateDoc(userProfileRef, { regenerationCredits: increment(-1) });
+            await updateDoc(userProfileRef, { generationCredits: increment(-1) });
         }
         
         toast({ title: 'Image Saved!', description: 'Your persona has a fresh new look.' });
         onRegenerationComplete();
+        refetchUserProfile();
         resetAndClose();
 
       } catch (error: any) {
@@ -129,7 +130,7 @@ export function RegenerateImageDialog({ children, persona, pet, onRegenerationCo
         <DialogTitle>Regenerate Persona Image</DialogTitle>
         <DialogDescription>
           Provide some feedback to guide the AI, then regenerate the image.
-          {userProfile?.planType === 'free' && ` You have ${userProfile.regenerationCredits || 0} credits remaining.`}
+          {userProfile?.planType === 'free' && ` You have ${userProfile.generationCredits || 0} credits remaining.`}
         </DialogDescription>
       </DialogHeader>
       <div className="space-y-4 py-4">
@@ -189,3 +190,5 @@ export function RegenerateImageDialog({ children, persona, pet, onRegenerationCo
     </Dialog>
   );
 }
+
+    

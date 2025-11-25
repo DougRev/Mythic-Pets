@@ -10,11 +10,19 @@ import { useAuth } from '@/hooks/useAuth';
 import { useCollection, useDoc } from '@/firebase';
 import { collection, doc, query } from 'firebase/firestore';
 import React from 'react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 export default function PersonaGalleryPage() {
   const params = useParams();
   const petId = params.petId as string;
   const { user, firestore } = useAuth();
+
+  const userProfileRef = React.useMemo(() => {
+    if (!user || !firestore) return null;
+    return doc(firestore, 'users', user.uid);
+  }, [firestore, user]);
+
+  const { data: userProfile, isLoading: isUserLoading } = useDoc<any>(userProfileRef);
 
   const petRef = React.useMemo(() => {
     if (!user || !firestore || !petId) return null;
@@ -30,12 +38,52 @@ export default function PersonaGalleryPage() {
 
   const { data: personas, isLoading: isPersonasLoading } = useCollection<any>(personasQuery);
 
-  if (isPetLoading) {
+  const isFreeTier = userProfile?.planType === 'free';
+  const hasReachedPersonaLimit = isFreeTier && personas && personas.length >= 2;
+
+  if (isPetLoading || isUserLoading) {
     return <div className="container mx-auto max-w-4xl py-8 px-4 md:px-6">Loading...</div>;
   }
 
   if (!pet) {
     return <div className="container mx-auto max-w-4xl py-8 px-4 md:px-6">Pet not found.</div>;
+  }
+
+  const AddPersonaCard = () => {
+    if (hasReachedPersonaLimit) {
+        return (
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Card className="h-full border-2 border-dashed bg-muted/20 cursor-not-allowed">
+                            <CardContent className="flex flex-col items-center justify-center h-full p-4">
+                                <div className="flex flex-col items-center justify-center text-muted-foreground/50">
+                                    <PlusCircle className="h-12 w-12 mb-4" />
+                                    <p className="font-semibold text-lg text-center">Create New Persona</p>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>Upgrade to Pro to create more personas.</p>
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
+        );
+    }
+
+    return (
+         <Link href={`/dashboard/pets/${petId}/create-persona`} className="group">
+            <Card className="h-full border-2 border-dashed bg-transparent hover:border-primary hover:bg-muted/50 transition-colors duration-200">
+              <CardContent className="flex flex-col items-center justify-center h-full p-4">
+                  <div className="flex flex-col items-center justify-center text-muted-foreground">
+                    <PlusCircle className="h-12 w-12 mb-4" />
+                    <p className="font-semibold text-lg text-center">Create New Persona</p>
+                </div>
+              </CardContent>
+            </Card>
+        </Link>
+    );
   }
 
   const renderContent = () => {
@@ -66,16 +114,7 @@ export default function PersonaGalleryPage() {
             </Card>
           </Link>
         ))}
-         <Link href={`/dashboard/pets/${petId}/create-persona`} className="group">
-            <Card className="h-full border-2 border-dashed bg-transparent hover:border-primary hover:bg-muted/50 transition-colors duration-200">
-              <CardContent className="flex flex-col items-center justify-center h-full p-4">
-                  <div className="flex flex-col items-center justify-center text-muted-foreground">
-                    <PlusCircle className="h-12 w-12 mb-4" />
-                    <p className="font-semibold text-lg text-center">Create New Persona</p>
-                </div>
-              </CardContent>
-            </Card>
-        </Link>
+        <AddPersonaCard />
       </div>
     );
   }
@@ -91,14 +130,29 @@ export default function PersonaGalleryPage() {
               Select a persona to see their stories or create a new one.
             </p>
         </div>
-        <Button asChild>
-          <Link href={`/dashboard/pets/${petId}/create-persona`}>
-             <PlusCircle className="mr-2 h-4 w-4" />
-             Create New Persona
-          </Link>
-        </Button>
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <div className="inline-block"> 
+                        <Button asChild disabled={hasReachedPersonaLimit}>
+                          <Link href={`/dashboard/pets/${petId}/create-persona`}>
+                             <PlusCircle className="mr-2 h-4 w-4" />
+                             Create New Persona
+                          </Link>
+                        </Button>
+                    </div>
+                </TooltipTrigger>
+                {hasReachedPersonaLimit && (
+                    <TooltipContent>
+                        <p>Upgrade to Pro to create more personas.</p>
+                    </TooltipContent>
+                )}
+            </Tooltip>
+        </TooltipProvider>
       </div>
       {renderContent()}
     </div>
   );
 }
+
+    
