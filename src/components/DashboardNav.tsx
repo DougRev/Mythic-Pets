@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookImage, User, PawPrint } from 'lucide-react';
+import { BookImage, PawPrint } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Tooltip,
@@ -14,7 +14,6 @@ import {
 const navItems = [
   { href: '/dashboard/pets', label: 'Pets', icon: PawPrint },
   { href: '/dashboard/gallery', label: 'Gallery', icon: BookImage },
-  { href: '/dashboard/account', label: 'Account', icon: User },
 ];
 
 export function DashboardNav() {
