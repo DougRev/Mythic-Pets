@@ -11,6 +11,13 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import {googleAI} from '@genkit-ai/google-genai';
+import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { initializeApp, getApps } from 'firebase-admin/app';
+
+if (!getApps().length) {
+    initializeApp();
+}
+const db = getFirestore();
 
 const ContinueAiStoryInputSchema = z.object({
   persona: z.string().describe("The pet's persona, including theme and lore."),
@@ -25,6 +32,7 @@ const ContinueAiStoryInputSchema = z.object({
   storyLength: z.string().describe("The desired total length of the story."),
   currentChapter: z.number().describe("The current chapter number."),
   prompt: z.string().optional().describe("Optional user prompt for creative direction for the next chapter."),
+  userId: z.string().describe('The ID of the user requesting the generation.'),
 });
 export type ContinueAiStoryInput = z.infer<typeof ContinueAiStoryInputSchema>;
 
@@ -95,6 +103,17 @@ const continueAiStoryFlow = ai.defineFlow(
     outputSchema: ContinueAiStoryOutputSchema,
   },
   async input => {
+    
+    const userRef = db.collection('users').doc(input.userId);
+    const userDoc = await userRef.get();
+    const userData = userDoc.data();
+
+    if (userData?.planType === 'free') {
+        if (userData.generationCredits <= 0) {
+            throw new Error('You have no generation credits remaining. Please upgrade to Pro.');
+        }
+    }
+
     // 1. Determine if this should be the final chapter
     let isFinalChapter = false;
     const storyLengthMap = { 'Short': 3, 'Medium': 5, 'Epic': 7 };
@@ -117,6 +136,13 @@ const continueAiStoryFlow = ai.defineFlow(
 
     if (!media?.url) {
       throw new Error('Failed to generate next chapter image.');
+    }
+    
+    // 4. Deduct credit after successful generation for free users
+    if (userData?.planType === 'free') {
+        await userRef.update({
+            generationCredits: FieldValue.increment(-1),
+        });
     }
 
     return {
