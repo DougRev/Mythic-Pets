@@ -47,7 +47,7 @@ export default function PetSelectionPage() {
   const petAvatarDefault = PlaceHolderImages.find(p => p.id === 'pet-avatar-default');
 
   const isFreeTier = userProfile?.planType === 'free';
-  const hasReachedPetLimit = isFreeTier && pets && pets.length >= 1;
+  const hasReachedPetLimit = !!(isFreeTier && pets && pets.length >= 1);
 
   const handleDeletePet = async (petId: string, petName: string) => {
     if (!user || !firestore || !storage) return;
@@ -217,5 +217,3 @@ export default function PetSelectionPage() {
     </div>
   );
 }
-
-    

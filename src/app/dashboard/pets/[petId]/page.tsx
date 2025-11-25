@@ -39,7 +39,7 @@ export default function PersonaGalleryPage() {
   const { data: personas, isLoading: isPersonasLoading } = useCollection<any>(personasQuery);
 
   const isFreeTier = userProfile?.planType === 'free';
-  const hasReachedPersonaLimit = isFreeTier && personas && personas.length >= 2;
+  const hasReachedPersonaLimit = !!(isFreeTier && personas && personas.length >= 2);
 
   if (isPetLoading || isUserLoading) {
     return <div className="container mx-auto max-w-4xl py-8 px-4 md:px-6">Loading...</div>;
@@ -154,5 +154,3 @@ export default function PersonaGalleryPage() {
     </div>
   );
 }
-
-    
