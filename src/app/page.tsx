@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { PawPrint, Shield, BookOpen, Share2, Star, Edit, RefreshCw } from 'lucide-react';
+import { PawPrint, Shield, BookOpen, Share2, Star, Edit, RefreshCw, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
@@ -70,20 +70,20 @@ const Hero = () => {
 const features = [
   {
     icon: Shield,
-    title: 'AI Persona Generation',
-    description: 'Transform pet photos into stunning AI art. Choose from themes like Superhero, Wizard, or Cyberpunk to create a unique persona.',
+    title: 'Create Mythic Personas',
+    description: 'Transform a photo of your pet into a stunning piece of art. Choose a theme and art style to generate a unique hero with their own backstory.',
     image: PlaceHolderImages.find(p => p.id === 'feature-persona'),
   },
   {
     icon: BookOpen,
-    title: 'AI Story Weaver',
-    description: 'Generate captivating, multi-chapter stories based on your pet\'s new persona. Select the tone and length, from a short adventure to an epic saga.',
+    title: 'Weave Epic Tales',
+    description: 'Generate captivating, multi-chapter stories based on your pet\'s new persona. You control the tone and length, from a short adventure to an epic saga.',
     image: PlaceHolderImages.find(p => p.id === 'feature-story'),
   },
   {
-    icon: RefreshCw,
+    icon: Sparkles,
     title: 'Regenerate & Refine',
-    description: 'Not happy with the result? Pro users can regenerate persona images, lore, and even individual chapter illustrations to get it just right.',
+    description: 'Not quite right? Pro users can regenerate persona images, lore, and even individual chapter illustrations to perfect their pet\'s legend.',
     image: PlaceHolderImages.find(p => p.id === 'feature-share'),
   },
 ];
@@ -154,7 +154,7 @@ const pricingTiers = [
             "Unlimited Personas",
             "Unlimited AI Generations",
             "Regenerate Images & Lore",
-            "High-Resolution Downloads"
+            "Regenerate Chapter Images",
         ],
         cta: "Go Pro",
         variant: "default" as const,
