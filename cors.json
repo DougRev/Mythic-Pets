@@ -1,6 +1,7 @@
 [
   {
     "origin": [
+      "https://mythic-pets.com",
       "https://6000-firebase-studio-1762786276024.cluster-ar5ykyjhlfetmwxm2nmwbrjbvm.cloudworkstations.dev",
       "http://localhost:9002",
       "https://*.firebaseapp.com",
