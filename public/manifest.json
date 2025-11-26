@@ -2,15 +2,20 @@
   "name": "Mythic Pets",
   "short_name": "Mythic Pets",
   "description": "Turn your pet into a legend with AI-powered personas and stories.",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#4f46e5",
   "icons": [
     {
-      "src": "/icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml"
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
     }
-  ]
+  ],
+  "theme_color": "#21293c",
+  "background_color": "#21293c",
+  "display": "standalone",
+  "start_url": "/"
 }
