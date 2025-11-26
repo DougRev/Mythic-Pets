@@ -6,6 +6,7 @@ import {
   signOut as firebaseSignOut,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  sendPasswordResetEmail as firebaseSendPasswordResetEmail,
   signInWithPopup,
   GoogleAuthProvider,
   OAuthProvider,
@@ -34,6 +35,7 @@ export const useAuth = (): FirebaseContextState & {
   signInWithEmail: (email: string, password: string) => Promise<any>;
   signInWithGoogle: () => Promise<any>;
   signInWithApple: () => Promise<any>;
+  sendPasswordResetEmail: (email: string) => Promise<void>;
   signOut: () => Promise<void>;
 } => {
   const context = useContext(FirebaseContext);
@@ -67,6 +69,10 @@ export const useAuth = (): FirebaseContextState & {
     return userCredential;
   };
 
+  const sendPasswordResetEmail = (email: string) => {
+    return firebaseSendPasswordResetEmail(auth, email);
+  };
+
   const signOut = () => {
     return firebaseSignOut(auth);
   };
@@ -77,8 +83,7 @@ export const useAuth = (): FirebaseContextState & {
     signInWithEmail,
     signInWithGoogle,
     signInWithApple,
+    sendPasswordResetEmail,
     signOut,
   };
 };
-
-    
