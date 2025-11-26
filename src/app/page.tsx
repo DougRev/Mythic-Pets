@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { PawPrint, Shield, BookOpen, Share2, Star } from 'lucide-react';
+import { PawPrint, Shield, BookOpen, Share2, Star, Edit, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
@@ -77,13 +77,13 @@ const features = [
   {
     icon: BookOpen,
     title: 'AI Story Weaver',
-    description: 'Generate captivating stories based on your pet\'s new persona. Select the tone and length, from a short post to a full tale.',
+    description: 'Generate captivating, multi-chapter stories based on your pet\'s new persona. Select the tone and length, from a short adventure to an epic saga.',
     image: PlaceHolderImages.find(p => p.id === 'feature-story'),
   },
   {
-    icon: Share2,
-    title: 'Share Your Saga',
-    description: 'Easily share your pet’s persona and stories on social media with pre-formatted captions and a unique "Remix" call to action.',
+    icon: RefreshCw,
+    title: 'Regenerate & Refine',
+    description: 'Not happy with the result? Pro users can regenerate persona images, lore, and even individual chapter illustrations to get it just right.',
     image: PlaceHolderImages.find(p => p.id === 'feature-share'),
   },
 ];
@@ -137,9 +137,9 @@ const pricingTiers = [
         description: "Get started and see what legends your pet can become.",
         features: [
             "1 Pet Profile",
-            "5 AI Persona Generations/mo",
-            "5 AI Story Generations/mo",
-            "Basic Sharing Options"
+            "2 AI Personas per Pet",
+            "5 Generation Credits per month",
+            "Create & Share Stories"
         ],
         cta: "Start for Free",
         variant: "secondary" as const,
@@ -151,10 +151,10 @@ const pricingTiers = [
         description: "For the ultimate storyteller and pet lover.",
         features: [
             "Unlimited Pet Profiles",
+            "Unlimited AI Personas",
             "Unlimited AI Generations",
-            "Advanced Story Editing",
-            "High-Resolution Downloads",
-            "Remove Watermarks"
+            "Regenerate Images & Lore",
+            "High-Resolution Downloads"
         ],
         cta: "Go Pro",
         variant: "default" as const,
