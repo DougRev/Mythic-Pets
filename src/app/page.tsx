@@ -137,7 +137,7 @@ const pricingTiers = [
         description: "Get started and see what legends your pet can become.",
         features: [
             "1 Pet Profile",
-            "2 AI Personas per Pet",
+            "2 Personas per Pet",
             "5 Generation Credits per month",
             "Create & Share Stories"
         ],
@@ -151,7 +151,7 @@ const pricingTiers = [
         description: "For the ultimate storyteller and pet lover.",
         features: [
             "Unlimited Pet Profiles",
-            "Unlimited AI Personas",
+            "Unlimited Personas",
             "Unlimited AI Generations",
             "Regenerate Images & Lore",
             "High-Resolution Downloads"
