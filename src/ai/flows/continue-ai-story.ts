@@ -87,14 +87,26 @@ const generateNextChapterImagePrompt = ai.definePrompt({
     }),
   },
   model: googleAI.model('gemini-2.5-flash-image-preview'),
-  prompt: `You are an expert illustrator for a storybook. Your task is to generate a scene based on the chapter text provided.
+  prompt: `You are an expert illustrator for a storybook. Your task is to generate a dynamic and immersive scene based on the chapter text provided.
 
   CRITICAL: The main character's appearance (breed, color, markings, etc.) MUST be consistent with the provided Persona Image. Use the Persona Image as the primary reference for the character. The art style of the generated image should also match the Persona Image.
+
+  IMPORTANT: The pose of the character and the environment should reflect the action, mood, and details described in the chapter text. Create a full scene, not just a portrait.
 
   Chapter Text: {{{chapterText}}}
   Persona Image: {{media url=personaImage}}`,
   config: {
     responseModalities: ['IMAGE'],
+    safetySettings: [
+        {
+          category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
+          threshold: 'BLOCK_ONLY_HIGH',
+        },
+        {
+          category: 'HARM_CATEGORY_HARASSMENT',
+          threshold: 'BLOCK_MEDIUM_AND_ABOVE',
+        },
+    ]
   },
 });
 
@@ -131,10 +143,14 @@ const continueAiStoryFlow = ai.defineFlow(
     }
 
     // 3. Generate chapter image based on the new text
-    const { media } = await generateNextChapterImagePrompt({
+    const { media, finishReason, "safety-ratings": safetyRatings } = await generateNextChapterImagePrompt({
         chapterText: textOutput.chapterText,
         personaImage: input.personaImage
     });
+    
+    if (finishReason === 'BLOCKED' && safetyRatings && safetyRatings.length > 0) {
+        throw new Error('Image generation was blocked due to safety guidelines. Please try a different creative direction.');
+    }
 
     if (!media?.url) {
       throw new Error('Failed to generate next chapter image.');
