@@ -12,10 +12,13 @@ import {
   OAuthProvider,
   updateProfile,
   User,
+  getAdditionalUserInfo,
 } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 
-async function createUserProfile(firestore: any, user: User) {
+async function createUserProfile(firestore: any, user: User, isNewUser: boolean) {
+    if (!isNewUser) return; // Only create profile for new users
+
     const userProfileRef = doc(firestore, "users", user.uid);
     const profileData = {
         id: user.uid,
@@ -27,6 +30,7 @@ async function createUserProfile(firestore: any, user: User) {
         planType: 'free',
         generationCredits: 5,
     };
+    // Use setDoc with merge:true to avoid overwriting existing data if somehow called twice
     await setDoc(userProfileRef, profileData, { merge: true });
 }
 
@@ -47,7 +51,8 @@ export const useAuth = (): FirebaseContextState & {
   const signUpWithEmail = async (email: string, password: string, displayName: string) => {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(userCredential.user, { displayName });
-    await createUserProfile(firestore, userCredential.user);
+    // It's a new user, so pass true
+    await createUserProfile(firestore, userCredential.user, true);
     return userCredential;
   };
 
@@ -55,18 +60,22 @@ export const useAuth = (): FirebaseContextState & {
     return signInWithEmailAndPassword(auth, email, password);
   };
 
+  const handleSocialSignIn = async (provider: GoogleAuthProvider | OAuthProvider) => {
+    const userCredential = await signInWithPopup(auth, provider);
+    const additionalInfo = getAdditionalUserInfo(userCredential);
+    // Use the isNewUser flag from additionalInfo to decide whether to create a profile
+    await createUserProfile(firestore, userCredential.user, !!additionalInfo?.isNewUser);
+    return userCredential;
+  };
+
   const signInWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
-    const userCredential = await signInWithPopup(auth, provider);
-    await createUserProfile(firestore, userCredential.user);
-    return userCredential;
+    return handleSocialSignIn(provider);
   };
 
   const signInWithApple = async () => {
     const provider = new OAuthProvider('apple.com');
-    const userCredential = await signInWithPopup(auth, provider);
-    await createUserProfile(firestore, userCredential.user);
-    return userCredential;
+    return handleSocialSignIn(provider);
   };
 
   const sendPasswordResetEmail = (email: string) => {

@@ -86,15 +86,15 @@ export default function SignupPage() {
       } else {
         await signInWithApple();
       }
-      // Let the useEffect handle the redirect
+      // Successful login will be handled by the useEffect hook which redirects to dashboard.
     } catch (error: any) {
-      // Don't show toast for user closing popup
-      if (error.code !== 'auth/popup-closed-by-user') {
-          toast({
-            variant: "destructive",
-            title: "Sign-up Failed",
-            description: "Could not sign up. Please try again.",
-          });
+      // Avoid showing a toast if the user intentionally closes the popup.
+      if (error.code !== 'auth/popup-closed-by-user' && error.code !== 'auth/cancelled-popup-request') {
+        toast({
+          variant: "destructive",
+          title: "Sign-up Failed",
+          description: "Could not sign up with the selected provider. Please try again.",
+        });
       }
     } finally {
       setSocialLoading(null);
