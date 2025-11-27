@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -69,18 +70,21 @@ const regenerateChapterImageFlow = ai.defineFlow(
     outputSchema: RegenerateChapterImageOutputSchema,
   },
   async input => {
-    const { media, finishReason, "safety-ratings": safetyRatings } = await regenerateImagePrompt(input);
+    const imageGenResponse = await regenerateImagePrompt(input);
     
+    const finishReason = imageGenResponse.finishReason;
+    const safetyRatings = imageGenResponse.usage?.safetyRatings;
+
     if (finishReason === 'BLOCKED' && safetyRatings && safetyRatings.length > 0) {
         throw new Error('Image generation was blocked due to safety guidelines. Please try a different creative direction.');
     }
 
-    if (!media?.url) {
+    if (!imageGenResponse.media?.url) {
         throw new Error('Failed to regenerate chapter image. The AI did not return an image.');
     }
 
     return {
-      newImageUrl: media.url,
+      newImageUrl: imageGenResponse.media.url,
     };
   }
 );

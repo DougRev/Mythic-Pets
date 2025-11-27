@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -133,16 +134,19 @@ const generateAiStoryFlow = ai.defineFlow(
     }
 
     // 2. Generate chapter image based on the generated text
-    const { media, finishReason, "safety-ratings": safetyRatings  } = await generateImagePrompt({
+    const imageGenResponse = await generateImagePrompt({
         chapterText: textOutput.chapterText,
         personaImage: input.personaImage
     });
 
+    const finishReason = imageGenResponse.finishReason;
+    const safetyRatings = imageGenResponse.usage?.safetyRatings;
+    
     if (finishReason === 'BLOCKED' && safetyRatings && safetyRatings.length > 0) {
         throw new Error('Image generation was blocked due to safety guidelines. Please try a different creative direction.');
     }
     
-    if (!media?.url) {
+    if (!imageGenResponse.media?.url) {
       throw new Error('Failed to generate chapter image.');
     }
     
@@ -157,7 +161,7 @@ const generateAiStoryFlow = ai.defineFlow(
       title: textOutput.title,
       chapterTitle: textOutput.chapterTitle,
       chapterText: textOutput.chapterText,
-      chapterImage: media.url,
+      chapterImage: imageGenResponse.media.url,
     };
   }
 );
