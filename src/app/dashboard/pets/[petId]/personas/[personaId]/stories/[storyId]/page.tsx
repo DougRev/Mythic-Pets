@@ -8,7 +8,7 @@ import { useCollection, useDoc } from '@/firebase';
 import { doc, collection, query, orderBy, addDoc, updateDoc, writeBatch, deleteField } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { ArrowLeft, Loader2, Wand2, CheckCircle2, UploadCloud, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Loader2, Wand2, CheckCircle2, UploadCloud, RefreshCw, Gem } from 'lucide-react';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 import { continueAiStory } from '@/ai/flows/continue-ai-story';
@@ -19,6 +19,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { RegenerateChapterImageDialog } from '@/components/RegenerateChapterImageDialog';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 
 export default function StoryDetailsPage() {
@@ -57,12 +58,18 @@ export default function StoryDetailsPage() {
     if(!storyRef) return null;
     return query(collection(storyRef, 'chapters'), orderBy('chapterNumber'));
   }, [storyRef]);
+  
+  const userProfileRef = React.useMemo(() => {
+    if (!user || !firestore) return null;
+    return doc(firestore, 'users', user.uid);
+  }, [firestore, user]);
 
   // Data fetching
   const { data: pet, isLoading: isPetLoading } = useDoc<any>(petRef);
   const { data: persona, isLoading: isPersonaLoading } = useDoc<any>(personaRef);
   const { data: story, isLoading: isStoryLoading, refetch: refetchStory } = useDoc<any>(storyRef);
   const { data: chapters, isLoading: areChaptersLoading, refetch: refetchChapters } = useCollection<any>(chaptersQuery);
+  const { data: userProfile, isLoading: isProfileLoading } = useDoc<any>(userProfileRef);
 
   useEffect(() => {
     if (story) {
@@ -223,7 +230,7 @@ export default function StoryDetailsPage() {
       });
   };
   
-  if (isStoryLoading || areChaptersLoading || isPetLoading || isPersonaLoading) {
+  if (isStoryLoading || areChaptersLoading || isPetLoading || isPersonaLoading || isProfileLoading) {
     return <div className="flex h-screen items-center justify-center">Loading story...</div>;
   }
 
@@ -238,6 +245,69 @@ export default function StoryDetailsPage() {
   }
 
   const isStoryCompleted = story.status === 'completed';
+  const isFreeTier = userProfile?.planType === 'free';
+  const hasNoCredits = isFreeTier && userProfile?.generationCredits <= 0;
+
+  const NextChapterButton = () => {
+    const button = (
+        <Button disabled={isGenerating || hasNoCredits}>
+            <Wand2 className="mr-2" /> Generate Next Chapter
+        </Button>
+    );
+
+    if (!isStoryCompleted) {
+        return (
+            <Dialog open={isGenerateDialogOpen} onOpenChange={setGenerateDialogOpen}>
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <div className="w-full cursor-pointer">
+                                <DialogTrigger asChild>
+                                    {button}
+                                </DialogTrigger>
+                            </div>
+                        </TooltipTrigger>
+                        {hasNoCredits && (
+                        <TooltipContent>
+                            <p className="flex items-center gap-2"><Gem className="h-4 w-4"/> Upgrade to Pro for unlimited generations.</p>
+                        </TooltipContent>
+                        )}
+                    </Tooltip>
+                </TooltipProvider>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Generate Next Chapter</DialogTitle>
+                        <DialogDescription>
+                            Add some creative direction for the next chapter, or leave it blank for the AI to decide.
+                            {isFreeTier && ` You have ${userProfile.generationCredits} credits remaining.`}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4 space-y-2">
+                        <Label htmlFor="creative-prompt">Creative Direction (Optional)</Label>
+                        <Textarea
+                            id="creative-prompt"
+                            value={creativePrompt}
+                            onChange={(e) => setCreativePrompt(e.target.value)}
+                            placeholder="e.g., Introduce a mysterious new character..."
+                            rows={4}
+                        />
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setGenerateDialogOpen(false)}>Cancel</Button>
+                        <Button onClick={handleGenerateNextChapter} disabled={isGenerating}>
+                            {isGenerating ? (
+                                <><Loader2 className="mr-2 animate-spin" /> Generating...</>
+                            ) : (
+                                <><Wand2 className="mr-2" /> Generate</>
+                            )}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        )
+    }
+    return null;
+  }
 
   return (
     <div className="container mx-auto max-w-4xl py-8 px-4 md:px-6">
@@ -309,43 +379,7 @@ export default function StoryDetailsPage() {
                     Next Chapter
                 </Button>
             </div>
-            {!isStoryCompleted && (
-                 <Dialog open={isGenerateDialogOpen} onOpenChange={setGenerateDialogOpen}>
-                    <DialogTrigger asChild>
-                        <Button disabled={isGenerating}>
-                            <Wand2 className="mr-2" /> Generate Next Chapter
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Generate Next Chapter</DialogTitle>
-                            <DialogDescription>
-                                Add some creative direction for the next chapter, or leave it blank for the AI to decide.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <div className="py-4 space-y-2">
-                            <Label htmlFor="creative-prompt">Creative Direction (Optional)</Label>
-                            <Textarea
-                                id="creative-prompt"
-                                value={creativePrompt}
-                                onChange={(e) => setCreativePrompt(e.target.value)}
-                                placeholder="e.g., Introduce a mysterious new character..."
-                                rows={4}
-                            />
-                        </div>
-                        <DialogFooter>
-                            <Button variant="outline" onClick={() => setGenerateDialogOpen(false)}>Cancel</Button>
-                            <Button onClick={handleGenerateNextChapter} disabled={isGenerating}>
-                                {isGenerating ? (
-                                    <><Loader2 className="mr-2 animate-spin" /> Generating...</>
-                                ) : (
-                                    <><Wand2 className="mr-2" /> Generate</>
-                                )}
-                            </Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
-            )}
+            <NextChapterButton />
              {isStoryCompleted && !story.publishedStoryId && (
                 <Button onClick={handlePublish} disabled={isPublishing}>
                    {isPublishing ? (

@@ -6,7 +6,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { ArrowLeft, Wand2, Loader2 } from 'lucide-react';
+import { ArrowLeft, Wand2, Loader2, Gem } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -42,6 +42,7 @@ import { generateAiPersona } from '@/ai/flows/generate-ai-persona';
 import { uploadFile } from '@/firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
 import { Input } from '@/components/ui/input';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const themes = [
   'Superhero',
@@ -109,8 +110,14 @@ export default function CreatePersonaPage() {
     if (!user || !firestore || !petId) return null;
     return doc(firestore, 'users', user.uid, 'petProfiles', petId);
   }, [firestore, user, petId]);
+  
+  const userProfileRef = React.useMemo(() => {
+    if (!user || !firestore) return null;
+    return doc(firestore, 'users', user.uid);
+  }, [firestore, user]);
 
   const { data: pet, isLoading: isPetLoading } = useDoc<any>(petRef);
+  const { data: userProfile, isLoading: isProfileLoading } = useDoc<any>(userProfileRef);
 
   const form = useForm<PersonaFormValues>({
     resolver: zodResolver(personaFormSchema),
@@ -195,12 +202,44 @@ export default function CreatePersonaPage() {
     }
   };
 
-  if (isPetLoading) {
+  if (isPetLoading || isProfileLoading) {
     return <div className="flex h-screen items-center justify-center">Loading pet details...</div>;
   }
 
   if (!pet) {
     return <div className="flex h-screen items-center justify-center">Pet not found.</div>;
+  }
+
+  const isFreeTier = userProfile?.planType === 'free';
+  const hasNoCredits = isFreeTier && userProfile?.generationCredits <= 0;
+
+  const GenerateButton = () => {
+      const button = (
+        <Button type="submit" disabled={isGenerating || hasNoCredits} className="w-full">
+            {isGenerating ? (
+            <><Loader2 className="mr-2 animate-spin" /> Generating...</>
+            ) : (
+            <><Wand2 className="mr-2" /> Generate Persona</>
+            )}
+        </Button>
+      );
+
+      if (hasNoCredits) {
+          return (
+              <TooltipProvider>
+                  <Tooltip>
+                      <TooltipTrigger asChild>
+                          <div className="w-full cursor-not-allowed">{button}</div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                          <p className="flex items-center gap-2"><Gem className="h-4 w-4"/> Upgrade to Pro for unlimited generations.</p>
+                      </TooltipContent>
+                  </Tooltip>
+              </TooltipProvider>
+          )
+      }
+      
+      return button;
   }
 
 
@@ -235,6 +274,7 @@ export default function CreatePersonaPage() {
                 <CardTitle>Create a New Persona</CardTitle>
                 <CardDescription>
                     Define a new mythic identity for {pet.name}.
+                    {isFreeTier && ` You have ${userProfile.generationCredits} credits remaining.`}
                 </CardDescription>
                 </CardHeader>
                 <Form {...form}>
@@ -346,13 +386,7 @@ export default function CreatePersonaPage() {
                     />
                     </CardContent>
                     <CardFooter>
-                    <Button type="submit" disabled={isGenerating} className="w-full">
-                        {isGenerating ? (
-                        <><Loader2 className="mr-2 animate-spin" /> Generating...</>
-                        ) : (
-                        <><Wand2 className="mr-2" /> Generate Persona</>
-                        )}
-                    </Button>
+                        <GenerateButton />
                     </CardFooter>
                 </form>
                 </Form>

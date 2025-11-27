@@ -4,16 +4,17 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import { useAuth } from '@/hooks/useAuth';
 import { useDoc } from '@/firebase';
-import { doc, updateDoc, increment } from 'firebase/firestore';
+import { doc, updateDoc } from 'firebase/firestore';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Wand2, Save, XCircle } from 'lucide-react';
+import { Loader2, Wand2, Save, XCircle, Gem } from 'lucide-react';
 import { regenerateAiImage } from '@/ai/flows/regenerate-image';
 import { uploadFile } from '@/firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 
 interface RegenerateImageDialogProps {
   children: React.ReactNode;
@@ -36,20 +37,14 @@ export function RegenerateImageDialog({ children, persona, pet, onRegenerationCo
   }, [firestore, user]);
 
   const { data: userProfile, refetch: refetchUserProfile } = useDoc<any>(userProfileRef);
+  
+  const isFreeTier = userProfile?.planType === 'free';
+  const hasNoCredits = isFreeTier && userProfile?.generationCredits <= 0;
 
   const handleGenerate = async () => {
     if (!user || !userProfileRef || !userProfile || !persona || !pet) {
       toast({ variant: 'destructive', title: 'Error', description: 'Missing required data to regenerate.' });
       return;
-    }
-    
-    if (userProfile.planType === 'free' && userProfile.generationCredits <= 0) {
-        toast({
-            variant: 'destructive',
-            title: 'No Credits Left',
-            description: 'Please upgrade to a Pro plan for more regenerations.',
-        });
-        return;
     }
 
     setIsGenerating(true);
@@ -61,6 +56,7 @@ export function RegenerateImageDialog({ children, persona, pet, onRegenerationCo
             imageStyle: persona.imageStyle,
             originalImageUrl: persona.imageUrl,
             feedback: feedback || 'Regenerate the image to be better.',
+            userId: user.uid,
         });
 
         if (!result.newImageUrl) {
@@ -94,11 +90,6 @@ export function RegenerateImageDialog({ children, persona, pet, onRegenerationCo
         const personaRef = doc(firestore, 'users', user.uid, 'petProfiles', pet.id, 'aiPersonas', persona.id);
         await updateDoc(personaRef, { imageUrl: finalImageUrl });
 
-        // Decrement credits for free users
-        if (userProfile?.planType === 'free') {
-            await updateDoc(userProfileRef, { generationCredits: increment(-1) });
-        }
-        
         toast({ title: 'Image Saved!', description: 'Your persona has a fresh new look.' });
         onRegenerationComplete();
         refetchUserProfile();
@@ -130,7 +121,7 @@ export function RegenerateImageDialog({ children, persona, pet, onRegenerationCo
         <DialogTitle>Regenerate Persona Image</DialogTitle>
         <DialogDescription>
           Provide some feedback to guide the AI, then regenerate the image.
-          {userProfile?.planType === 'free' && ` You have ${userProfile.generationCredits || 0} credits remaining.`}
+          {isFreeTier && ` You have ${userProfile.generationCredits || 0} credits remaining.`}
         </DialogDescription>
       </DialogHeader>
       <div className="space-y-4 py-4">
@@ -145,9 +136,22 @@ export function RegenerateImageDialog({ children, persona, pet, onRegenerationCo
       </div>
       <DialogFooter>
         <Button variant="outline" onClick={resetAndClose}>Cancel</Button>
-        <Button onClick={handleGenerate} disabled={isGenerating}>
-          {isGenerating ? <><Loader2 className="mr-2 animate-spin" /> Generating...</> : <><Wand2 className="mr-2" /> Regenerate</>}
-        </Button>
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <div className="cursor-not-allowed">
+                        <Button onClick={handleGenerate} disabled={isGenerating || hasNoCredits}>
+                            {isGenerating ? <><Loader2 className="mr-2 animate-spin" /> Generating...</> : <><Wand2 className="mr-2" /> Regenerate</>}
+                        </Button>
+                    </div>
+                </TooltipTrigger>
+                {hasNoCredits && (
+                    <TooltipContent>
+                        <p className="flex items-center gap-2"><Gem className="h-4 w-4"/> Upgrade to Pro for unlimited generations.</p>
+                    </TooltipContent>
+                )}
+            </Tooltip>
+        </TooltipProvider>
       </DialogFooter>
     </>
   );
@@ -157,7 +161,7 @@ export function RegenerateImageDialog({ children, persona, pet, onRegenerationCo
       <DialogHeader>
         <DialogTitle>Review New Image</DialogTitle>
         <DialogDescription>
-          Do you want to save this new image or discard it?
+          Do you want to save this new image or discard it? Saving will use one generation credit for Free Tier users.
         </DialogDescription>
       </DialogHeader>
       <div className="grid grid-cols-2 gap-4 py-4">
@@ -190,5 +194,3 @@ export function RegenerateImageDialog({ children, persona, pet, onRegenerationCo
     </Dialog>
   );
 }
-
-    

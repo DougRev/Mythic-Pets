@@ -3,14 +3,15 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useDoc } from '@/firebase';
-import { doc, updateDoc, increment } from 'firebase/firestore';
+import { doc, updateDoc } from 'firebase/firestore';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Wand2, Save, XCircle } from 'lucide-react';
+import { Loader2, Wand2, Save, XCircle, Gem } from 'lucide-react';
 import { regenerateAiLore } from '@/ai/flows/regenerate-lore';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 
 interface RegenerateLoreDialogProps {
   children: React.ReactNode;
@@ -34,21 +35,15 @@ export function RegenerateLoreDialog({ children, persona, pet, onRegenerationCom
 
   const { data: userProfile, refetch: refetchUserProfile } = useDoc<any>(userProfileRef);
 
+  const isFreeTier = userProfile?.planType === 'free';
+  const hasNoCredits = isFreeTier && userProfile?.generationCredits <= 0;
+
   const handleGenerate = async () => {
     if (!user || !userProfileRef || !userProfile || !persona || !pet) {
       toast({ variant: 'destructive', title: 'Error', description: 'Missing required data to regenerate.' });
       return;
     }
     
-    if (userProfile.planType === 'free' && userProfile.generationCredits <= 0) {
-        toast({
-            variant: 'destructive',
-            title: 'No Credits Left',
-            description: 'Please upgrade to a Pro plan for more regenerations.',
-        });
-        return;
-    }
-
     setIsGenerating(true);
     setNewLore(null);
     try {
@@ -56,6 +51,7 @@ export function RegenerateLoreDialog({ children, persona, pet, onRegenerationCom
             petName: pet.name,
             theme: persona.theme,
             feedback: feedback || 'Make the lore more exciting and detailed.',
+            userId: user.uid,
         });
 
         if (!result.newLoreText) {
@@ -84,11 +80,6 @@ export function RegenerateLoreDialog({ children, persona, pet, onRegenerationCom
         // Update the persona document
         const personaRef = doc(firestore, 'users', user.uid, 'petProfiles', pet.id, 'aiPersonas', persona.id);
         await updateDoc(personaRef, { loreText: newLore });
-
-        // Decrement credits for free users
-        if (userProfile?.planType === 'free') {
-            await updateDoc(userProfileRef, { generationCredits: increment(-1) });
-        }
         
         toast({ title: 'Lore Saved!', description: 'Your persona has a fresh new backstory.' });
         onRegenerationComplete();
@@ -121,7 +112,7 @@ export function RegenerateLoreDialog({ children, persona, pet, onRegenerationCom
         <DialogTitle>Regenerate Persona Lore</DialogTitle>
         <DialogDescription>
           Provide some feedback to guide the AI, then regenerate the lore.
-          {userProfile?.planType === 'free' && ` You have ${userProfile.generationCredits || 0} credits remaining.`}
+          {isFreeTier && ` You have ${userProfile.generationCredits || 0} credits remaining.`}
         </DialogDescription>
       </DialogHeader>
       <div className="space-y-4 py-4">
@@ -136,9 +127,22 @@ export function RegenerateLoreDialog({ children, persona, pet, onRegenerationCom
       </div>
       <DialogFooter>
         <Button variant="outline" onClick={resetAndClose}>Cancel</Button>
-        <Button onClick={handleGenerate} disabled={isGenerating}>
-          {isGenerating ? <><Loader2 className="mr-2 animate-spin" /> Generating...</> : <><Wand2 className="mr-2" /> Regenerate</>}
-        </Button>
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <div className="cursor-not-allowed">
+                        <Button onClick={handleGenerate} disabled={isGenerating || hasNoCredits}>
+                        {isGenerating ? <><Loader2 className="mr-2 animate-spin" /> Generating...</> : <><Wand2 className="mr-2" /> Regenerate</>}
+                        </Button>
+                    </div>
+                </TooltipTrigger>
+                {hasNoCredits && (
+                    <TooltipContent>
+                        <p className="flex items-center gap-2"><Gem className="h-4 w-4"/> Upgrade to Pro for unlimited generations.</p>
+                    </TooltipContent>
+                )}
+            </Tooltip>
+        </TooltipProvider>
       </DialogFooter>
     </>
   );
@@ -148,7 +152,7 @@ export function RegenerateLoreDialog({ children, persona, pet, onRegenerationCom
       <DialogHeader>
         <DialogTitle>Review New Lore</DialogTitle>
         <DialogDescription>
-          Do you want to save this new lore or discard it?
+          Do you want to save this new lore or discard it? Saving will use one generation credit for Free Tier users.
         </DialogDescription>
       </DialogHeader>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4 max-h-[50vh] overflow-y-auto">
@@ -181,5 +185,3 @@ export function RegenerateLoreDialog({ children, persona, pet, onRegenerationCom
     </Dialog>
   );
 }
-
-    

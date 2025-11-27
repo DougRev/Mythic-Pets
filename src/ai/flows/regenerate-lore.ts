@@ -11,11 +11,19 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import {googleAI} from '@genkit-ai/google-genai';
+import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { initializeApp, getApps, applicationDefault } from 'firebase-admin/app';
+
+if (!getApps().length) {
+    initializeApp({ credential: applicationDefault() });
+}
+const db = getFirestore();
 
 const RegenerateAiLoreInputSchema = z.object({
   petName: z.string().describe('The name of the pet.'),
   theme: z.string().describe('The narrative theme for the AI persona (e.g., Superhero, Detective, Knight).'),
   feedback: z.string().describe('User feedback or specific direction for the new lore.'),
+  userId: z.string().describe('The ID of the user requesting the regeneration.'),
 });
 export type RegenerateAiLoreInput = z.infer<typeof RegenerateAiLoreInputSchema>;
 
@@ -50,10 +58,28 @@ const regenerateAiLoreFlow = ai.defineFlow(
     outputSchema: RegenerateAiLoreOutputSchema,
   },
   async input => {
+
+    const userRef = db.collection('users').doc(input.userId);
+    const userDoc = await userRef.get();
+    const userData = userDoc.data();
+
+    if (userData?.planType === 'free') {
+        if (userData.generationCredits <= 0) {
+            throw new Error('You have no generation credits remaining. Please upgrade to Pro.');
+        }
+    }
+
     const { output } = await regenerateLorePrompt(input);
     
     if (!output) {
         throw new Error('Failed to regenerate persona lore. The AI did not return any text.');
+    }
+    
+    // Deduct credit after successful generation for free users
+    if (userData?.planType === 'free') {
+        await userRef.update({
+            generationCredits: FieldValue.increment(-1),
+        });
     }
 
     return {

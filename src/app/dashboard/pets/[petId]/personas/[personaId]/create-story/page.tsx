@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { ArrowLeft, Wand2, Loader2 } from 'lucide-react';
+import { ArrowLeft, Wand2, Loader2, Gem } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -41,6 +41,7 @@ import { doc, addDoc, collection } from 'firebase/firestore';
 import { generateAiStory } from '@/ai/flows/generate-ai-story';
 import { uploadFile } from '@/firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const storyFormSchema = z.object({
   tone: z.string({
@@ -78,9 +79,15 @@ export default function CreateStoryPage() {
     if (!petRef || !personaId) return null;
     return doc(petRef, 'aiPersonas', personaId);
   }, [petRef, personaId]);
+  
+  const userProfileRef = React.useMemo(() => {
+    if (!user || !firestore) return null;
+    return doc(firestore, 'users', user.uid);
+  }, [firestore, user]);
 
   const { data: pet, isLoading: isPetLoading } = useDoc<any>(petRef);
   const { data: persona, isLoading: isPersonaLoading } = useDoc<any>(personaRef);
+  const { data: userProfile, isLoading: isProfileLoading } = useDoc<any>(userProfileRef);
 
   const form = useForm<StoryFormValues>({
     resolver: zodResolver(storyFormSchema),
@@ -166,12 +173,44 @@ export default function CreateStoryPage() {
     }
   };
 
-  if (isPetLoading || isPersonaLoading) {
+  if (isPetLoading || isPersonaLoading || isProfileLoading) {
     return <div className="flex h-screen items-center justify-center">Loading...</div>;
   }
 
   if (!pet || !persona) {
     return <div className="flex h-screen items-center justify-center">Pet or Persona not found.</div>;
+  }
+  
+  const isFreeTier = userProfile?.planType === 'free';
+  const hasNoCredits = isFreeTier && userProfile?.generationCredits <= 0;
+
+  const GenerateButton = () => {
+    const button = (
+        <Button type="submit" disabled={isGenerating || hasNoCredits} className="w-full">
+            {isGenerating ? (
+            <><Loader2 className="mr-2 animate-spin" /> Generating Story...</>
+            ) : (
+            <><Wand2 className="mr-2" /> Generate Story</>
+            )}
+        </Button>
+    );
+
+    if (hasNoCredits) {
+        return (
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <div className="w-full cursor-not-allowed">{button}</div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p className="flex items-center gap-2"><Gem className="h-4 w-4"/> Upgrade to Pro for unlimited generations.</p>
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
+        );
+    }
+
+    return button;
   }
 
   return (
@@ -188,6 +227,7 @@ export default function CreateStoryPage() {
           <CardTitle>Create a New Story</CardTitle>
           <CardDescription>
             Generate the first chapter of a new tale for {pet.name} as the {persona.theme}.
+            {isFreeTier && ` You have ${userProfile.generationCredits} credits remaining.`}
           </CardDescription>
         </CardHeader>
         <Form {...form}>
@@ -265,13 +305,7 @@ export default function CreateStoryPage() {
               />
             </CardContent>
             <CardFooter>
-              <Button type="submit" disabled={isGenerating} className="w-full">
-                {isGenerating ? (
-                  <><Loader2 className="mr-2 animate-spin" /> Generating Story...</>
-                ) : (
-                  <><Wand2 className="mr-2" /> Generate Story</>
-                )}
-              </Button>
+              <GenerateButton />
             </CardFooter>
           </form>
         </Form>
