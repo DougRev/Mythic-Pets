@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -52,8 +53,7 @@ export default function AccountPage() {
         return;
     };
     
-    // Also covers users who have canceled and are pending expiry
-    if (userProfile?.planType === 'pro') {
+    if (userProfile?.planType === 'pro' && userProfile?.subscriptionStatus !== 'canceled') {
         toast({ title: 'Already a Pro', description: 'You are already on the Pro plan.' });
         return;
     }
@@ -103,12 +103,16 @@ export default function AccountPage() {
   };
   
   const renderSubscriptionInfo = () => {
-    if (isProfileLoading) {
-      return <p>Loading subscription details...</p>;
+    if (isProfileLoading || !userProfile) {
+      return {
+        title: 'Loading Plan...',
+        description: 'Loading your subscription details...',
+        button: <Button disabled><Loader2 className="animate-spin" /></Button>
+      };
     }
     
     const isPro = userProfile.planType === 'pro';
-    const isCanceled = userProfile.subscriptionStatus === 'canceled' || userProfile.subscriptionStatus === 'trialing';
+    const isCanceled = userProfile.subscriptionStatus === 'canceled';
 
     if (isPro) {
         const periodEndDate = userProfile.subscriptionPeriodEnd 
@@ -154,7 +158,17 @@ export default function AccountPage() {
   }
   
   if (isProfileLoading || !userProfile) {
-    return <div className="container mx-auto max-w-2xl py-8 px-4 md:px-6">Loading account details...</div>;
+    return (
+      <div className="container mx-auto max-w-2xl py-8 px-4 md:px-6">
+          <div className="space-y-4 mb-8">
+            <h1 className="font-headline text-3xl font-bold tracking-tight sm:text-4xl">Account Settings</h1>
+            <p className="text-lg text-muted-foreground">
+              Manage your profile and subscription.
+            </p>
+          </div>
+          <p>Loading account details...</p>
+      </div>
+    );
   }
   
   const subscriptionInfo = renderSubscriptionInfo();
