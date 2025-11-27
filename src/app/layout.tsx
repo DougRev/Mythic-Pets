@@ -25,7 +25,6 @@ export default function RootLayout({
         <link rel="icon" type="image/png" sizes="32x32" href="/logo/favicon-32x32.png" />
         <link rel="icon" type="image/png" sizes="16x16" href="/logo/favicon-16x16.png" />
         <link rel="icon" href="/icon.svg" type="image/svg+xml" />
-        <link rel="icon" href="/favicon.ico" sizes="any" />
       </head>
       <body className="font-body antialiased">
         <FirebaseClientProvider>
