@@ -1,0 +1,466 @@
+{
+  "entities": {
+    "UserProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserProfile",
+      "type": "object",
+      "description": "Represents a user profile in the Mythic Pets application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UserProfile entity."
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the user.",
+          "format": "email"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Display name of the user."
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "URL of the user's profile photo, if available.",
+          "format": "uri"
+        },
+        "creationDate": {
+          "type": "string",
+          "description": "Date and time when the user profile was created.",
+          "format": "date-time"
+        },
+        "lastLogin": {
+          "type": "string",
+          "description": "Date and time of the user's last login.",
+          "format": "date-time"
+        },
+        "planType": {
+          "type": "string",
+          "description": "Type of subscription plan the user has (e.g., 'free', 'pro')."
+        },
+        "generationCredits": {
+          "type": "number",
+          "description": "Number of generation credits available for the user."
+        },
+        "stripeCustomerId": {
+          "type": "string",
+          "description": "The user's Stripe Customer ID."
+        },
+        "subscriptionStatus": {
+            "type": "string",
+            "description": "The status of the user's Stripe subscription (e.g., 'active', 'canceled')."
+        },
+        "subscriptionPeriodEnd": {
+            "type": "number",
+            "description": "The Unix timestamp for when the current subscription period ends."
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "displayName",
+        "creationDate",
+        "lastLogin",
+        "planType",
+        "generationCredits"
+      ]
+    },
+    "PetProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "PetProfile",
+      "type": "object",
+      "description": "Represents a pet profile in the Mythic Pets application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the PetProfile entity."
+        },
+        "userProfileId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N PetProfile)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the pet."
+        },
+        "breed": {
+          "type": "string",
+          "description": "Breed of the pet."
+        },
+        "age": {
+          "type": "number",
+          "description": "Age of the pet (in years or months)."
+        },
+        "species": {
+          "type": "string",
+          "description": "Species of the pet (e.g., 'dog', 'cat', 'bird')."
+        },
+        "bio": {
+          "type": "string",
+          "description": "Short biography or description of the pet."
+        },
+        "referenceImageUrls": {
+          "type": "array",
+          "description": "URLs of reference images for the pet.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "colorPalette": {
+          "type": "array",
+          "description": "Color palette associated with the pet (e.g., hex codes).",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "userProfileId",
+        "name",
+        "breed",
+        "age",
+        "species",
+        "bio"
+      ]
+    },
+    "AIPersona": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "AIPersona",
+      "type": "object",
+      "description": "Represents an AI-generated persona for a pet.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the AIPersona entity."
+        },
+        "petProfileId": {
+          "type": "string",
+          "description": "Reference to PetProfile. (Relationship: PetProfile 1:N AIPersona)"
+        },
+        "theme": {
+          "type": "string",
+          "description": "Theme of the AI persona (e.g., 'Superhero', 'Detective')."
+        },
+        "imageStyle": {
+          "type": "string",
+          "description": "Style of the AI-generated image."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL of the AI-generated image.",
+          "format": "uri"
+        },
+        "loreText": {
+          "type": "string",
+          "description": "Short lore text associated with the AI persona."
+        },
+        "generationDate": {
+          "type": "string",
+          "description": "Date and time when the AI persona was generated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "petProfileId",
+        "theme",
+        "imageStyle",
+        "imageUrl",
+        "loreText",
+        "generationDate"
+      ]
+    },
+    "AIStory": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "AIStory",
+      "type": "object",
+      "description": "Represents an AI-generated story 'book' for a pet persona.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the AIStory entity."
+        },
+        "aiPersonaId": {
+          "type": "string",
+          "description": "Reference to AIPersona. (Relationship: AIPersona 1:N AIStory)"
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the AI story."
+        },
+        "tone": {
+          "type": "string",
+          "description": "Tone of the AI story (e.g., 'Wholesome', 'Funny')."
+        },
+        "generationDate": {
+          "type": "string",
+          "description": "Date and time when the AI story was generated.",
+          "format": "date-time"
+        },
+        "isFavorite": {
+          "type": "boolean",
+          "description": "Is the story a favorite of the user?"
+        },
+        "lastChapter": {
+            "type": "number",
+            "description": "The number of the last generated chapter."
+        },
+        "storyLength": {
+          "type": "string",
+          "description": "The desired length of the story (e.g., 'Short', 'Medium', 'Long').",
+          "enum": ["Short", "Medium", "Epic"]
+        },
+        "status": {
+            "type": "string",
+            "description": "The current status of the story.",
+            "enum": ["in-progress", "completed"]
+        },
+        "publishedStoryId": {
+          "type": "string",
+          "description": "The ID of the corresponding document in the /publishedStories collection, if it has been published."
+        }
+      },
+      "required": [
+        "id",
+        "aiPersonaId",
+        "title",
+        "tone",
+        "generationDate",
+        "lastChapter",
+        "storyLength",
+        "status"
+      ]
+    },
+    "AIChapter": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "AIChapter",
+      "type": "object",
+      "description": "Represents a single chapter within an AI-generated story.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the AIChapter entity."
+        },
+        "chapterNumber": {
+          "type": "number",
+          "description": "The sequential number of the chapter within the story."
+        },
+        "chapterTitle": {
+          "type": "string",
+          "description": "The title of the chapter."
+        },
+        "chapterText": {
+          "type": "string",
+          "description": "The text content of the chapter."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL of the AI-generated image for this chapter."
+        },
+        "generationDate": {
+          "type": "string",
+          "description": "Date and time when the chapter was generated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "chapterNumber",
+        "chapterTitle",
+        "chapterText",
+        "imageUrl",
+        "generationDate"
+      ]
+    },
+    "PublishedStory": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "PublishedStory",
+      "type": "object",
+      "description": "Represents a publicly shared story in the gallery. This is a denormalized object for efficient querying.",
+      "properties": {
+        "id": { "type": "string", "description": "Unique ID for the published story." },
+        "authorId": { "type": "string", "description": "The User ID of the original author." },
+        "authorName": { "type": "string", "description": "The display name of the author." },
+        "petName": { "type": "string", "description": "The name of the pet." },
+        "personaTheme": { "type": "string", "description": "The theme of the persona (e.g. 'Superhero')." },
+        "personaImage": { "type": "string", "description": "URL of the main persona image." },
+        "storyTitle": { "type": "string", "description": "The title of the story." },
+        "storyTone": { "type": "string", "description": "The tone of the story." },
+        "likes": { "type": "number", "description": "The total number of likes." },
+        "likedBy": { "type": "array", "items": { "type": "string" }, "description": "An array of user IDs who have liked the story." },
+        "publishedDate": { "type": "string", "format": "date-time", "description": "When the story was published." }
+      },
+      "required": ["id", "authorId", "authorName", "petName", "personaTheme", "personaImage", "storyTitle", "storyTone", "likes", "publishedDate"]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous",
+      "google.com",
+      "apple.com"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "UserProfile",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "Collection of user profiles. Each document contains user-specific information. User can only access their own profile.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user.  This matches the Firebase Auth UID."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/petProfiles/{petProfileId}",
+        "definition": {
+          "entityName": "PetProfile",
+          "schema": {
+            "$ref": "#/backend/entities/PetProfile"
+          },
+          "description": "Subcollection of pet profiles belonging to a specific user. Each document represents a pet profile. User can only access pet profiles associated with their user ID.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "petProfileId",
+              "description": "The unique identifier for the pet profile."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/petProfiles/{petProfileId}/aiPersonas/{aiPersonaId}",
+        "definition": {
+          "entityName": "AIPersona",
+          "schema": {
+            "$ref": "#/backend/entities/AIPersona"
+          },
+          "description": "Subcollection of AI personas for a specific pet profile. Each document represents an AI-generated persona. User can only access AI personas associated with their user ID and pet profile.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "petProfileId",
+              "description": "The unique identifier for the pet profile."
+            },
+            {
+              "name": "aiPersonaId",
+              "description": "The unique identifier for the AI persona."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/petProfiles/{petProfileId}/aiPersonas/{aiPersonaId}/aiStories/{aiStoryId}",
+        "definition": {
+          "entityName": "AIStory",
+          "schema": {
+            "$ref": "#/backend/entities/AIStory"
+          },
+          "description": "Subcollection of AI-generated stories for a specific AI persona. Each document represents an AI story 'book'. User can only access AI stories associated with their user ID, pet profile, and AI persona.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "petProfileId",
+              "description": "The unique identifier for the pet profile."
+            },
+            {
+              "name": "aiPersonaId",
+              "description": "The unique identifier for the AI persona."
+            },
+            {
+              "name": "aiStoryId",
+              "description": "The unique identifier for the AI story."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/petProfiles/{petProfileId}/aiPersonas/{aiPersonaId}/aiStories/{aiStoryId}/chapters/{chapterId}",
+        "definition": {
+          "entityName": "AIChapter",
+          "schema": {
+            "$ref": "#/backend/entities/AIChapter"
+          },
+          "description": "Subcollection of chapters for a specific AI story. Each document represents a chapter. User can only access chapters associated with their user ID.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "petProfileId",
+              "description": "The unique identifier for the pet profile."
+            },
+            {
+              "name": "aiPersonaId",
+              "description": "The unique identifier for the AI persona."
+            },
+            {
+              "name": "aiStoryId",
+              "description": "The unique identifier for the AI story."
+            },
+            {
+              "name": "chapterId",
+              "description": "The unique identifier for the chapter."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/publishedStories/{publishedStoryId}",
+        "definition": {
+          "entityName": "PublishedStory",
+          "schema": {
+            "$ref": "#/backend/entities/PublishedStory"
+          },
+          "description": "A public collection of stories shared by users to the gallery. Anyone can read these, but only the author can create or delete their own.",
+          "params": [
+            {
+              "name": "publishedStoryId",
+              "description": "The unique identifier for the published story."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/publishedStories/{publishedStoryId}/chapters/{chapterId}",
+        "definition": {
+          "entityName": "AIChapter",
+          "schema": {
+            "$ref": "#/backend/entities/AIChapter"
+          },
+          "description": "Subcollection of chapters for a specific published story. Each document is a copy of the original chapter. This collection is public read-only.",
+          "params": [
+            {
+              "name": "publishedStoryId",
+              "description": "The unique identifier for the published story."
+            },
+            {
+              "name": "chapterId",
+              "description": "The unique identifier for the chapter."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore data structure is designed to support the Mythic Pets application, focusing on user profiles, pet profiles, AI personas, and AI-generated stories. The structure prioritizes authorization independence and simplifies security rules, adhering to the core design principles.\n\n**Authorization Independence:**\n\n*   User-owned data (PetProfiles, AIPersonas, AIStories) is nested under the `/users/{userId}` path, ensuring that access control is based on the user's ID. This eliminates the need for `get()` calls in security rules to check ownership.\n\n**Public Data:**\n\n*   A new top-level collection, `/publishedStories`, is introduced for the public gallery. This separates public data from private user data, simplifying security rules. Data in this collection is denormalized to allow for efficient loading of the gallery without needing complex joins or multiple reads.\n\n**Access Modeling:**\n\n*   Private Data: User profiles and all associated data (pets, personas, stories) are stored under the `/users/{userId}` path, providing path-based ownership.\n*   Public Data: Stories intended for public viewing are copied to `/publishedStories`.\n\n**QAPs (Rules are not Filters):**\n\n*   The structure supports secure `list` operations. Rules can allow listing of all documents under `/users/{userId}` for an owner, and all documents under `/publishedStories` for any user."
+  }
+}

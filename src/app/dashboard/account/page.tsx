@@ -7,13 +7,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Gem, Loader2, CheckCircle2, Settings } from 'lucide-react';
+import { Gem, Loader2, Settings, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useDoc } from '@/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { createCheckoutSession } from '@/ai/flows/create-checkout-session';
 import { createBillingPortalSession } from '@/ai/flows/create-billing-portal-session';
+import { format } from 'date-fns';
 
 export default function AccountPage() {
   const { user, firestore } = useAuth();
@@ -33,7 +34,7 @@ export default function AccountPage() {
       toast({
         variant: 'destructive',
         title: 'Upgrade Canceled',
-        description: 'Your upgrade process was canceled. You are still on the Free plan.',
+        description: 'Your upgrade process was not completed.',
       });
     }
   }, [searchParams, toast]);
@@ -51,14 +52,15 @@ export default function AccountPage() {
         return;
     };
     
+    // Also covers users who have canceled and are pending expiry
     if (userProfile?.planType === 'pro') {
-        toast({ title: 'Already Subscribed', description: 'You are already on the Pro plan.' });
+        toast({ title: 'Already a Pro', description: 'You are already on the Pro plan.' });
         return;
     }
 
     setIsUpgrading(true);
     try {
-      const { sessionId, url } = await createCheckoutSession({
+      const { url } = await createCheckoutSession({
           userId: user.uid,
           userEmail: user.email!,
           appUrl: window.location.origin,
@@ -100,11 +102,62 @@ export default function AccountPage() {
     }
   };
   
+  const renderSubscriptionInfo = () => {
+    if (isProfileLoading) {
+      return <p>Loading subscription details...</p>;
+    }
+    
+    const isPro = userProfile.planType === 'pro';
+    const isCanceled = userProfile.subscriptionStatus === 'canceled' || userProfile.subscriptionStatus === 'trialing';
+
+    if (isPro) {
+        const periodEndDate = userProfile.subscriptionPeriodEnd 
+            ? format(new Date(userProfile.subscriptionPeriodEnd * 1000), 'MMMM dd, yyyy')
+            : 'N/A';
+
+        if (isCanceled && userProfile.subscriptionPeriodEnd) {
+             return {
+                title: 'Pro Plan',
+                description: `Your plan will expire on ${periodEndDate}. You have Pro access until then.`,
+                button: (
+                    <Button onClick={handleUpgrade} disabled={isUpgrading}>
+                        {isUpgrading ? <Loader2 className="mr-2 animate-spin"/> : <RefreshCw className="mr-2" />}
+                        {isUpgrading ? 'Redirecting...' : 'Re-activate Pro'}
+                    </Button>
+                )
+            };
+        }
+
+        return {
+            title: 'Pro Plan',
+            description: `Your plan renews on ${periodEndDate}.`,
+            button: (
+                <Button onClick={handleManageSubscription} disabled={isManaging}>
+                    {isManaging ? <Loader2 className="mr-2 animate-spin"/> : <Settings className="mr-2" />}
+                    {isManaging ? 'Redirecting...' : 'Manage Subscription'}
+                </Button>
+            )
+        };
+
+    } else { // Free Tier
+         return {
+            title: 'Free Tier',
+            description: `You have ${userProfile.generationCredits || 0} generation credits remaining.`,
+            button: (
+                 <Button onClick={handleUpgrade} disabled={isUpgrading}>
+                    {isUpgrading ? <Loader2 className="mr-2 animate-spin"/> : <Gem className="mr-2" />}
+                    {isUpgrading ? 'Redirecting...' : 'Upgrade to Pro'}
+                </Button>
+            )
+        };
+    }
+  }
+  
   if (isProfileLoading || !userProfile) {
     return <div className="container mx-auto max-w-2xl py-8 px-4 md:px-6">Loading account details...</div>;
   }
-
-  const isPro = userProfile.planType === 'pro';
+  
+  const subscriptionInfo = renderSubscriptionInfo();
 
   return (
     <div className="container mx-auto max-w-2xl py-8 px-4 md:px-6">
@@ -151,25 +204,12 @@ export default function AccountPage() {
           <CardContent className="space-y-4">
             <div className="rounded-lg border bg-card p-4 flex items-center justify-between">
                 <div>
-                    <h3 className="font-bold">{isPro ? 'Pro Plan' : 'Free Tier'}</h3>
+                    <h3 className="font-bold">{subscriptionInfo.title}</h3>
                     <p className="text-sm text-muted-foreground">
-                        {isPro
-                            ? 'You have unlimited generation credits.'
-                            : `You have ${userProfile.generationCredits || 0} generation credits remaining.`
-                        }
+                       {subscriptionInfo.description}
                     </p>
                 </div>
-                {isPro ? (
-                    <Button onClick={handleManageSubscription} disabled={isManaging}>
-                        {isManaging ? <Loader2 className="mr-2 animate-spin"/> : <Settings className="mr-2" />}
-                        {isManaging ? 'Redirecting...' : 'Manage Subscription'}
-                    </Button>
-                ) : (
-                    <Button onClick={handleUpgrade} disabled={isUpgrading}>
-                        {isUpgrading ? <Loader2 className="mr-2 animate-spin"/> : <Gem className="mr-2" />}
-                        {isUpgrading ? 'Redirecting...' : 'Upgrade to Pro'}
-                    </Button>
-                )}
+                {subscriptionInfo.button}
             </div>
           </CardContent>
         </Card>
@@ -177,5 +217,3 @@ export default function AccountPage() {
     </div>
   );
 }
-
-    
