@@ -1,3 +1,4 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
@@ -16,33 +17,70 @@ try {
 }
 
 
-async function updateUserSubscriptionState(db: FirebaseFirestore.Firestore, stripeCustomerId: string, subscription: Stripe.Subscription) {
-    const usersRef = db.collection('users');
-    const q = usersRef.where('stripeCustomerId', '==', stripeCustomerId);
-    const querySnapshot = await q.get();
+async function updateUserSubscriptionState(db: FirebaseFirestore.Firestore, stripeCustomerId: string, subscription: Stripe.Subscription, userId?: string | null) {
+    console.log(`[updateUserSubscriptionState] Called with customerId: ${stripeCustomerId}, userId: ${userId}`);
+    
+    let userRef: FirebaseFirestore.DocumentReference | null = null;
+    let userDoc: FirebaseFirestore.DocumentSnapshot | null = null;
 
-    if (querySnapshot.empty) {
-        console.error(`Webhook Error: No user found with Stripe Customer ID: ${stripeCustomerId}`);
+    if (userId) {
+        // Preferred method: direct lookup by UID
+        console.log(`[updateUserSubscriptionState] Attempting direct lookup with userId: ${userId}`);
+        userRef = db.collection('users').doc(userId);
+        userDoc = await userRef.get();
+        if (!userDoc.exists) {
+            console.warn(`[updateUserSubscriptionState] No user found with direct userId: ${userId}. Falling back to customerId lookup.`);
+            userRef = null; // Reset userRef to allow fallback
+        } else {
+             console.log(`[updateUserSubscriptionState] Found user ${userDoc.id} via direct userId.`);
+        }
+    }
+
+    if (!userRef) {
+        // Fallback method: query by stripeCustomerId
+        console.log(`[updateUserSubscriptionState] Attempting fallback lookup with stripeCustomerId: ${stripeCustomerId}`);
+        const usersCol = db.collection('users');
+        const q = usersCol.where('stripeCustomerId', '==', stripeCustomerId);
+        const querySnapshot = await q.get();
+
+        if (querySnapshot.empty) {
+            console.error(`Webhook Error: No user found with Stripe Customer ID: ${stripeCustomerId} and no fallback userId was provided.`);
+            return;
+        }
+        
+        userDoc = querySnapshot.docs[0];
+        userRef = userDoc.ref;
+        console.log(`[updateUserSubscriptionState] Found user ${userDoc.id} via stripeCustomerId.`);
+    }
+
+    if (!userRef || !userDoc) {
+        console.error(`[updateUserSubscriptionState] CRITICAL: Could not find user document to update.`);
         return;
     }
     
-    const userDoc = querySnapshot.docs[0];
-    const userRef = userDoc.ref;
+    // Determine the plan type based on subscription status
+    const planType = (subscription.status === 'active' || subscription.status === 'trialing' || (subscription.status === 'canceled' && subscription.cancel_at_period_end)) ? 'pro' : 'free';
     
-    const planType = subscription.status === 'active' || subscription.cancel_at_period_end ? 'pro' : 'free';
-
-    const updateData = {
+    const updateData: any = {
         planType: planType,
         subscriptionStatus: subscription.status,
         subscriptionPeriodEnd: subscription.current_period_end, // Unix timestamp
         stripeCustomerId: stripeCustomerId,
-        // If they cancel and then re-subscribe, we might need to reset credits
-        generationCredits: planType === 'pro' ? -1 : 5, 
     };
+    
+    // Reset credits only under specific conditions
+    if (planType === 'pro' && userDoc.data()?.planType !== 'pro') {
+      updateData.generationCredits = -1; // -1 for unlimited
+      console.log(`[updateUserSubscriptionState] User ${userDoc.id} upgraded to Pro. Setting unlimited credits.`);
+    } else if (planType === 'free' && userDoc.data()?.planType === 'pro') {
+      updateData.generationCredits = 5; // Reset to 5 for free plan
+      console.log(`[updateUserSubscriptionState] User ${userDoc.id} downgraded to Free. Resetting credits to 5.`);
+    }
 
-    console.log(`Updating user ${userDoc.id} with subscription data:`, updateData);
+
+    console.log(`[updateUserSubscriptionState] Updating user ${userDoc.id} with subscription data:`, updateData);
     await userRef.update(updateData);
-    console.log(`SUCCESS: User ${userDoc.id} subscription status updated.`);
+    console.log(`[updateUserSubscriptionState] SUCCESS: User ${userDoc.id} subscription status updated.`);
 }
 
 
@@ -85,20 +123,22 @@ export async function POST(req: NextRequest) {
     const checkoutSession = event.data.object as Stripe.Checkout.Session;
     console.log("Handling checkout.session.completed event.");
     
+    // IMPORTANT: client_reference_id is our Firebase UID
     const userId = checkoutSession.client_reference_id;
     const stripeCustomerId = typeof checkoutSession.customer === 'string' ? checkoutSession.customer : checkoutSession.customer?.id;
     const subscriptionId = typeof checkoutSession.subscription === 'string' ? checkoutSession.subscription : checkoutSession.subscription?.id;
 
 
     if (!userId || !stripeCustomerId || !subscriptionId) {
-      console.error('CRITICAL: Missing required IDs from checkout session.');
+      console.error('CRITICAL: Missing required IDs from checkout session.', { userId, stripeCustomerId, subscriptionId });
       return NextResponse.json({ error: 'Missing user, customer, or subscription ID from checkout session' }, { status: 400 });
     }
     console.log(`User ID: ${userId}, Customer ID: ${stripeCustomerId}, Subscription ID: ${subscriptionId}`);
 
     try {
         const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-        await updateUserSubscriptionState(db, stripeCustomerId, subscription);
+        // Pass all IDs to the update function
+        await updateUserSubscriptionState(db, stripeCustomerId, subscription, userId);
     } catch (error: any)      {
       console.error(`STRIPE/FIRESTORE ERROR: Failed to process checkout for user ${userId}.`, error);
       return NextResponse.json({ error: 'Webhook handler failed' }, { status: 500 });
@@ -115,7 +155,8 @@ export async function POST(req: NextRequest) {
     }
 
      try {
-        await updateUserSubscriptionState(db, stripeCustomerId, subscription);
+        // We don't have the userId here, so we pass null and rely on the customerId lookup
+        await updateUserSubscriptionState(db, stripeCustomerId, subscription, null);
     } catch (error: any)      {
       console.error(`STRIPE/FIRESTORE ERROR: Failed to process subscription update for customer ${stripeCustomerId}.`, error);
       return NextResponse.json({ error: 'Webhook handler failed' }, { status: 500 });
