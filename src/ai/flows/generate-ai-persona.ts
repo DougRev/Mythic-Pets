@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -12,11 +13,11 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import {googleAI} from '@genkit-ai/google-genai';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
-import { initializeApp, getApps } from 'firebase-admin/app';
+import { initializeApp, getApps, applicationDefault } from 'firebase-admin/app';
 import {FieldValue} from 'firebase-admin/firestore';
 
 if (!getApps().length) {
-    initializeApp();
+    initializeApp({ credential: applicationDefault() });
 }
 const db = getFirestore();
 
@@ -120,5 +121,3 @@ const generateAiPersonaFlow = ai.defineFlow(
     };
   }
 );
-
-    

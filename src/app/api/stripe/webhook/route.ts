@@ -1,7 +1,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { initializeApp, getApps, applicationDefault } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { stripe } from '@/lib/stripe';
 
@@ -9,7 +9,7 @@ import { stripe } from '@/lib/stripe';
 try {
   if (!getApps().length) {
     console.log("Initializing Firebase Admin SDK...");
-    initializeApp();
+    initializeApp({ credential: applicationDefault() });
     console.log("Firebase Admin SDK initialized successfully.");
   }
 } catch (error: any) {

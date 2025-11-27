@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -8,12 +9,12 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { stripe } from '@/lib/stripe';
 import { getFirestore } from 'firebase-admin/firestore';
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { initializeApp, getApps, applicationDefault } from 'firebase-admin/app';
 
 // Initialize Firebase Admin SDK
 try {
   if (!getApps().length) {
-    initializeApp();
+    initializeApp({ credential: applicationDefault() });
   }
 } catch (error: any) {
   console.error("CRITICAL: Firebase Admin SDK initialization failed:", error.message);
