@@ -49,8 +49,7 @@ const regenerateImagePrompt = ai.definePrompt({
   Persona Image: {{media url=personaImage}}`,
   config: {
     responseModalities: ['IMAGE'],
-  },
-  safetySettings: [
+    safetySettings: [
         {
           category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
           threshold: 'BLOCK_ONLY_HIGH',
@@ -60,6 +59,7 @@ const regenerateImagePrompt = ai.definePrompt({
           threshold: 'BLOCK_MEDIUM_AND_ABOVE',
         },
     ]
+  },
 });
 
 
