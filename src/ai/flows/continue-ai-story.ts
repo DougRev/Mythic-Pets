@@ -150,7 +150,7 @@ const continueAiStoryFlow = ai.defineFlow(
     });
 
     const finishReason = imageGenResponse.finishReason;
-    const safetyRatings = imageGenResponse.usage?.safetyRatings;
+    const safetyRatings = imageGenResponse.safetyRatings;
     
     if (finishReason === 'BLOCKED' && safetyRatings && safetyRatings.length > 0) {
         throw new Error('Image generation was blocked due to safety guidelines. Please try a different creative direction.');
