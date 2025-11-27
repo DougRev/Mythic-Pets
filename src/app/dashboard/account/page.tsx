@@ -122,7 +122,7 @@ export default function AccountPage() {
         if (isCanceled && userProfile.subscriptionPeriodEnd) {
              return {
                 title: 'Pro Plan',
-                description: `Your plan will expire on ${periodEndDate}. You have Pro access until then.`,
+                description: `Your plan is canceled and will expire on ${periodEndDate}. You have Pro access until then.`,
                 button: (
                     <Button onClick={handleUpgrade} disabled={isUpgrading}>
                         {isUpgrading ? <Loader2 className="mr-2 animate-spin"/> : <RefreshCw className="mr-2" />}
@@ -166,7 +166,22 @@ export default function AccountPage() {
               Manage your profile and subscription.
             </p>
           </div>
-          <p>Loading account details...</p>
+          <Card>
+             <CardHeader>
+                <CardTitle>Subscription</CardTitle>
+             </CardHeader>
+             <CardContent>
+                <div className="rounded-lg border bg-card p-4 flex items-center justify-between">
+                    <div>
+                        <h3 className="font-bold">Loading Plan...</h3>
+                        <p className="text-sm text-muted-foreground">
+                           Loading your subscription details...
+                        </p>
+                    </div>
+                    <Button disabled><Loader2 className="animate-spin" /></Button>
+                </div>
+             </CardContent>
+          </Card>
       </div>
     );
   }
