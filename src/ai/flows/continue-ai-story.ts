@@ -87,7 +87,9 @@ const generateNextChapterImagePrompt = ai.definePrompt({
     }),
   },
   model: googleAI.model('gemini-2.5-flash-image-preview'),
-  prompt: `Based on the following chapter text, generate a visually compelling scene. The style should be consistent with the provided persona image.
+  prompt: `You are an expert illustrator for a storybook. Your task is to generate a scene based on the chapter text provided.
+
+  CRITICAL: The main character's appearance (breed, color, markings, etc.) MUST be consistent with the provided Persona Image. Use the Persona Image as the primary reference for the character. The art style of the generated image should also match the Persona Image.
 
   Chapter Text: {{{chapterText}}}
   Persona Image: {{media url=personaImage}}`,
