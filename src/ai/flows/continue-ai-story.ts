@@ -149,15 +149,8 @@ const continueAiStoryFlow = ai.defineFlow(
         personaImage: input.personaImage
     });
 
-    const finishReason = imageGenResponse.finishReason;
-    const safetyRatings = imageGenResponse.safetyRatings;
-    
-    if (finishReason === 'BLOCKED' && safetyRatings && safetyRatings.length > 0) {
-        throw new Error('Image generation was blocked due to safety guidelines. Please try a different creative direction.');
-    }
-
     if (!imageGenResponse.media?.url) {
-      throw new Error('Failed to generate next chapter image.');
+      throw new Error('Image generation may have been blocked due to safety policies. Please try a different creative direction.');
     }
     
     // 4. Deduct credit after successful generation for free users

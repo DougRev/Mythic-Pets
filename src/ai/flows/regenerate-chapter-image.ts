@@ -71,16 +71,9 @@ const regenerateChapterImageFlow = ai.defineFlow(
   },
   async input => {
     const imageGenResponse = await regenerateImagePrompt(input);
-    
-    const finishReason = imageGenResponse.finishReason;
-    const safetyRatings = imageGenResponse.safetyRatings;
-
-    if (finishReason === 'BLOCKED' && safetyRatings && safetyRatings.length > 0) {
-        throw new Error('Image generation was blocked due to safety guidelines. Please try a different creative direction.');
-    }
 
     if (!imageGenResponse.media?.url) {
-        throw new Error('Failed to regenerate chapter image. The AI did not return an image.');
+        throw new Error('Image generation may have been blocked due to safety policies. Please try a different creative direction.');
     }
 
     return {
