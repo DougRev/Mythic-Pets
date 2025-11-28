@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -15,8 +16,12 @@ import { Part } from 'genkit';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { initializeApp, getApps, applicationDefault } from 'firebase-admin/app';
 
-if (!getApps().length) {
+try {
+  if (!getApps().length) {
     initializeApp({ credential: applicationDefault() });
+  }
+} catch (error: any) {
+  console.error("CRITICAL: Firebase Admin SDK initialization failed:", error.message);
 }
 const db = getFirestore();
 
@@ -78,14 +83,10 @@ const regenerateAiImageFlow = ai.defineFlow(
         }
     }
     
-    const { media, finishReason, safetyRatings } = await regenerateImagePrompt(input);
-    
-    if (finishReason === 'BLOCKED' || (safetyRatings && safetyRatings.some(r => r.blocked))) {
-      throw new Error('Image generation was blocked due to safety guidelines. Please try a different creative direction.');
-    }
+    const { media } = await regenerateImagePrompt(input);
     
     if (!media?.url) {
-        throw new Error('Failed to regenerate persona image. The AI did not return an image.');
+      throw new Error('Image generation was blocked due to safety guidelines or an unknown error. Please try a different creative direction.');
     }
     
     // Deduct credit after successful generation for free users
