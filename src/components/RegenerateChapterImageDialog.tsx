@@ -44,18 +44,9 @@ export function RegenerateChapterImageDialog({ children, chapter, persona, story
   const isPro = userProfile?.planType === 'pro';
 
   const handleGenerate = async () => {
-    if (!user || !userProfileRef || !chapter || !persona || !storage) {
+    if (!user || !userProfile || !chapter || !persona || !storage) {
       toast({ variant: 'destructive', title: 'Error', description: 'Missing required data to regenerate.' });
       return;
-    }
-    
-    if (!isPro) {
-        toast({
-            variant: 'destructive',
-            title: 'Pro Feature Only',
-            description: 'Please upgrade to a Pro plan to regenerate chapter images.',
-        });
-        return;
     }
 
     setIsGenerating(true);

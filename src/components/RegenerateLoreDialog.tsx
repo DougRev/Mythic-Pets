@@ -46,11 +46,6 @@ export function RegenerateLoreDialog({ children, persona, pet, onRegenerationCom
       return;
     }
     
-    if (hasNoCredits) {
-        toast({ variant: 'destructive', title: 'Out of Credits', description: 'Please upgrade to Pro to regenerate content.' });
-        return;
-    }
-    
     setIsGenerating(true);
     setNewLore(null);
     try {

@@ -48,11 +48,6 @@ export function RegenerateImageDialog({ children, persona, pet, onRegenerationCo
       toast({ variant: 'destructive', title: 'Error', description: 'Missing required data to regenerate.' });
       return;
     }
-    
-    if (hasNoCredits) {
-        toast({ variant: 'destructive', title: 'Out of Credits', description: 'Please upgrade to Pro to regenerate content.' });
-        return;
-    }
 
     setIsGenerating(true);
     setNewImageUrl(null);
