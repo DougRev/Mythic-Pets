@@ -1,3 +1,4 @@
+
 'use client';
 
 import Image from 'next/image';
@@ -5,7 +6,7 @@ import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Gem } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useCollection, useDoc } from '@/firebase';
 import { collection, doc, query } from 'firebase/firestore';
@@ -48,27 +49,42 @@ export default function PersonaGalleryPage() {
   if (!pet) {
     return <div className="container mx-auto max-w-4xl py-8 px-4 md:px-6">Pet not found.</div>;
   }
+  
+  const AddButton = () => {
+    if (hasReachedPersonaLimit) {
+        return (
+            <Button asChild>
+                <Link href="/dashboard/account">
+                    <Gem className="mr-2 h-4 w-4" />
+                    Go Pro for More Personas
+                </Link>
+            </Button>
+        );
+    }
+    return (
+        <Button asChild>
+            <Link href={`/dashboard/pets/${petId}/create-persona`}>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Create New Persona
+            </Link>
+        </Button>
+    );
+  }
+
 
   const AddPersonaCard = () => {
     if (hasReachedPersonaLimit) {
         return (
-            <TooltipProvider>
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Card className="h-full border-2 border-dashed bg-muted/20 cursor-not-allowed">
-                            <CardContent className="flex flex-col items-center justify-center h-full p-4">
-                                <div className="flex flex-col items-center justify-center text-muted-foreground/50">
-                                    <PlusCircle className="h-12 w-12 mb-4" />
-                                    <p className="font-semibold text-lg text-center">Create New Persona</p>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                        <p>Upgrade to Pro to create more personas.</p>
-                    </TooltipContent>
-                </Tooltip>
-            </TooltipProvider>
+            <Link href="/dashboard/account" className="group">
+                <Card className="h-full border-2 border-dashed bg-muted/20 hover:border-primary hover:bg-muted/50 transition-colors duration-200">
+                  <CardContent className="flex flex-col items-center justify-center h-full p-4">
+                      <div className="flex flex-col items-center justify-center text-muted-foreground">
+                        <Gem className="h-12 w-12 mb-4 text-primary/80" />
+                        <p className="font-semibold text-lg text-center">Go Pro for More</p>
+                    </div>
+                  </CardContent>
+                </Card>
+            </Link>
         );
     }
 
@@ -130,25 +146,7 @@ export default function PersonaGalleryPage() {
               Select a persona to see their stories or create a new one.
             </p>
         </div>
-        <TooltipProvider>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <div className="inline-block"> 
-                        <Button asChild disabled={hasReachedPersonaLimit}>
-                          <Link href={`/dashboard/pets/${petId}/create-persona`}>
-                             <PlusCircle className="mr-2 h-4 w-4" />
-                             Create New Persona
-                          </Link>
-                        </Button>
-                    </div>
-                </TooltipTrigger>
-                {hasReachedPersonaLimit && (
-                    <TooltipContent>
-                        <p>Upgrade to Pro to create more personas.</p>
-                    </TooltipContent>
-                )}
-            </Tooltip>
-        </TooltipProvider>
+        <AddButton />
       </div>
       {renderContent()}
     </div>
