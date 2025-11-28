@@ -266,7 +266,7 @@ export default function CreatePersonaPage() {
                 <CardTitle>Create a New Persona</CardTitle>
                 <CardDescription>
                     Define a new mythic identity for {pet.name}.
-                    {isFreeTier && ` You have ${userProfile.generationCredits} credits remaining.`}
+                    {isFreeTier && !hasNoCredits && ` You have ${userProfile.generationCredits} credits remaining.`}
                 </CardDescription>
                 </CardHeader>
                 <Form {...form}>

@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
-import { PlusCircle, Pencil, Trash2, Loader2 } from 'lucide-react';
+import { PlusCircle, Pencil, Trash2, Loader2, Gem } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { ManagePetDialog } from '@/components/ManagePetDialog';
 import { useAuth } from '@/hooks/useAuth';
@@ -73,52 +73,41 @@ export default function PetSelectionPage() {
     return <div className="container mx-auto max-w-4xl py-8 px-4 md:px-6">Loading pets...</div>;
   }
 
-  const AddPetButton = () => (
-    <TooltipProvider>
-        <Tooltip>
-            <TooltipTrigger asChild>
-                <div className="inline-block">
-                    <ManagePetDialog>
-                        <button 
-                            className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
-                            disabled={hasReachedPetLimit}
-                        >
-                            <PlusCircle className="mr-2 h-4 w-4" />
-                            Add New Pet
-                        </button>
-                    </ManagePetDialog>
-                </div>
-            </TooltipTrigger>
-            {hasReachedPetLimit && (
-                <TooltipContent>
-                    <p>Upgrade to Pro to add more pets.</p>
-                </TooltipContent>
-            )}
-        </Tooltip>
-    </TooltipProvider>
-  );
+  const AddPetButton = () => {
+    if (hasReachedPetLimit) {
+        return (
+            <Button asChild>
+                <Link href="/dashboard/account">
+                    <Gem className="mr-2" /> Go Pro to Add More Pets
+                </Link>
+            </Button>
+        )
+    }
+
+    return (
+        <ManagePetDialog>
+            <Button>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add New Pet
+            </Button>
+        </ManagePetDialog>
+    );
+  };
 
   const AddPetCard = () => {
     if(hasReachedPetLimit) {
         return (
-            <TooltipProvider>
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Card className="h-full border-2 border-dashed bg-muted/20 cursor-not-allowed">
-                            <CardContent className="flex flex-col items-center justify-center h-full p-4">
-                                <div className="flex flex-col items-center justify-center text-muted-foreground/50">
-                                    {petAvatarDefault && <Image src={petAvatarDefault.imageUrl} alt="Default pet avatar" width={80} height={80} className="mb-4 opacity-60" />}
-                                    <PlusCircle className="h-10 w-10 mb-2" />
-                                    <p className="font-semibold text-center">Add New Pet</p>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                         <p>Upgrade to Pro to add more pets.</p>
-                    </TooltipContent>
-                </Tooltip>
-            </TooltipProvider>
+            <Link href="/dashboard/account" className="group">
+                <Card className="h-full border-2 border-dashed bg-muted/20 hover:border-primary hover:bg-muted/50 transition-colors duration-200">
+                    <CardContent className="flex flex-col items-center justify-center h-full p-4">
+                        <div className="flex flex-col items-center justify-center text-muted-foreground">
+                            {petAvatarDefault && <Image src={petAvatarDefault.imageUrl} alt="Default pet avatar" width={80} height={80} className="mb-4 opacity-60" />}
+                            <Gem className="h-10 w-10 mb-2" />
+                            <p className="font-semibold text-center">Go Pro to Add More</p>
+                        </div>
+                    </CardContent>
+                </Card>
+            </Link>
         );
     }
     return (
