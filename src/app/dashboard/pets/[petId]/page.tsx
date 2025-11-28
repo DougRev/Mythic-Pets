@@ -1,6 +1,6 @@
-
 'use client';
 
+import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
@@ -10,8 +10,6 @@ import { PlusCircle, Gem } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useCollection, useDoc } from '@/firebase';
 import { collection, doc, query } from 'firebase/firestore';
-import React from 'react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 export default function PersonaGalleryPage() {
   const params = useParams();
@@ -78,9 +76,10 @@ export default function PersonaGalleryPage() {
             <Link href="/dashboard/account" className="group">
                 <Card className="h-full border-2 border-dashed bg-muted/20 hover:border-primary hover:bg-muted/50 transition-colors duration-200">
                   <CardContent className="flex flex-col items-center justify-center h-full p-4">
-                      <div className="flex flex-col items-center justify-center text-muted-foreground">
-                        <Gem className="h-12 w-12 mb-4 text-primary/80" />
-                        <p className="font-semibold text-lg text-center">Go Pro for More</p>
+                      <div className="flex flex-col items-center justify-center text-center text-muted-foreground group-hover:text-primary transition-colors">
+                        <Gem className="h-12 w-12 mb-4" />
+                        <p className="font-semibold text-lg">Go Pro for More</p>
+                        <p className="text-sm">Upgrade to create unlimited personas.</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -92,7 +91,7 @@ export default function PersonaGalleryPage() {
          <Link href={`/dashboard/pets/${petId}/create-persona`} className="group">
             <Card className="h-full border-2 border-dashed bg-transparent hover:border-primary hover:bg-muted/50 transition-colors duration-200">
               <CardContent className="flex flex-col items-center justify-center h-full p-4">
-                  <div className="flex flex-col items-center justify-center text-muted-foreground">
+                  <div className="flex flex-col items-center justify-center text-muted-foreground group-hover:text-primary transition-colors">
                     <PlusCircle className="h-12 w-12 mb-4" />
                     <p className="font-semibold text-lg text-center">Create New Persona</p>
                 </div>
