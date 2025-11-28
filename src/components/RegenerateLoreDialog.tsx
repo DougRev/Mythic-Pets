@@ -44,6 +44,11 @@ export function RegenerateLoreDialog({ children, persona, pet, onRegenerationCom
       return;
     }
     
+    if (hasNoCredits) {
+        toast({ variant: 'destructive', title: 'Out of Credits', description: 'Please upgrade to Pro to regenerate content.' });
+        return;
+    }
+    
     setIsGenerating(true);
     setNewLore(null);
     try {
@@ -152,7 +157,7 @@ export function RegenerateLoreDialog({ children, persona, pet, onRegenerationCom
       <DialogHeader>
         <DialogTitle>Review New Lore</DialogTitle>
         <DialogDescription>
-          Do you want to save this new lore or discard it? Saving will use one generation credit for Free Tier users.
+          Do you want to save this new lore or discard it?
         </DialogDescription>
       </DialogHeader>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4 max-h-[50vh] overflow-y-auto">

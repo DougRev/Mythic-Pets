@@ -145,6 +145,15 @@ export default function CreatePersonaPage() {
         toast({ variant: 'destructive', title: 'Error', description: 'Pet reference not found.' });
         return;
     }
+    
+    if (userProfile?.planType === 'free' && userProfile?.generationCredits <= 0) {
+      toast({
+        variant: 'destructive',
+        title: 'Out of Credits',
+        description: 'Please upgrade to the Pro plan for unlimited generations.',
+      });
+      return;
+    }
 
     setIsGenerating(true);
     try {

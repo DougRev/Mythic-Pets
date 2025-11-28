@@ -46,6 +46,11 @@ export function RegenerateImageDialog({ children, persona, pet, onRegenerationCo
       toast({ variant: 'destructive', title: 'Error', description: 'Missing required data to regenerate.' });
       return;
     }
+    
+    if (hasNoCredits) {
+        toast({ variant: 'destructive', title: 'Out of Credits', description: 'Please upgrade to Pro to regenerate content.' });
+        return;
+    }
 
     setIsGenerating(true);
     setNewImageUrl(null);
@@ -161,7 +166,7 @@ export function RegenerateImageDialog({ children, persona, pet, onRegenerationCo
       <DialogHeader>
         <DialogTitle>Review New Image</DialogTitle>
         <DialogDescription>
-          Do you want to save this new image or discard it? Saving will use one generation credit for Free Tier users.
+          Do you want to save this new image or discard it?
         </DialogDescription>
       </DialogHeader>
       <div className="grid grid-cols-2 gap-4 py-4">

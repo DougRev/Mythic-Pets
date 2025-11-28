@@ -14,6 +14,7 @@ import { Loader2, Wand2, Save, XCircle, Gem } from 'lucide-react';
 import { regenerateChapterImage } from '@/ai/flows/regenerate-chapter-image';
 import { uploadFile } from '@/firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface RegenerateChapterImageDialogProps {
   children: React.ReactNode;
@@ -119,6 +120,7 @@ export function RegenerateChapterImageDialog({ children, chapter, persona, story
   const renderContent = () => {
     if (!isPro && open) {
         return (
+          <TooltipProvider>
             <>
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2"><Gem /> Pro Feature</DialogTitle>
@@ -136,6 +138,7 @@ export function RegenerateChapterImageDialog({ children, chapter, persona, story
                     </Button>
                 </DialogFooter>
             </>
+          </TooltipProvider>
         )
     }
 

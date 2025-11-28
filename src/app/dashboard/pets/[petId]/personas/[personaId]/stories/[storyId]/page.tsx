@@ -89,6 +89,16 @@ export default function StoryDetailsPage() {
         return;
     }
     
+    if (userProfile?.planType === 'free' && userProfile?.generationCredits <= 0) {
+      toast({
+        variant: 'destructive',
+        title: 'Out of Credits',
+        description: 'Please upgrade to the Pro plan for unlimited generations.',
+      });
+      setGenerateDialogOpen(false);
+      return;
+    }
+    
     setIsGenerating(true);
     try {
         const previousChaptersText = chapters
