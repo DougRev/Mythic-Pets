@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useDoc } from '@/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
@@ -24,6 +25,7 @@ interface RegenerateImageDialogProps {
 }
 
 export function RegenerateImageDialog({ children, persona, pet, onRegenerationComplete }: RegenerateImageDialogProps) {
+  const router = useRouter();
   const { user, firestore, storage } = useAuth();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
@@ -141,22 +143,24 @@ export function RegenerateImageDialog({ children, persona, pet, onRegenerationCo
       </div>
       <DialogFooter>
         <Button variant="outline" onClick={resetAndClose}>Cancel</Button>
-        <TooltipProvider>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <div className="cursor-not-allowed">
-                        <Button onClick={handleGenerate} disabled={isGenerating || hasNoCredits}>
-                            {isGenerating ? <><Loader2 className="mr-2 animate-spin" /> Generating...</> : <><Wand2 className="mr-2" /> Regenerate</>}
+        {hasNoCredits ? (
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button type="button" onClick={() => router.push('/dashboard/account')}>
+                            <Gem className="mr-2" /> Go Pro to Regenerate
                         </Button>
-                    </div>
-                </TooltipTrigger>
-                {hasNoCredits && (
+                    </TooltipTrigger>
                     <TooltipContent>
-                        <p className="flex items-center gap-2"><Gem className="h-4 w-4"/> Upgrade to Pro for unlimited generations.</p>
+                        <p>Upgrade to Pro for unlimited generations.</p>
                     </TooltipContent>
-                )}
-            </Tooltip>
-        </TooltipProvider>
+                </Tooltip>
+            </TooltipProvider>
+        ) : (
+            <Button onClick={handleGenerate} disabled={isGenerating}>
+                {isGenerating ? <><Loader2 className="mr-2 animate-spin" /> Generating...</> : <><Wand2 className="mr-2" /> Regenerate</>}
+            </Button>
+        )}
       </DialogFooter>
     </>
   );

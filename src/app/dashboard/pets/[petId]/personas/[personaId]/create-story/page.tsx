@@ -194,8 +194,29 @@ export default function CreateStoryPage() {
   const hasNoCredits = isFreeTier && userProfile?.generationCredits <= 0;
 
   const GenerateButton = () => {
-    const button = (
-        <Button type="submit" disabled={isGenerating || hasNoCredits} className="w-full">
+    if (hasNoCredits) {
+      return (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                className="w-full"
+                onClick={() => router.push('/dashboard/account')}
+              >
+                <Gem className="mr-2" /> Go Pro to Generate
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Upgrade to Pro for unlimited generations.</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    }
+
+    return (
+        <Button type="submit" disabled={isGenerating} className="w-full">
             {isGenerating ? (
             <><Loader2 className="mr-2 animate-spin" /> Generating Story...</>
             ) : (
@@ -203,23 +224,6 @@ export default function CreateStoryPage() {
             )}
         </Button>
     );
-
-    if (hasNoCredits) {
-        return (
-            <TooltipProvider>
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <div className="w-full cursor-not-allowed">{button}</div>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                        <p className="flex items-center gap-2"><Gem className="h-4 w-4"/> Upgrade to Pro for unlimited generations.</p>
-                    </TooltipContent>
-                </Tooltip>
-            </TooltipProvider>
-        );
-    }
-
-    return button;
   }
 
   return (

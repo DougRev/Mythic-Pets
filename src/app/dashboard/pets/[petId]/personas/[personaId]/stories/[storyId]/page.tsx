@@ -259,65 +259,68 @@ export default function StoryDetailsPage() {
   const hasNoCredits = isFreeTier && userProfile?.generationCredits <= 0;
 
   const NextChapterButton = () => {
-    const button = (
-        <Button disabled={isGenerating || hasNoCredits}>
-            <Wand2 className="mr-2" /> Generate Next Chapter
-        </Button>
-    );
+    if (isStoryCompleted) return null;
 
-    if (!isStoryCompleted) {
-        return (
-            <Dialog open={isGenerateDialogOpen} onOpenChange={setGenerateDialogOpen}>
-                <TooltipProvider>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <div className="w-full cursor-pointer">
-                                <DialogTrigger asChild>
-                                    {button}
-                                </DialogTrigger>
-                            </div>
-                        </TooltipTrigger>
-                        {hasNoCredits && (
-                        <TooltipContent>
-                            <p className="flex items-center gap-2"><Gem className="h-4 w-4"/> Upgrade to Pro for unlimited generations.</p>
-                        </TooltipContent>
-                        )}
-                    </Tooltip>
-                </TooltipProvider>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Generate Next Chapter</DialogTitle>
-                        <DialogDescription>
-                            Add some creative direction for the next chapter, or leave it blank for the AI to decide.
-                            {isFreeTier && ` You have ${userProfile.generationCredits} credits remaining.`}
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="py-4 space-y-2">
-                        <Label htmlFor="creative-prompt">Creative Direction (Optional)</Label>
-                        <Textarea
-                            id="creative-prompt"
-                            value={creativePrompt}
-                            onChange={(e) => setCreativePrompt(e.target.value)}
-                            placeholder="e.g., Introduce a mysterious new character..."
-                            rows={4}
-                        />
-                    </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setGenerateDialogOpen(false)}>Cancel</Button>
-                        <Button onClick={handleGenerateNextChapter} disabled={isGenerating}>
-                            {isGenerating ? (
-                                <><Loader2 className="mr-2 animate-spin" /> Generating...</>
-                            ) : (
-                                <><Wand2 className="mr-2" /> Generate</>
-                            )}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-        )
+    if (hasNoCredits) {
+      return (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                className="w-full"
+                onClick={() => router.push('/dashboard/account')}
+              >
+                <Gem className="mr-2" /> Go Pro to Continue
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Upgrade to Pro for unlimited generations.</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
     }
-    return null;
-  }
+
+    return (
+      <Dialog open={isGenerateDialogOpen} onOpenChange={setGenerateDialogOpen}>
+        <DialogTrigger asChild>
+          <Button>
+            <Wand2 className="mr-2" /> Generate Next Chapter
+          </Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Generate Next Chapter</DialogTitle>
+            <DialogDescription>
+              Add some creative direction for the next chapter, or leave it blank for the AI to decide.
+              {isFreeTier && ` You have ${userProfile.generationCredits} credits remaining.`}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-2">
+            <Label htmlFor="creative-prompt">Creative Direction (Optional)</Label>
+            <Textarea
+              id="creative-prompt"
+              value={creativePrompt}
+              onChange={(e) => setCreativePrompt(e.target.value)}
+              placeholder="e.g., Introduce a mysterious new character..."
+              rows={4}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setGenerateDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleGenerateNextChapter} disabled={isGenerating}>
+              {isGenerating ? (
+                <><Loader2 className="mr-2 animate-spin" /> Generating...</>
+              ) : (
+                <><Wand2 className="mr-2" /> Generate</>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  };
 
   return (
     <div className="container mx-auto max-w-4xl py-8 px-4 md:px-6">

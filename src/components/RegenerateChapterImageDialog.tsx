@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useDoc } from '@/firebase';
 import { doc, updateDoc, increment } from 'firebase/firestore';
@@ -25,6 +26,7 @@ interface RegenerateChapterImageDialogProps {
 }
 
 export function RegenerateChapterImageDialog({ children, chapter, persona, story, onRegenerationComplete }: RegenerateChapterImageDialogProps) {
+  const router = useRouter();
   const { user, firestore, storage } = useAuth();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
@@ -120,25 +122,23 @@ export function RegenerateChapterImageDialog({ children, chapter, persona, story
   const renderContent = () => {
     if (!isPro && open) {
         return (
-          <TooltipProvider>
-            <>
-                <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2"><Gem /> Pro Feature</DialogTitle>
-                    <DialogDescription>
-                    Regenerating chapter images is an exclusive feature for our Pro subscribers.
-                    </DialogDescription>
-                </DialogHeader>
-                <div className="py-4">
-                    <p>Upgrade to a Pro plan to get unlimited regenerations for all your content, including story illustrations!</p>
-                </div>
-                <DialogFooter>
-                    <Button variant="outline" onClick={resetAndClose}>Maybe Later</Button>
-                    <Button onClick={() => { /* Add navigation to upgrade page here */ }}>
-                        <Gem className="mr-2"/> Go Pro
-                    </Button>
-                </DialogFooter>
-            </>
-          </TooltipProvider>
+          <>
+            <DialogHeader>
+                <DialogTitle className="flex items-center gap-2"><Gem /> Pro Feature</DialogTitle>
+                <DialogDescription>
+                Regenerating chapter images is an exclusive feature for our Pro subscribers.
+                </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+                <p>Upgrade to a Pro plan to get unlimited regenerations for all your content, including story illustrations!</p>
+            </div>
+            <DialogFooter>
+                <Button variant="outline" onClick={resetAndClose}>Maybe Later</Button>
+                <Button onClick={() => router.push('/dashboard/account')}>
+                    <Gem className="mr-2"/> Go Pro
+                </Button>
+            </DialogFooter>
+          </>
         )
     }
 
