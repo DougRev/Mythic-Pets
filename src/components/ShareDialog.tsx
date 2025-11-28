@@ -36,10 +36,12 @@ export function ShareDialog({ children, title, body, imageUrl }: ShareDialogProp
     if (!navigator.share || !imageUrl) return;
 
     try {
-      // Convert data URL to blob if necessary, otherwise fetch URL
-      const blob = imageUrl.startsWith('data:') 
-        ? await dataUrlToBlob(imageUrl)
-        : await (await fetch(imageUrl)).blob();
+      // When fetching from Firebase Storage, we need to specify CORS mode.
+      const response = await fetch(imageUrl, { mode: 'cors' });
+      if (!response.ok) {
+        throw new Error(`Failed to fetch image, status: ${response.status}`);
+      }
+      const blob = await response.blob();
 
       const file = new File([blob], 'mythic-pet.png', { type: blob.type || 'image/png' });
 
