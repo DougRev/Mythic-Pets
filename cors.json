@@ -8,17 +8,11 @@
       "https://*.web.app"
     ],
     "method": [
-      "GET",
-      "PUT",
-      "POST",
-      "DELETE"
+      "GET"
     ],
     "responseHeader": [
       "Content-Type",
-      "Authorization",
-      "Content-Length",
-      "User-Agent",
-      "x-firebase-gmpid"
+      "Authorization"
     ],
     "maxAgeSeconds": 3600
   }
