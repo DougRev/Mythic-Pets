@@ -41,7 +41,6 @@ import { doc, addDoc, collection } from 'firebase/firestore';
 import { generateAiStory } from '@/ai/flows/generate-ai-story';
 import { uploadFile } from '@/firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const storyFormSchema = z.object({
   tone: z.string({
@@ -196,22 +195,11 @@ export default function CreateStoryPage() {
   const GenerateButton = () => {
     if (hasNoCredits) {
       return (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                type="button"
-                className="w-full"
-                onClick={() => router.push('/dashboard/account')}
-              >
+        <Button asChild className="w-full">
+            <Link href="/dashboard/account">
                 <Gem className="mr-2" /> Go Pro to Generate
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Upgrade to Pro for unlimited generations.</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+            </Link>
+        </Button>
       );
     }
 

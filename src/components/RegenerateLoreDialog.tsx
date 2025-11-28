@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Wand2, Save, XCircle, Gem } from 'lucide-react';
 import { regenerateAiLore } from '@/ai/flows/regenerate-lore';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
+import Link from 'next/link';
 
 interface RegenerateLoreDialogProps {
   children: React.ReactNode;
@@ -135,18 +135,11 @@ export function RegenerateLoreDialog({ children, persona, pet, onRegenerationCom
       <DialogFooter>
         <Button variant="outline" onClick={resetAndClose}>Cancel</Button>
         {hasNoCredits ? (
-            <TooltipProvider>
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Button type="button" onClick={() => router.push('/dashboard/account')}>
-                            <Gem className="mr-2" /> Go Pro to Regenerate
-                        </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                        <p>Upgrade to Pro for unlimited generations.</p>
-                    </TooltipContent>
-                </Tooltip>
-            </TooltipProvider>
+            <Button asChild>
+                <Link href="/dashboard/account">
+                    <Gem className="mr-2" /> Go Pro to Regenerate
+                </Link>
+            </Button>
         ) : (
             <Button onClick={handleGenerate} disabled={isGenerating}>
                 {isGenerating ? <><Loader2 className="mr-2 animate-spin" /> Generating...</> : <><Wand2 className="mr-2" /> Regenerate</>}

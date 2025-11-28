@@ -19,7 +19,6 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { RegenerateChapterImageDialog } from '@/components/RegenerateChapterImageDialog';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 
 export default function StoryDetailsPage() {
@@ -263,22 +262,11 @@ export default function StoryDetailsPage() {
 
     if (hasNoCredits) {
       return (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                type="button"
-                className="w-full"
-                onClick={() => router.push('/dashboard/account')}
-              >
+        <Button asChild>
+            <Link href="/dashboard/account">
                 <Gem className="mr-2" /> Go Pro to Continue
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Upgrade to Pro for unlimited generations.</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+            </Link>
+        </Button>
       );
     }
 

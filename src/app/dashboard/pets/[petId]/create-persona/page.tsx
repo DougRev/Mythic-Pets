@@ -42,7 +42,7 @@ import { generateAiPersona } from '@/ai/flows/generate-ai-persona';
 import { uploadFile } from '@/firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
 import { Input } from '@/components/ui/input';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import Link from 'next/link';
 
 const themes = [
   'Superhero',
@@ -225,22 +225,11 @@ export default function CreatePersonaPage() {
   const GenerateButton = () => {
     if (hasNoCredits) {
       return (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                type="button"
-                className="w-full"
-                onClick={() => router.push('/dashboard/account')}
-              >
-                <Gem className="mr-2" /> Go Pro to Generate
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Upgrade to Pro for unlimited generations.</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <Button asChild className="w-full">
+          <Link href="/dashboard/account">
+            <Gem className="mr-2" /> Go Pro to Generate
+          </Link>
+        </Button>
       );
     }
 

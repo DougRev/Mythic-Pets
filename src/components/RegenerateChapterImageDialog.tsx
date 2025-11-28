@@ -15,7 +15,7 @@ import { Loader2, Wand2, Save, XCircle, Gem } from 'lucide-react';
 import { regenerateChapterImage } from '@/ai/flows/regenerate-chapter-image';
 import { uploadFile } from '@/firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import Link from 'next/link';
 
 interface RegenerateChapterImageDialogProps {
   children: React.ReactNode;
@@ -134,8 +134,10 @@ export function RegenerateChapterImageDialog({ children, chapter, persona, story
             </div>
             <DialogFooter>
                 <Button variant="outline" onClick={resetAndClose}>Maybe Later</Button>
-                <Button onClick={() => router.push('/dashboard/account')}>
-                    <Gem className="mr-2"/> Go Pro
+                <Button asChild>
+                    <Link href="/dashboard/account">
+                        <Gem className="mr-2"/> Go Pro
+                    </Link>
                 </Button>
             </DialogFooter>
           </>

@@ -15,7 +15,7 @@ import { Loader2, Wand2, Save, XCircle, Gem } from 'lucide-react';
 import { regenerateAiImage } from '@/ai/flows/regenerate-image';
 import { uploadFile } from '@/firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
+import Link from 'next/link';
 
 interface RegenerateImageDialogProps {
   children: React.ReactNode;
@@ -144,18 +144,11 @@ export function RegenerateImageDialog({ children, persona, pet, onRegenerationCo
       <DialogFooter>
         <Button variant="outline" onClick={resetAndClose}>Cancel</Button>
         {hasNoCredits ? (
-            <TooltipProvider>
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Button type="button" onClick={() => router.push('/dashboard/account')}>
-                            <Gem className="mr-2" /> Go Pro to Regenerate
-                        </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                        <p>Upgrade to Pro for unlimited generations.</p>
-                    </TooltipContent>
-                </Tooltip>
-            </TooltipProvider>
+            <Button asChild>
+                <Link href="/dashboard/account">
+                    <Gem className="mr-2" /> Go Pro to Regenerate
+                </Link>
+            </Button>
         ) : (
             <Button onClick={handleGenerate} disabled={isGenerating}>
                 {isGenerating ? <><Loader2 className="mr-2 animate-spin" /> Generating...</> : <><Wand2 className="mr-2" /> Regenerate</>}
