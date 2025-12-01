@@ -6,11 +6,6 @@ import { Metadata, ResolvingMetadata } from 'next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Bot } from 'lucide-react';
 
-type Props = {
-  params: { personaId: string };
-  searchParams: { [key: string]: string | string[] | undefined };
-};
-
 // Fetch data for the persona
 async function getPersonaData(personaId: string) {
   const personaRef = doc(db, 'publicPersonas', personaId);
@@ -24,7 +19,7 @@ async function getPersonaData(personaId: string) {
 
 // Generate metadata for social sharing
 export async function generateMetadata(
-  { params }: Props,
+  { params }: { params: { personaId: string } },
   parent: ResolvingMetadata
 ): Promise<Metadata> {
   const personaId = params.personaId;
@@ -62,7 +57,7 @@ export async function generateMetadata(
 }
 
 // The public page component
-export default async function PublicPersonaPage({ params }: Props) {
+export default async function PublicPersonaPage({ params }: { params: { personaId: string } }) {
   const persona = await getPersonaData(params.personaId);
 
   if (!persona) {
