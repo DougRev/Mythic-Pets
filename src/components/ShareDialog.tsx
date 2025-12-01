@@ -19,15 +19,23 @@ export function ShareDialog({ children, title, body, imageUrl }: ShareDialogProp
   const handleDownload = () => {
     if (!imageUrl) return;
     
-    // Create a link element
     const link = document.createElement('a');
     link.href = imageUrl;
 
     // Robustly extract mime type and determine file extension
-    const mimeTypeMatch = imageUrl.match(/^data:(image\/(png|jpeg|gif));base64,/);
     let extension = 'png'; // Default extension
-    if (mimeTypeMatch && mimeTypeMatch[2]) {
-      extension = mimeTypeMatch[2];
+    if (imageUrl.startsWith('data:image')) {
+        const mimeTypeMatch = imageUrl.match(/^data:image\/(.*?);/);
+        if (mimeTypeMatch && mimeTypeMatch[1]) {
+            extension = mimeTypeMatch[1];
+        }
+    } else {
+        // Fallback for regular URLs, try to get from path
+        const urlPath = new URL(imageUrl).pathname;
+        const lastPart = urlPath.split('.').pop();
+        if(lastPart && ['png', 'jpg', 'jpeg', 'gif'].includes(lastPart)) {
+            extension = lastPart;
+        }
     }
     
     // Set a proper filename with the correct extension
@@ -39,6 +47,7 @@ export function ShareDialog({ children, title, body, imageUrl }: ShareDialogProp
     link.click();
     document.body.removeChild(link);
   };
+
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
