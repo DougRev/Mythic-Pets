@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
 import Link from 'next/link';
+import { OnboardingGuide } from '@/components/OnboardingGuide';
 
 export default function DashboardPage() {
   const { user, isUserLoading } = useAuth();
@@ -44,6 +45,10 @@ export default function DashboardPage() {
           You're all set to begin a legendary journey. What would you like to do first?
         </p>
       </div>
+
+      {/* Onboarding component will only appear if the user has no pets */}
+      <OnboardingGuide />
+
       <div className="grid md:grid-cols-2 gap-6">
         <Card className="flex flex-col">
             <CardHeader>
