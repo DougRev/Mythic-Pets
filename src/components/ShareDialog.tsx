@@ -65,6 +65,10 @@ export function ShareDialog({ children, title, body, url, imageUrl }: ShareDialo
     toast({ title: 'Copied!', description: 'The link has been copied to your clipboard.' });
   };
 
+  const handleCopy = () => {
+    navigator.clipboard.writeText(url);
+    toast({ title: 'Copied!', description: 'The link has been copied to your clipboard.' });
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -93,6 +97,12 @@ export function ShareDialog({ children, title, body, url, imageUrl }: ShareDialo
               <Download className="mr-2" />
               Download Image
           </Button>
+          {canShare && (
+            <Button onClick={handleShare} className="w-full sm:w-auto flex-1 mt-2 sm:mt-0">
+              <Share2 className="mr-2" />
+              Share
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
