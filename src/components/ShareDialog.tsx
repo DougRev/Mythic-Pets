@@ -12,7 +12,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Download, Share2, Copy } from 'lucide-react';
+import { Download, Copy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from './ui/input';
 
@@ -30,24 +30,25 @@ export function ShareDialog({ children, title, body, url, imageUrl }: ShareDialo
 
   const handleDownload = async () => {
     if (!imageUrl) return;
-
+  
     try {
       const response = await fetch(imageUrl);
       const blob = await response.blob();
       
       const mimeType = blob.type;
-      const extension = mimeType.split('/')[1] ?? 'png';
+      // Fallback to png if mime type is not found or is generic
+      const extension = mimeType.startsWith('image/') ? mimeType.split('/')[1] : 'png';
       const filename = `mythic-pet-${title.toLowerCase().replace(/\s+/g, '-')}.${extension}`;
       
       const link = document.createElement('a');
       const objectUrl = URL.createObjectURL(blob);
       link.href = objectUrl;
       link.download = filename;
-
+  
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-
+  
       URL.revokeObjectURL(objectUrl);
     } catch (error) {
         console.error("Download failed:", error);
