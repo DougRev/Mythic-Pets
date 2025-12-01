@@ -18,9 +18,23 @@ export function ShareDialog({ children, title, body, imageUrl }: ShareDialogProp
 
   const handleDownload = () => {
     if (!imageUrl) return;
+    
+    // Create a link element
     const link = document.createElement('a');
     link.href = imageUrl;
-    link.download = `mythic-pet-${title.toLowerCase().replace(/\s+/g, '-')}.png`;
+
+    // Extract mime type and determine file extension
+    const mimeType = imageUrl.match(/data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+).*,.*/);
+    let extension = 'png'; // Default extension
+    if (mimeType && mimeType.length > 1) {
+      extension = mimeType[1].split('/')[1];
+    }
+    
+    // Set a proper filename with the correct extension
+    const filename = `mythic-pet-${title.toLowerCase().replace(/\s+/g, '-')}.${extension}`;
+    link.download = filename;
+
+    // Append to the document, trigger the-click, and then remove it
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
