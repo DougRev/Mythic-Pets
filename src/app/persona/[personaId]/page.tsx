@@ -1,37 +1,39 @@
 import React from 'react';
 import Image from 'next/image';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/firebase/config'; // Assumes you have a db export in firebase config
+import { initializeApp, getApps, applicationDefault } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
 import { Metadata } from 'next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Bot } from 'lucide-react';
+
+// Initialize Firebase Admin SDK if not already initialized
+if (!getApps().length) {
+  initializeApp({ credential: applicationDefault() });
+}
+const db = getFirestore();
 
 type Props = {
   params: { personaId: string }
 }
 
-// Fetch data for the persona
+// Fetch data for the persona using the Admin SDK
 async function getPersonaData(personaId: string) {
   try {
-    const personaRef = doc(db, 'publicPersonas', personaId);
-    const personaSnap = await getDoc(personaRef);
+    const personaRef = db.collection('publicPersonas').doc(personaId);
+    const personaSnap = await personaRef.get();
 
-    if (!personaSnap.exists()) {
+    if (!personaSnap.exists) {
       return null;
     }
     return personaSnap.data();
   } catch (error) {
-    console.error("Error fetching persona data:", error);
-    // In a build/server environment, it might be better to return null
-    // if there's an issue with connecting to Firestore.
+    console.error("Error fetching persona data with Admin SDK:", error);
     return null;
   }
 }
 
 // Generate metadata for social sharing
-export async function generateMetadata(
-  { params }: Props,
-): Promise<Metadata> {
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const personaId = params.personaId;
   const persona = await getPersonaData(personaId);
 
