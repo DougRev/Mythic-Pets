@@ -2,7 +2,7 @@ import React from 'react';
 import Image from 'next/image';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/firebase/config'; // Assumes you have a db export in firebase config
-import { Metadata, ResolvingMetadata } from 'next';
+import { Metadata } from 'next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Bot } from 'lucide-react';
 
@@ -12,19 +12,25 @@ type Props = {
 
 // Fetch data for the persona
 async function getPersonaData(personaId: string) {
-  const personaRef = doc(db, 'publicPersonas', personaId);
-  const personaSnap = await getDoc(personaRef);
+  try {
+    const personaRef = doc(db, 'publicPersonas', personaId);
+    const personaSnap = await getDoc(personaRef);
 
-  if (!personaSnap.exists()) {
+    if (!personaSnap.exists()) {
+      return null;
+    }
+    return personaSnap.data();
+  } catch (error) {
+    console.error("Error fetching persona data:", error);
+    // In a build/server environment, it might be better to return null
+    // if there's an issue with connecting to Firestore.
     return null;
   }
-  return personaSnap.data();
 }
 
 // Generate metadata for social sharing
 export async function generateMetadata(
   { params }: Props,
-  parent: ResolvingMetadata
 ): Promise<Metadata> {
   const personaId = params.personaId;
   const persona = await getPersonaData(personaId);
@@ -35,12 +41,14 @@ export async function generateMetadata(
     }
   }
 
+  const description = persona.loreText ? persona.loreText.substring(0, 150) + '...' : 'Check out this Mythic Pet!';
+
   return {
     title: `${persona.petName}'s ${persona.theme} Persona`,
-    description: persona.loreText.substring(0, 150) + '...',
+    description: description,
     openGraph: {
       title: `${persona.petName}'s ${persona.theme} Persona`,
-      description: persona.loreText.substring(0, 150) + '...',
+      description: description,
       images: [
         {
           url: persona.imageUrl,
@@ -54,7 +62,7 @@ export async function generateMetadata(
     twitter: {
       card: 'summary_large_image',
       title: `${persona.petName}'s ${persona.theme} Persona`,
-      description: persona.loreText.substring(0, 150) + '...',
+      description: description,
       images: [persona.imageUrl],
     },
   }
