@@ -6,6 +6,12 @@ import { Metadata, ResolvingMetadata } from 'next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Bot } from 'lucide-react';
 
+// This is the definitive, standard type for Next.js App Router page props
+type Props = {
+  params: { personaId: string };
+  searchParams: { [key: string]: string | string[] | undefined };
+};
+
 // Fetch data for the persona
 async function getPersonaData(personaId: string) {
   const personaRef = doc(db, 'publicPersonas', personaId);
@@ -19,7 +25,7 @@ async function getPersonaData(personaId: string) {
 
 // Generate metadata for social sharing
 export async function generateMetadata(
-  { params }: { params: { personaId: string } },
+  { params }: Props,
   parent: ResolvingMetadata
 ): Promise<Metadata> {
   const personaId = params.personaId;
@@ -56,8 +62,8 @@ export async function generateMetadata(
   }
 }
 
-// The public page component
-export default async function PublicPersonaPage({ params }: { params: { personaId: string } }) {
+// The public page component, now using the definitive Props type
+export default async function PublicPersonaPage({ params, searchParams }: Props) {
   const persona = await getPersonaData(params.personaId);
 
   if (!persona) {
