@@ -1,9 +1,10 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { PawPrint, Shield, BookOpen, Share2, Star, Edit, RefreshCw, Sparkles } from 'lucide-react';
+import { PawPrint, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { PersonaGallery } from '@/components/PersonaGallery';
 
 const AppLogo = () => (
   <Link href="/" className="flex items-center gap-2">
@@ -17,7 +18,7 @@ const Header = () => (
     <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
       <AppLogo />
       <nav className="hidden items-center gap-6 md:flex">
-        <Link href="#features" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Features</Link>
+        <Link href="#gallery" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Gallery</Link>
         <Link href="#pricing" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Pricing</Link>
       </nav>
       <div className="flex items-center gap-2">
@@ -66,68 +67,6 @@ const Hero = () => {
     </section>
   );
 };
-
-const features = [
-  {
-    icon: Shield,
-    title: 'Create Mythic Personas',
-    description: 'Transform a photo of your pet into a stunning piece of art. Choose a theme and art style to generate a unique hero with their own backstory.',
-    image: PlaceHolderImages.find(p => p.id === 'feature-persona'),
-  },
-  {
-    icon: BookOpen,
-    title: 'Weave Epic Tales',
-    description: 'Generate captivating, multi-chapter stories based on your pet\'s new persona. You control the tone and length, from a short adventure to an epic saga.',
-    image: PlaceHolderImages.find(p => p.id === 'feature-story'),
-  },
-  {
-    icon: Sparkles,
-    title: 'Regenerate & Refine',
-    description: 'Not quite right? Pro users can regenerate persona images, lore, and even individual chapter illustrations to perfect their pet\'s legend.',
-    image: PlaceHolderImages.find(p => p.id === 'feature-share'),
-  },
-];
-
-const Features = () => (
-  <section id="features" className="w-full py-12 md:py-24 lg:py-32">
-    <div className="container mx-auto space-y-12 px-4 md:px-6">
-      <div className="flex flex-col items-center justify-center space-y-4 text-center">
-        <h2 className="font-headline text-3xl font-bold tracking-tighter sm:text-5xl">From Pet to Protagonist</h2>
-        <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-          Mythic Pets provides all the tools you need to build a legendary universe for your companion.
-        </p>
-      </div>
-      <div className="mx-auto grid items-start gap-8 sm:max-w-4xl sm:grid-cols-1 md:gap-12 lg:max-w-5xl lg:grid-cols-3">
-        {features.map((feature, index) => (
-          <Card key={index} className="flex flex-col overflow-hidden">
-             {feature.image && (
-              <Image
-                src={feature.image.imageUrl}
-                alt={feature.image.description}
-                width={400}
-                height={250}
-                className="aspect-video w-full object-cover"
-                data-ai-hint={feature.image.imageHint}
-              />
-            )}
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
-                  <feature.icon className="h-5 w-5" />
-                </div>
-                <CardTitle className="font-headline text-xl">{feature.title}</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">{feature.description}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </div>
-  </section>
-);
-
 
 const pricingTiers = [
     {
@@ -227,7 +166,7 @@ export default function Home() {
       <Header />
       <main className="flex-1">
         <Hero />
-        <Features />
+        <PersonaGallery />
         <Pricing />
       </main>
       <Footer />
