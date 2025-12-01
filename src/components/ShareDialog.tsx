@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
 
@@ -30,11 +30,15 @@ export function ShareDialog({ children, title, body, imageUrl }: ShareDialogProp
             extension = mimeTypeMatch[1];
         }
     } else {
-        // Fallback for regular URLs, try to get from path
-        const urlPath = new URL(imageUrl).pathname;
-        const lastPart = urlPath.split('.').pop();
-        if(lastPart && ['png', 'jpg', 'jpeg', 'gif'].includes(lastPart)) {
-            extension = lastPart;
+        try {
+            // For regular URLs, try to get from path
+            const urlPath = new URL(imageUrl).pathname;
+            const lastPart = urlPath.split('.').pop();
+            if(lastPart && ['png', 'jpg', 'jpeg', 'gif'].includes(lastPart)) {
+                extension = lastPart;
+            }
+        } catch (e) {
+            console.error("Could not parse URL to determine extension, defaulting to png.", e);
         }
     }
     
