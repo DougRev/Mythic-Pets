@@ -1,57 +1,48 @@
 'use client';
 
-import React, { useState } from 'react';
-import Image from 'next/image';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Download } from 'lucide-react';
+import { Share2 } from 'lucide-react';
+import { Input } from './ui/input';
+import { useToast } from '@/hooks/use-toast';
 
 interface ShareDialogProps {
   children: React.ReactNode;
   title: string;
   body: string;
-  imageUrl: string;
+  url: string;
 }
 
-export function ShareDialog({ children, title, body, imageUrl }: ShareDialogProps) {
+export function ShareDialog({ children, title, body, url }: ShareDialogProps) {
   const [open, setOpen] = useState(false);
+  const [canShare, setCanShare] = useState(false);
+  const { toast } = useToast();
 
-  const handleDownload = () => {
-    if (!imageUrl) return;
-    
-    const link = document.createElement('a');
-    link.href = imageUrl;
-
-    // Robustly extract mime type and determine file extension
-    let extension = 'png'; // Default extension
-    if (imageUrl.startsWith('data:image')) {
-        const mimeTypeMatch = imageUrl.match(/^data:image\/(.*?);/);
-        if (mimeTypeMatch && mimeTypeMatch[1]) {
-            extension = mimeTypeMatch[1];
-        }
-    } else {
-        try {
-            // For regular URLs, try to get from path
-            const urlPath = new URL(imageUrl).pathname;
-            const lastPart = urlPath.split('.').pop();
-            if(lastPart && ['png', 'jpg', 'jpeg', 'gif'].includes(lastPart)) {
-                extension = lastPart;
-            }
-        } catch (e) {
-            console.error("Could not parse URL to determine extension, defaulting to png.", e);
-        }
+  useEffect(() => {
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      setCanShare(true);
     }
-    
-    // Set a proper filename with the correct extension
-    const filename = `mythic-pet-${title.toLowerCase().replace(/\s+/g, '-')}.${extension}`;
-    link.download = filename;
+  }, []);
 
-    // Append to the document, trigger the-click, and then remove it
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: title,
+          text: body,
+          url: url,
+        });
+      } catch (error) {
+        console.error('Error sharing:', error);
+      }
+    }
   };
 
+  const handleCopy = () => {
+    navigator.clipboard.writeText(url);
+    toast({ title: 'Copied!', description: 'The link has been copied to your clipboard.' });
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -60,23 +51,22 @@ export function ShareDialog({ children, title, body, imageUrl }: ShareDialogProp
         <DialogHeader>
           <DialogTitle>Share Your Creation</DialogTitle>
           <DialogDescription>
-            Download the image to share with your friends and followers!
+            Share this link with your friends and followers!
           </DialogDescription>
         </DialogHeader>
-        <div className="py-4 flex items-center justify-center">
-            <Image
-              src={imageUrl}
-              alt={`Shareable image of ${title}`}
-              width={500}
-              height={500}
-              className="rounded-lg shadow-md aspect-square object-contain"
-            />
+        <div className="py-4">
+          <Input value={url} readOnly />
         </div>
-        <DialogFooter>
-          <Button onClick={handleDownload} className="w-full">
-              <Download className="mr-2" />
-              Download Image
+        <DialogFooter className="sm:justify-start">
+          <Button onClick={handleCopy} className="w-full sm:w-auto flex-1">
+            Copy Link
           </Button>
+          {canShare && (
+            <Button onClick={handleShare} className="w-full sm:w-auto flex-1 mt-2 sm:mt-0">
+              <Share2 className="mr-2" />
+              Share
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
