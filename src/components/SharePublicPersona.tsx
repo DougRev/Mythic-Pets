@@ -16,12 +16,12 @@ interface SharePublicPersonaProps {
 }
 
 export function SharePublicPersona({ persona, pet, personaId }: SharePublicPersonaProps) {
-  const { firestore } = useAuth();
+  const { user, firestore } = useAuth();
   const { toast } = useToast();
   const { trackEvent } = useAnalytics();
 
   const handlePublish = async () => {
-    if (!firestore) {
+    if (!firestore || !user) {
       toast({ variant: 'destructive', title: 'Error', description: 'Could not connect to the database.' });
       return;
     }
@@ -34,6 +34,7 @@ export function SharePublicPersona({ persona, pet, personaId }: SharePublicPerso
         imageUrl: persona.imageUrl,
         generationDate: persona.generationDate,
         petName: pet.name,
+        authorId: user.uid, // Add authorId for security rules
       };
 
       // Write it to the public collection
@@ -55,6 +56,7 @@ export function SharePublicPersona({ persona, pet, personaId }: SharePublicPerso
       title={persona.theme}
       body={`Check out my pet, ${pet.name}, as a ${persona.theme}!`}
       url={publicUrl}
+      imageUrl={persona.imageUrl}
     >
       <Button variant="outline" onClick={handlePublish}><Share2 className="mr-2"/>Share</Button>
     </ShareDialog>

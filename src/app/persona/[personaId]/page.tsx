@@ -1,27 +1,48 @@
+
 import React from 'react';
 import Image from 'next/image';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/firebase/config';
-import { Metadata, ResolvingMetadata } from 'next';
+import { initializeApp, getApps, applicationDefault, App } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
+import { Metadata } from 'next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Bot } from 'lucide-react';
 
-// Fetch data for the persona
-async function getPersonaData(personaId: string) {
-  const personaRef = doc(db, 'publicPersonas', personaId);
-  const personaSnap = await getDoc(personaRef);
+// Initialize Firebase Admin SDK if not already initialized
+let adminApp: App;
+if (!getApps().length) {
+  adminApp = initializeApp({ credential: applicationDefault() });
+} else {
+  adminApp = getApps()[0];
+}
+const db = getFirestore(adminApp);
 
-  if (!personaSnap.exists()) {
+
+// Define the correct props type for a dynamic route page in Next.js
+type Props = {
+  params: {
+    personaId: string;
+  };
+};
+
+
+// Fetch data for the persona using the Admin SDK
+async function getPersonaData(personaId: string) {
+  try {
+    const personaRef = db.collection('publicPersonas').doc(personaId);
+    const personaSnap = await personaRef.get();
+
+    if (!personaSnap.exists) {
+      return null;
+    }
+    return personaSnap.data();
+  } catch (error) {
+    console.error("Error fetching persona data with Admin SDK:", error);
     return null;
   }
-  return personaSnap.data();
 }
 
 // Generate metadata for social sharing
-export async function generateMetadata(
-  { params }: { params: { personaId: string } },
-  parent: ResolvingMetadata
-): Promise<Metadata> {
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const personaId = params.personaId;
   const persona = await getPersonaData(personaId);
 
@@ -31,12 +52,14 @@ export async function generateMetadata(
     }
   }
 
+  const description = persona.loreText ? persona.loreText.substring(0, 150) + '...' : 'Check out this Mythic Pet!';
+
   return {
     title: `${persona.petName}'s ${persona.theme} Persona`,
-    description: persona.loreText.substring(0, 150) + '...',
+    description: description,
     openGraph: {
       title: `${persona.petName}'s ${persona.theme} Persona`,
-      description: persona.loreText.substring(0, 150) + '...',
+      description: description,
       images: [
         {
           url: persona.imageUrl,
@@ -50,14 +73,14 @@ export async function generateMetadata(
     twitter: {
       card: 'summary_large_image',
       title: `${persona.petName}'s ${persona.theme} Persona`,
-      description: persona.loreText.substring(0, 150) + '...',
+      description: description,
       images: [persona.imageUrl],
     },
   }
 }
 
 // The public page component
-export default async function PublicPersonaPage({ params }: { params: { personaId: string } }) {
+export default async function PublicPersonaPage({ params }: Props) {
   const persona = await getPersonaData(params.personaId);
 
   if (!persona) {
