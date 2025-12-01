@@ -23,11 +23,11 @@ export function ShareDialog({ children, title, body, imageUrl }: ShareDialogProp
     const link = document.createElement('a');
     link.href = imageUrl;
 
-    // Extract mime type and determine file extension
-    const mimeType = imageUrl.match(/data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+).*,.*/);
+    // Robustly extract mime type and determine file extension
+    const mimeTypeMatch = imageUrl.match(/^data:(image\/(png|jpeg|gif));base64,/);
     let extension = 'png'; // Default extension
-    if (mimeType && mimeType.length > 1) {
-      extension = mimeType[1].split('/')[1];
+    if (mimeTypeMatch && mimeTypeMatch[2]) {
+      extension = mimeTypeMatch[2];
     }
     
     // Set a proper filename with the correct extension
