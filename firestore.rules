@@ -104,6 +104,20 @@ service cloud.firestore {
             allow update: if false;
         }
     }
+
+    /**
+     * @description Enforces access control for public personas.
+     * @path /publicPersonas/{personaId}
+     */
+    match /publicPersonas/{personaId} {
+        // Anyone can read public personas
+        allow get, list: if true;
+        // Only the original author (owner) of the persona can create/update it.
+        // We'd need to store the author's UID in the public persona document.
+        allow create, update: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
+        // Public personas can't be deleted directly, they are removed when the original is deleted.
+        allow delete: if false;
+    }
   }
 
   // Helper functions
@@ -120,12 +134,10 @@ service cloud.firestore {
   }
   
   function isUpdatingAllowedFields(data) {
-    let allowedFields = ['displayName', 'photoURL', 'generationCredits', 'planType', 'stripeCustomerId'];
+    let allowedFields = ['displayName', 'photoURL', 'generationCredits', 'planType', 'stripeCustomerId', 'subscriptionStatus', 'subscriptionPeriodEnd'];
     let receivedKeys = data.keys();
     
     // Check that every key in the request is in the allowed list
     return receivedKeys.hasOnly(allowedFields);
   }
 }
-
-    
