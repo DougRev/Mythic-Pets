@@ -1,27 +1,46 @@
+
 import React from 'react';
 import Image from 'next/image';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/firebase/config'; // Assumes you have a db export in firebase config
 import { Metadata, ResolvingMetadata } from 'next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Bot } from 'lucide-react';
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
 
+// Define the correct props type for a dynamic Next.js page
 type Props = {
-  params: { personaId: string }
+  params: { personaId: string };
+};
+
+// Initialize Firebase Admin SDK safely for server-side rendering
+const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT
+  ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
+  : undefined;
+
+if (serviceAccount) {
+    if (!getApps().length) {
+        initializeApp({
+            credential: cert(serviceAccount),
+        });
+    }
 }
 
-// Fetch data for the persona
-async function getPersonaData(personaId: string) {
-  const personaRef = doc(db, 'publicPersonas', personaId);
-  const personaSnap = await getDoc(personaRef);
 
-  if (!personaSnap.exists()) {
+async function getPersonaData(personaId: string) {
+  if (!serviceAccount) {
+    console.error("Firebase Admin SDK not initialized. FIREBASE_SERVICE_ACCOUNT env variable is missing.");
+    return null;
+  }
+  const db = getFirestore();
+  const personaRef = db.collection('publicPersonas').doc(personaId);
+  const personaSnap = await personaRef.get();
+
+  if (!personaSnap.exists) {
     return null;
   }
   return personaSnap.data();
 }
 
-// Generate metadata for social sharing
 export async function generateMetadata(
   { params }: Props,
   parent: ResolvingMetadata
@@ -35,12 +54,14 @@ export async function generateMetadata(
     }
   }
 
+  const description = persona.loreText ? persona.loreText.substring(0, 150) + '...' : 'A mythic pet persona.';
+
   return {
     title: `${persona.petName}'s ${persona.theme} Persona`,
-    description: persona.loreText.substring(0, 150) + '...',
+    description: description,
     openGraph: {
       title: `${persona.petName}'s ${persona.theme} Persona`,
-      description: persona.loreText.substring(0, 150) + '...',
+      description: description,
       images: [
         {
           url: persona.imageUrl,
@@ -54,13 +75,12 @@ export async function generateMetadata(
     twitter: {
       card: 'summary_large_image',
       title: `${persona.petName}'s ${persona.theme} Persona`,
-      description: persona.loreText.substring(0, 150) + '...',
+      description: description,
       images: [persona.imageUrl],
     },
   }
 }
 
-// The public page component
 export default async function PublicPersonaPage({ params }: Props) {
   const persona = await getPersonaData(params.personaId);
 
