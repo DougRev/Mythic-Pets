@@ -1,20 +1,29 @@
+
 import React from 'react';
 import Image from 'next/image';
-import { initializeApp, getApps, applicationDefault } from 'firebase-admin/app';
+import { initializeApp, getApps, applicationDefault, App } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { Metadata } from 'next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Bot } from 'lucide-react';
 
 // Initialize Firebase Admin SDK if not already initialized
+let adminApp: App;
 if (!getApps().length) {
-  initializeApp({ credential: applicationDefault() });
+  adminApp = initializeApp({ credential: applicationDefault() });
+} else {
+  adminApp = getApps()[0];
 }
-const db = getFirestore();
+const db = getFirestore(adminApp);
 
+
+// Define the correct props type for a dynamic route page in Next.js
 type Props = {
-  params: { personaId: string }
-}
+  params: {
+    personaId: string;
+  };
+};
+
 
 // Fetch data for the persona using the Admin SDK
 async function getPersonaData(personaId: string) {
