@@ -1,44 +1,32 @@
-
 import React from 'react';
 import Image from 'next/image';
-import { initializeApp, getApps, applicationDefault, App } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
-import { Metadata } from 'next';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/firebase/config';
+import { Metadata, ResolvingMetadata } from 'next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Bot } from 'lucide-react';
 
-// Initialize Firebase Admin SDK only once
-if (!getApps().length) {
-  initializeApp({ credential: applicationDefault() });
-}
-const db = getFirestore();
-
-// Define the correct props type for a dynamic route page in Next.js
 type Props = {
-  params: {
-    personaId: string;
-  };
+  params: { personaId: string };
+  searchParams: { [key: string]: string | string[] | undefined };
 };
 
-
-// Fetch data for the persona using the Admin SDK
+// Fetch data for the persona
 async function getPersonaData(personaId: string) {
-  try {
-    const personaRef = db.collection('publicPersonas').doc(personaId);
-    const personaSnap = await personaRef.get();
+  const personaRef = doc(db, 'publicPersonas', personaId);
+  const personaSnap = await getDoc(personaRef);
 
-    if (!personaSnap.exists) {
-      return null;
-    }
-    return personaSnap.data();
-  } catch (error) {
-    console.error("Error fetching persona data with Admin SDK:", error);
+  if (!personaSnap.exists()) {
     return null;
   }
+  return personaSnap.data();
 }
 
 // Generate metadata for social sharing
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata(
+  { params }: Props,
+  parent: ResolvingMetadata
+): Promise<Metadata> {
   const personaId = params.personaId;
   const persona = await getPersonaData(personaId);
 
@@ -48,14 +36,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     }
   }
 
-  const description = persona.loreText ? persona.loreText.substring(0, 150) + '...' : 'Check out this Mythic Pet!';
-
   return {
     title: `${persona.petName}'s ${persona.theme} Persona`,
-    description: description,
+    description: persona.loreText.substring(0, 150) + '...',
     openGraph: {
       title: `${persona.petName}'s ${persona.theme} Persona`,
-      description: description,
+      description: persona.loreText.substring(0, 150) + '...',
       images: [
         {
           url: persona.imageUrl,
@@ -69,7 +55,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     twitter: {
       card: 'summary_large_image',
       title: `${persona.petName}'s ${persona.theme} Persona`,
-      description: description,
+      description: persona.loreText.substring(0, 150) + '...',
       images: [persona.imageUrl],
     },
   }
