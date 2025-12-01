@@ -10,10 +10,10 @@ interface ShareDialogProps {
   children: React.ReactNode;
   title: string;
   body: string;
-  imageUrl: string;
+  url: string;
 }
 
-export function ShareDialog({ children, title, body, imageUrl }: ShareDialogProps) {
+export function ShareDialog({ children, title, body, url }: ShareDialogProps) {
   const [open, setOpen] = useState(false);
   const [canShare, setCanShare] = useState(false);
 
@@ -89,6 +89,10 @@ export function ShareDialog({ children, title, body, imageUrl }: ShareDialogProp
     }
   };
 
+  const handleCopy = () => {
+    navigator.clipboard.writeText(url);
+    toast({ title: 'Copied!', description: 'The link has been copied to your clipboard.' });
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -100,14 +104,8 @@ export function ShareDialog({ children, title, body, imageUrl }: ShareDialogProp
             Share or download the image to show your friends and followers!
           </DialogDescription>
         </DialogHeader>
-        <div className="py-4 flex items-center justify-center">
-            <Image
-              src={imageUrl}
-              alt={`Shareable image of ${title}`}
-              width={500}
-              height={500}
-              className="rounded-lg shadow-md aspect-square object-contain"
-            />
+        <div className="py-4">
+          <Input value={url} readOnly />
         </div>
         <DialogFooter className="sm:justify-start">
           <Button onClick={handleDownload} className="w-full sm:w-auto flex-1">
