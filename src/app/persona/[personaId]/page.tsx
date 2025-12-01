@@ -7,15 +7,11 @@ import { Metadata } from 'next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Bot } from 'lucide-react';
 
-// Initialize Firebase Admin SDK if not already initialized
-let adminApp: App;
+// Initialize Firebase Admin SDK only once
 if (!getApps().length) {
-  adminApp = initializeApp({ credential: applicationDefault() });
-} else {
-  adminApp = getApps()[0];
+  initializeApp({ credential: applicationDefault() });
 }
-const db = getFirestore(adminApp);
-
+const db = getFirestore();
 
 // Define the correct props type for a dynamic route page in Next.js
 type Props = {
