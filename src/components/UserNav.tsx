@@ -13,13 +13,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Gem, LogOut, User as UserIcon, Sparkles } from 'lucide-react';
+import { Gem, LogOut, User as UserIcon, Sparkles, MessageSquare } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useAnalytics } from '@/hooks/useAnalytics';
 import { useDoc } from '@/firebase';
 import { doc } from 'firebase/firestore';
 
 export function UserNav() {
   const { user, firestore, signOut } = useAuth();
+  const { trackEvent } = useAnalytics();
   
   const userProfileRef = React.useMemo(() => {
     if (!user || !firestore) return null;
@@ -93,9 +95,18 @@ export function UserNav() {
                 </DropdownMenuItem>
             </Link>
           )}
+          <a href="mailto:feedback@mythicpets.com">
+            <DropdownMenuItem>
+                <MessageSquare className="mr-2 h-4 w-4" />
+                <span>Send Feedback</span>
+            </DropdownMenuItem>
+          </a>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={signOut}>
+        <DropdownMenuItem onClick={() => {
+            trackEvent('user_logout');
+            signOut();
+        }}>
           <LogOut className="mr-2 h-4 w-4" />
           <span>Log out</span>
         </DropdownMenuItem>

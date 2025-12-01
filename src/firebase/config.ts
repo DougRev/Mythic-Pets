@@ -1,3 +1,6 @@
+import { initializeApp, getApps } from 'firebase/app';
+import { getFirestore } from 'firebase/firestore';
+
 export const firebaseConfig = {
   "projectId": "studio-4909354378-652fa",
   "appId": "1:424163038035:web:89723f5510be4b192d47a6",
@@ -7,3 +10,12 @@ export const firebaseConfig = {
   "messagingSenderId": "424163038035",
   "storageBucket": "studio-4909354378-652fa.firebasestorage.app"
 };
+
+// Initialize Firebase
+let app;
+if (!getApps().length) {
+  app = initializeApp(firebaseConfig);
+}
+
+// Export firestore instance
+export const db = getFirestore(app);
