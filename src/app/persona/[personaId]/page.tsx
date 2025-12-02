@@ -8,12 +8,6 @@ import { Bot } from 'lucide-react';
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
-// Define the correct props type for a dynamic Next.js page
-type PageProps = {
-  params: { personaId: string };
-  searchParams: { [key: string]: string | string[] | undefined };
-};
-
 // Initialize Firebase Admin SDK safely for server-side rendering
 const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT
   ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
@@ -44,7 +38,7 @@ async function getPersonaData(personaId: string) {
 }
 
 export async function generateMetadata(
-  { params }: PageProps,
+  { params }: { params: { personaId: string } },
   parent: ResolvingMetadata
 ): Promise<Metadata> {
   const personaId = params.personaId;
@@ -83,7 +77,7 @@ export async function generateMetadata(
   }
 }
 
-export default async function PublicPersonaPage({ params }: PageProps) {
+export default async function PublicPersonaPage({ params }: { params: { personaId: string } }) {
   const persona = await getPersonaData(params.personaId);
 
   if (!persona) {
