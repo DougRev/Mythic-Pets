@@ -23,7 +23,7 @@ export function ShareDialog({ children, title, body, imageUrl, remixPath }: Shar
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      if (navigator.share) {
+      if (!!navigator.share) {
         setIsShareApiAvailable(true);
       }
       // Construct the full URL client-side
