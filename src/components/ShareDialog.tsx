@@ -20,7 +20,7 @@ export function ShareDialog({ children, title, body, url }: ShareDialogProps) {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (typeof navigator !== 'undefined' && navigator.share) {
+    if (typeof navigator !== 'undefined' && typeof navigator.share !== 'undefined') {
       setCanShare(true);
     }
   }, []);
