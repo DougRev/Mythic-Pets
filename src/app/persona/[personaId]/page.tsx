@@ -9,7 +9,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 
 // Define the correct props type for a dynamic Next.js page
 type Props = {
-  params: { personaId: string };
+  params: Promise<{ personaId: string }>;
 };
 
 // Initialize Firebase Admin SDK safely for server-side rendering
@@ -45,7 +45,7 @@ export async function generateMetadata(
   { params }: Props,
   parent: ResolvingMetadata
 ): Promise<Metadata> {
-  const personaId = params.personaId;
+  const { personaId } = await params;
   const persona = await getPersonaData(personaId);
 
   if (!persona) {
@@ -82,7 +82,8 @@ export async function generateMetadata(
 }
 
 export default async function PublicPersonaPage({ params }: Props) {
-  const persona = await getPersonaData(params.personaId);
+  const { personaId } = await params;
+  const persona = await getPersonaData(personaId);
 
   if (!persona) {
     return <div className="flex h-screen items-center justify-center">Persona not found.</div>;
