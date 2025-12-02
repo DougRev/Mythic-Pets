@@ -156,12 +156,7 @@ export default function PersonaDetailsPage() {
             <RegenerateImageDialog persona={persona} pet={pet} onRegenerationComplete={refetchPersona}>
               <Button variant="outline" className="w-full"><RefreshCw className="mr-2 h-4 w-4"/>Image</Button>
             </RegenerateImageDialog>
-            <ShareDialog
-              title={persona.theme}
-              body={persona.loreText}
-              imageUrl={persona.imageUrl}
-              remixPath={remixPath}
-            >
+            <ShareDialog persona={persona} pet={pet}>
               <Button variant="outline" className="w-full"><Share2 className="mr-2 h-4 w-4"/>Share</Button>
             </ShareDialog>
             <DeleteDialog

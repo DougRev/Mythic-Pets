@@ -5,18 +5,32 @@ import Image from 'next/image';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Share2, Download, Copy, Link as LinkIcon } from 'lucide-react';
+import { Share2, Download, Copy, Link as LinkIcon, GalleryHorizontal } from 'lucide-react';
 import { usePathname } from 'next/navigation';
+import { publishPersona } from '@/app/actions';
+
+interface Pet {
+  id: string;
+  name: string;
+}
+
+interface Persona {
+  id: string;
+  title: string;
+  loreText: string;
+  imageUrl: string;
+  imageStyle: string;
+}
 
 interface ShareDialogProps {
   children: React.ReactNode;
-  title: string;
-  body: string;
-  imageUrl: string;
-  remixPath: string;
+  persona: Persona;
+  pet: Pet;
 }
 
-export function ShareDialog({ children, title, body, imageUrl, remixPath }: ShareDialogProps) {
+export function ShareDialog({ children, persona, pet }: ShareDialogProps) {
+  const { title, loreText: body, imageUrl } = persona;
+  const remixPath = `/dashboard/pets/${pet.id}/create-persona?theme=${encodeURIComponent(title)}&imageStyle=${encodeURIComponent(persona.imageStyle)}`;
   const { toast } = useToast();
   const [isShareApiAvailable, setIsShareApiAvailable] = useState(false);
   const [remixUrl, setRemixUrl] = useState('');
@@ -75,6 +89,22 @@ export function ShareDialog({ children, title, body, imageUrl, remixPath }: Shar
 
   const socialCaption = `Check out my pet's mythic persona: ${title}! Created with #MythicPets. \n\n${body}\n\nRemix this persona for your pet: ${remixUrl}`;
 
+  const handlePublish = async () => {
+    try {
+      await publishPersona(pet.id, persona.id);
+      toast({
+        title: 'Published to Gallery!',
+        description: 'Your mythic persona is now visible to the community.',
+      });
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Publishing Failed',
+        description: error.message || 'Could not publish your persona. Please try again.',
+      });
+    }
+  };
+
   return (
     <Dialog>
       <DialogTrigger asChild>{children}</DialogTrigger>
@@ -104,16 +134,21 @@ export function ShareDialog({ children, title, body, imageUrl, remixPath }: Shar
                 Copy Remix Link
             </Button>
         </div>
-        <DialogFooter>
-            {isShareApiAvailable ? (
-                 <Button onClick={handleShare} className="w-full">
+         <div className="mt-4 pt-4 border-t">
+          <Button onClick={handlePublish} variant="secondary" className="w-full">
+            <GalleryHorizontal className="mr-2 h-4 w-4" />
+            Publish to Community Gallery
+          </Button>
+        </div>
+        <DialogFooter className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button onClick={handleDownload} variant="outline" className="w-full sm:w-auto">
+                <Download className="mr-2 h-4 w-4" />
+                Download Image
+            </Button>
+            {isShareApiAvailable && (
+                 <Button onClick={handleShare} className="w-full sm:w-auto">
                     <Share2 className="mr-2 h-4 w-4" />
                     Share
-                </Button>
-            ) : (
-                <Button onClick={handleDownload} className="w-full">
-                    <Download className="mr-2 h-4 w-4" />
-                    Download Image
                 </Button>
             )}
         </DialogFooter>
