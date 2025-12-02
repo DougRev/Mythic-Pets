@@ -50,6 +50,7 @@ export function FirebaseClientProvider({ children }: FirebaseClientProviderProps
       auth={firebaseServices.auth}
       firestore={firebaseServices.firestore}
       storage={firebaseServices.storage}
+      app={firebaseServices.app}
     >
       {analytics && <FirebaseAnalytics analytics={analytics} />}
       {children}
