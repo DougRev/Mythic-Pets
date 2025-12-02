@@ -11,6 +11,7 @@ import React, {
 import { Firestore } from 'firebase/firestore';
 import { Auth, User, onAuthStateChanged } from 'firebase/auth';
 import { FirebaseStorage } from 'firebase/storage';
+import { FirebaseApp } from 'firebase/app';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 
 interface FirebaseProviderProps {
@@ -18,12 +19,14 @@ interface FirebaseProviderProps {
   firestore: Firestore;
   auth: Auth;
   storage: FirebaseStorage;
+  app: FirebaseApp;
 }
 
 export interface FirebaseContextState {
   firestore: Firestore;
   auth: Auth;
   storage: FirebaseStorage;
+  app: FirebaseApp;
   user: User | null;
   isUserLoading: boolean;
 }
@@ -37,6 +40,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
   firestore,
   auth,
   storage,
+  app,
 }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isUserLoading, setIsUserLoading] = useState(true);
@@ -54,10 +58,11 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       firestore,
       auth,
       storage,
+      app,
       user,
       isUserLoading,
     }),
-    [firestore, auth, storage, user, isUserLoading]
+    [firestore, auth, storage, app, user, isUserLoading]
   );
 
   return (
