@@ -1,84 +1,34 @@
-
+'use client';
 
 import React from 'react';
 import Image from 'next/image';
-import { Metadata, ResolvingMetadata } from 'next';
+import { useParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Bot } from 'lucide-react';
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
+import { Bot, Loader2 } from 'lucide-react';
+import { useDoc } from '@/firebase';
+import { doc } from 'firebase/firestore';
+import { useAuth } from '@/hooks/useAuth';
 
-// Initialize Firebase Admin SDK safely for server-side rendering
-const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT
-  ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
-  : undefined;
+export default function PublicPersonaPage() {
+  const params = useParams();
+  const personaId = params.personaId as string;
+  const { firestore } = useAuth();
 
-if (serviceAccount) {
-    if (!getApps().length) {
-        initializeApp({
-            credential: cert(serviceAccount),
-        });
-    }
-}
+  const personaRef = React.useMemo(() => {
+    if (!firestore || !personaId) return null;
+    return doc(firestore, 'publicPersonas', personaId);
+  }, [firestore, personaId]);
 
+  const { data: persona, isLoading } = useDoc<any>(personaRef);
 
-async function getPersonaData(personaId: string) {
-  if (!serviceAccount) {
-    console.error("Firebase Admin SDK not initialized. FIREBASE_SERVICE_ACCOUNT env variable is missing.");
-    return null;
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="mr-2 h-8 w-8 animate-spin" />
+        <span>Loading Persona...</span>
+      </div>
+    );
   }
-  const db = getFirestore();
-  const personaRef = db.collection('publicPersonas').doc(personaId);
-  const personaSnap = await personaRef.get();
-
-  if (!personaSnap.exists) {
-    return null;
-  }
-  return personaSnap.data();
-}
-
-export async function generateMetadata(
-  { params }: { params: { personaId: string } },
-  parent: ResolvingMetadata
-): Promise<Metadata> {
-  const personaId = params.personaId;
-  const persona = await getPersonaData(personaId);
-
-  if (!persona) {
-    return {
-      title: 'Persona Not Found',
-    }
-  }
-
-  const description = persona.loreText ? persona.loreText.substring(0, 150) + '...' : 'A mythic pet persona.';
-
-  return {
-    title: `${persona.petName}'s ${persona.theme} Persona`,
-    description: description,
-    openGraph: {
-      title: `${persona.petName}'s ${persona.theme} Persona`,
-      description: description,
-      images: [
-        {
-          url: persona.imageUrl,
-          width: 1200,
-          height: 630,
-          alt: `${persona.petName} as a ${persona.theme}`,
-        },
-      ],
-      type: 'article',
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: `${persona.petName}'s ${persona.theme} Persona`,
-      description: description,
-      images: [persona.imageUrl],
-    },
-  }
-}
-
-export default async function PublicPersonaPage({ params }: { params: { personaId: string } }) {
-  const persona = await getPersonaData(params.personaId);
 
   if (!persona) {
     return <div className="flex h-screen items-center justify-center">Persona not found.</div>;
