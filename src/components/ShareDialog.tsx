@@ -1,69 +1,48 @@
 'use client';
 
-import React, { useState } from 'react';
-import Image from 'next/image';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+import React, { useState, useEffect } from 'react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Download, Share2, Copy } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { Share2 } from 'lucide-react';
 import { Input } from './ui/input';
+import { useToast } from '@/hooks/use-toast';
 
 interface ShareDialogProps {
   children: React.ReactNode;
   title: string;
   body: string;
   url: string;
-  imageUrl: string;
 }
 
-export function ShareDialog({ children, title, body, url, imageUrl }: ShareDialogProps) {
+export function ShareDialog({ children, title, body, url }: ShareDialogProps) {
   const [open, setOpen] = useState(false);
+  const [canShare, setCanShare] = useState(false);
   const { toast } = useToast();
 
-  const handleDownload = async () => {
-    if (!imageUrl) return;
+  useEffect(() => {
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      setCanShare(true);
+    }
+  }, []);
 
-    try {
-      const response = await fetch(imageUrl);
-      const blob = await response.blob();
-      
-      const mimeType = blob.type;
-      const extension = mimeType.split('/')[1] ?? 'png';
-      const filename = `mythic-pet-${title.toLowerCase().replace(/\s+/g, '-')}.${extension}`;
-      
-      const link = document.createElement('a');
-      const objectUrl = URL.createObjectURL(blob);
-      link.href = objectUrl;
-      link.download = filename;
-
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      URL.revokeObjectURL(objectUrl);
-    } catch (error) {
-        console.error("Download failed:", error);
-        toast({
-            variant: "destructive",
-            title: "Download Failed",
-            description: "Could not download the image. Please try right-clicking the image to save."
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: title,
+          text: body,
+          url: url,
         });
+      } catch (error) {
+        console.error('Error sharing:', error);
+      }
     }
   };
-  
+
   const handleCopy = () => {
     navigator.clipboard.writeText(url);
     toast({ title: 'Copied!', description: 'The link has been copied to your clipboard.' });
   };
-
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -72,26 +51,22 @@ export function ShareDialog({ children, title, body, url, imageUrl }: ShareDialo
         <DialogHeader>
           <DialogTitle>Share Your Creation</DialogTitle>
           <DialogDescription>
-            Download the image or copy the link to share with your friends.
+            Share this link with your friends and followers!
           </DialogDescription>
         </DialogHeader>
-        <div className="py-4 space-y-4">
-             <div className="relative aspect-square w-full overflow-hidden rounded-md">
-                {imageUrl && <Image src={imageUrl} alt={title} fill className="object-cover" />}
-             </div>
-             <div className="flex w-full items-center space-x-2">
-                <Input value={url} readOnly />
-                <Button type="button" size="icon" onClick={handleCopy}>
-                    <Copy className="h-4 w-4" />
-                    <span className="sr-only">Copy Link</span>
-                </Button>
-            </div>
+        <div className="py-4">
+          <Input value={url} readOnly />
         </div>
         <DialogFooter className="sm:justify-start">
-          <Button onClick={handleDownload} className="w-full">
-              <Download className="mr-2" />
-              Download Image
+          <Button onClick={handleCopy} className="w-full sm:w-auto flex-1">
+            Copy Link
           </Button>
+          {canShare && (
+            <Button onClick={handleShare} className="w-full sm:w-auto flex-1 mt-2 sm:mt-0">
+              <Share2 className="mr-2" />
+              Share
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
