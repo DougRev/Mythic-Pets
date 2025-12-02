@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import Image from 'next/image';
 import { Metadata, ResolvingMetadata } from 'next';
@@ -10,6 +11,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 // Define the correct props type for a dynamic Next.js page
 type Props = {
   params: { personaId: string };
+  searchParams: { [key: string]: string | string[] | undefined };
 };
 
 // Initialize Firebase Admin SDK safely for server-side rendering

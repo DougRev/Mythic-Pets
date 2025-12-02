@@ -1,0 +1,250 @@
+[33mfd2628c[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mdev[m[33m)[m HEAD@{0}: commit: that worked but something broke when we did that because now it wont boo
+[33me86fb5f[m HEAD@{1}: pull origin dev: Merge made by the 'ort' strategy.
+[33m18420c9[m HEAD@{2}: commit: Try fixing this error: `Build Error: Module not found: Can't resolve 'ne
+[33m946b917[m HEAD@{3}: pull origin dev: Fast-forward
+[33md9307b1[m HEAD@{4}: reset: moving to HEAD
+[33md9307b1[m HEAD@{5}: commit: lets update the readme
+[33m172100f[m[33m ([m[1;32mmain[m[33m)[m HEAD@{6}: checkout: moving from main to dev
+[33m172100f[m[33m ([m[1;32mmain[m[33m)[m HEAD@{7}: commit: it failed once again
+[33mf740aa4[m HEAD@{8}: commit: It still failed. Here are the new logs
+[33m0473d1b[m HEAD@{9}: commit: i keep rolling back to earlier versions trying to get back to a place wh
+[33m1375e63[m HEAD@{10}: reset: moving to 1375e63
+[33m8673370[m HEAD@{11}: commit: Try fixing this error: `Runtime Error: PageNotFoundError: Cannot find mo
+[33mcd83675[m HEAD@{12}: commit: im still getting build errors. see below
+[33m27bbc38[m HEAD@{13}: commit: can you fix this
+[33mf21411c[m HEAD@{14}: reset: moving to f21411c
+[33m8108344[m HEAD@{15}: commit: fix this
+[33mc4d4b72[m HEAD@{16}: commit: i rolled back to a previous version to try and publish and have this sma
+[33mf21411c[m HEAD@{17}: reset: moving to f21411c
+[33mbd3b148[m[33m ([m[1;31morigin/main[m[33m)[m HEAD@{18}: pull origin main: Fast-forward
+[33mdbc52f2[m HEAD@{19}: pull origin main: Fast-forward
+[33m468baa8[m HEAD@{20}: pull origin main: Fast-forward
+[33m275c723[m HEAD@{21}: pull origin main: Fast-forward
+[33mba7222a[m HEAD@{22}: pull origin main: Fast-forward
+[33m17b42d1[m HEAD@{23}: pull origin main: Fast-forward
+[33m3895cb8[m HEAD@{24}: pull origin main: Fast-forward
+[33mcb43244[m HEAD@{25}: pull origin main: Fast-forward
+[33m4be54d3[m HEAD@{26}: commit: still issues. here are the new cloud build logs
+[33m2bca15c[m HEAD@{27}: commit: ok i tried the changes from the pull and we are still not working but i
+[33me44d764[m HEAD@{28}: pull origin main: Fast-forward
+[33m4f35c31[m HEAD@{29}: commit: new logs
+[33m6e1499a[m HEAD@{30}: commit: more issues
+[33mc378ea2[m HEAD@{31}: commit: it did not work here are the new logs
+[33mfcde38a[m HEAD@{32}: commit: i had an issue publishing please review cloud build logs
+[33mf21411c[m HEAD@{33}: commit: Try fixing this error: `Runtime Error: FirebaseError: Missing or insuffi
+[33m2106775[m HEAD@{34}: pull origin main: Fast-forward
+[33ma5ffb52[m HEAD@{35}: reset: moving to HEAD
+[33ma5ffb52[m HEAD@{36}: filter-branch: rewrite
+[33m7d18486[m HEAD@{37}: commit: ok i tried pushing and had issues . please review
+[33m25e5009[m HEAD@{38}: Branch: renamed refs/heads/main to refs/heads/main
+[33m25e5009[m HEAD@{40}: commit: Try fixing this error: `Runtime Error: Error: DialogTrigger is not defin
+[33me5e84de[m HEAD@{41}: commit: same issue
+[33m7c3f4a1[m HEAD@{42}: commit: Here is a screenshot of your downloaded file.
+[33m87a8a63[m HEAD@{43}: commit: it still does not have a file type
+[33m2349e21[m HEAD@{44}: commit: I found a bug related to download image. I am testing on PC. and when i
+[33m8544d51[m HEAD@{45}: commit: lets just remove the share and add a download image button.
+[33md88a193[m HEAD@{46}: commit: I am still trying to share on mobile and tis not working
+[33m8bb1c8e[m HEAD@{47}: commit: when i click share i get the error share failed cdould not share the iam
+[33m8ec0ad8[m HEAD@{48}: commit: lets work on sharing the created images. First i dont want a new image g
+[33mefe0a0d[m HEAD@{49}: commit: fix build logs trying to publish
+[33m07aef1f[m HEAD@{50}: commit: See image your changes didn't work
+[33m3b51512[m HEAD@{51}: commit: Perfect now do the pet persona page
+[33mb64ed00[m HEAD@{52}: commit: Now do the persona creation and pet creation pages
+[33m699fc81[m HEAD@{53}: commit: Ok it works on the chapter gen. Lets now implement on the other relevant
+[33mcc90990[m HEAD@{54}: commit: It's still not working on mobile the user gets buttons that don't click
+[33m1ddfcff[m HEAD@{55}: commit: But what about on mobile
+[33maaae063[m HEAD@{56}: commit: That works but the user gets no visual feedback on why they can't click
+[33m10740ae[m HEAD@{57}: commit: It's still broken but can't we fix this by just checking the users credi
+[33m580d167[m HEAD@{58}: commit: Try fixing this error: `Console Error: Error: 2 UNKNOWN: Getting metadat
+[33m3c68668[m HEAD@{59}: commit: new build logs again
+[33m05a5cab[m HEAD@{60}: commit: here are new logs
+[33m66b7b22[m HEAD@{61}: commit: faield again. Here are the new logs
+[33m16e2e56[m HEAD@{62}: commit: I tried to publish with your changes here are the new cloud build logs
+[33m83ac863[m HEAD@{63}: commit: Here are the cloud build logs
+[33m19b1495[m HEAD@{64}: commit: Ok i have a test user who hit there max on their free tier generation an
+[33mae40178[m HEAD@{65}: commit: Ok the image really holds the persona correctly however it has no image
+[33m87c7c74[m HEAD@{66}: commit: I am still getting the pop up red message when using google sso to login
+[33mb8780b4[m HEAD@{67}: commit: Can you take a look at the image gen. I had a tester today upload a pict
+[33me3622fc[m HEAD@{68}: commit: the favicon still shows the firebase logo thing.
+[33mc4bd2cc[m HEAD@{69}: commit: Try fixing this error: `Runtime Error: Error: window is not defined. Err
+[33mc4a54dd[m HEAD@{70}: commit: Yes i will enable it proceed on your end.
+[33mb88287a[m HEAD@{71}: commit: Ok the subscription worked. I subsscirbed to pro and then hit cancel. Am
+[33mb6d7a9d[m HEAD@{72}: commit: I just tried upgrading to pro and it worked with the fake cc number but
+[33m9a7ba39[m HEAD@{73}: commit: ok i tried to publish and had these cloud build logs
+[33m9ff5970[m HEAD@{74}: commit: OK here is something i want to look into. So as of right now when it com
+[33m99d8636[m HEAD@{75}: commit: move forward with forgot password
+[33m67740f8[m HEAD@{76}: commit: ok the txt A and cname all verified. What is next?
+[33m1455b58[m HEAD@{77}: commit: ok great. now i added the 16x16 and 32 version of the logo for use. same
+[33m3e5b40f[m HEAD@{78}: commit: Lets update the features portion of the landing page
+[33m1c9be01[m HEAD@{79}: commit: The card says AI personas but thats misleading. Lets remove the AI from
+[33m0ed0929[m HEAD@{80}: commit: Lets update the tier cards on the landing page.
+[33m70c1331[m HEAD@{81}: commit: ok i have added 3 images into public/logo there is 512-logo.png 192-logo
+[33mb40e4be[m HEAD@{82}: commit: I have a page of icons. What sizes do these need to be when i resize the
+[33m18984c1[m HEAD@{83}: commit: can you help with these cloud build logs
+[33m21dc108[m HEAD@{84}: commit: When a user hit generate chapter for a story does that use up a gen cred
+[33mc203fa7[m HEAD@{85}: commit: Ok i had to rollback again but i think i didnt need to like i thought i
+[33m1e5ddf9[m HEAD@{86}: commit: fix these logs
+[33m15d0d22[m HEAD@{87}: reset: moving to 15d0d22
+[33m184afaf[m HEAD@{88}: reset: moving to 184afaf
+[33m4e725ac[m HEAD@{89}: commit: Try fixing this error: `Console Error: Error: A "use server" file can on
+[33mbd956b8[m HEAD@{90}: commit: Take a look at these error
+[33mfb041a8[m HEAD@{91}: commit: Error: Failed to retrieve user profile.
+[33m1fbc9aa[m HEAD@{92}: commit: the issue persists. We this was not an issue until we made the changes a
+[33m3edbb37[m HEAD@{93}: commit: Try fixing this error: `Console Error: Error: Failed to retrieve user pr
+[33m747d6ed[m HEAD@{94}: commit: Try fixing this error: `Console Error: Error: 2 UNKNOWN: Getting metadat
+[33m260bc97[m HEAD@{95}: commit: i had to back up to a previous rollout.
+[33me07a0a0[m HEAD@{96}: reset: moving to e07a0a0
+[33m184afaf[m HEAD@{97}: commit: error persists when trying to save a persona
+[33m89b87bf[m HEAD@{98}: commit: Try fixing this error: `Console Error: Error: 2 UNKNOWN: Getting metadat
+[33m646ba5b[m HEAD@{99}: commit: Try fixing this error: `Console Error: Error: 2 UNKNOWN: Getting metadat
+[33m69b790f[m HEAD@{100}: commit: we have the side nav bar with some links and the account tab that has a
+[33m15d0d22[m HEAD@{101}: commit: Lets have an indicator for credits maybe built into the nav bar or someh
+[33mfb530d2[m HEAD@{102}: commit: Ok for free tiers i like the 1 pet profile. Lets allow for 2 pet persona
+[33me07a0a0[m HEAD@{103}: commit: when i click manage subscription i get Error could not open billing port
+[33mb067063[m HEAD@{104}: commit: Ok. Lets handle Manage subscription and also if a user is already a pro
+[33med74e82[m HEAD@{105}: commit: I was looking at the dev dashboard of stripe. Here is the data for check
+[33ma07ba0a[m HEAD@{106}: commit: Here are your new logs
+[33m37c4ce7[m HEAD@{107}: commit: ok i changed the endpoint of the URL and tried again. Do these logs look
+[33mc0f0058[m HEAD@{108}: commit: Here are the new logs from publish to trying to upgrade to pro.
+[33mc1efd48[m HEAD@{109}: commit: Here are the new logs for you because the issue still exists
+[33m94cecd5[m HEAD@{110}: commit: I tried again and same issue. It feels like its hard to point to where t
+[33m81a8dbe[m HEAD@{111}: commit: The issue persists. Is it possible im doing something wrong? I dont see
+[33m83ffdc5[m HEAD@{112}: commit: The issue perrsists. Why is this simple thing still an issue?
+[33m13c101c[m HEAD@{113}: commit: What if i just added a firebase admin sdk private key to the .env. would
+[33m2455a03[m HEAD@{114}: commit: the same issue persists. Everythig seems to work but the db never goes f
+[33meccf993[m HEAD@{115}: commit: Ok i tested again after publishing and still after payment is succesful
+[33m8b284bb[m HEAD@{116}: commit: Ok the publish worked but after the successful stripe payment the accoun
+[33mcf6ec92[m HEAD@{117}: commit: Can you fix based on these logs please from cloud build logs
+[33made813f[m HEAD@{118}: commit: ok i added the service account to the .env and you can check. I went in
+[33m3c9ac00[m HEAD@{119}: commit: Ok the stripe worked i verified on the stripe dashboard. However, on the
+[33m2d03abf[m HEAD@{120}: commit: can you review the google auth login because it works in this dev enviro
+[33ma0802d3[m HEAD@{121}: commit: i tried again and it failed. Here are the new logs
+[33mc89065e[m HEAD@{122}: commit: Can you review these cloud build logs
+[33m97e4595[m HEAD@{123}: commit: I am seeing the same issue. Just a blank page that says external page at
+[33m84e2603[m HEAD@{124}: commit: ok i click upgrade to pro and it looks like its trying to load (external
+[33m041ecf9[m HEAD@{125}: commit: Works perfect. Since we have the stripe information in the .env file we
+[33m6abc951[m HEAD@{126}: commit: ok looks good. Maybe we should make the credits available to free users
+[33m4ba9b6a[m HEAD@{127}: commit: lets allow for deleting a persona with cascade delete as well
+[33m30c48ba[m HEAD@{128}: commit: That works well. Now lets start working on Free vs Pro Account. Breakdow
+[33m202baa0[m HEAD@{129}: commit: Ok the delete worked but the pets image is still stored in the firebase
+[33mbd13150[m HEAD@{130}: commit: What if the delete button instead of being in the edit box there was a i
+[33m0569426[m HEAD@{131}: commit: Ok i rolled back to a working version. The edit a pet details works but
+[33mf3177f6[m HEAD@{132}: reset: moving to f3177f6
+[33mabee700[m HEAD@{133}: commit: continue. Lets make sure when a pet is deleted or persona is deleted the
+[33mf3177f6[m HEAD@{134}: commit: Ok i rolled back to a version that worked better. Lets try and work on t
+[33m1754401[m HEAD@{135}: reset: moving to 1754401
+[33m035445e[m HEAD@{136}: commit: Looks good. Lets continue
+[33m1754401[m HEAD@{137}: commit: start here
+[33m2e89d5d[m HEAD@{138}: commit: Ok thats great. The app is really coming along. When a user creates a st
+[33m2c743fa[m HEAD@{139}: commit: Ok that worked. The generate chapter works and the publish to gallery wo
+[33m5ebc8ae[m HEAD@{140}: commit: i am just trying to generate a new chapter of a new story so i can then
+[33m8ec3a3b[m HEAD@{141}: commit: Try fixing this error: `Console Error: FirebaseError: Missing or insuffi
+[33mdb699b9[m HEAD@{142}: commit: Ok so i removed a story from the gallery and that worked. However i want
+[33m039ac11[m HEAD@{143}: commit: Try fixing this error: `Runtime Error: Error: Link is not defined. Error
+[33m42e7da0[m HEAD@{144}: commit: Try fixing this error: `Runtime Error: Error: Cannot read properties of
+[33mb37f759[m HEAD@{145}: commit: Ok thank you. The delete buttons shows up but when i click it nothing ha
+[33m0d5ca9e[m HEAD@{146}: commit: What if a user wants to remove a story from the gallery
+[33m5e58e1d[m HEAD@{147}: commit: Can you review the how we format the cards in the gallery. We want them
+[33m9ea63c7[m HEAD@{148}: commit: Try fixing this error: `Runtime Error: FirebaseError: Missing or insuffi
+[33m597c654[m HEAD@{149}: commit: Try fixing this error: `Console Error: FirebaseError: Missing or insuffi
+[33m6268332[m HEAD@{150}: reset: moving to 6268332
+[33m1375e63[m HEAD@{151}: commit: Ok the issues persists and this may be releated to the issue but within
+[33m34e55df[m HEAD@{152}: commit: Try fixing this error: `Runtime Error: FirebaseError: Missing or insuffi
+[33m0230281[m HEAD@{153}: commit: Try fixing this error: `Runtime Error: FirebaseError: Missing or insuffi
+[33m53ba4b3[m HEAD@{154}: commit: Try fixing this error: `Runtime Error: FirebaseError: Missing or insuffi
+[33ma121630[m HEAD@{155}: commit: Try fixing this error: `Console Error: FirebaseError: Missing or insuffi
+[33m634452b[m HEAD@{156}: commit: Try fixing this error: `Console Error: Error: refetchChapters is not a f
+[33m89cfaec[m HEAD@{157}: commit: I just dont see a button. see the image
+[33m130c200[m HEAD@{158}: commit: ok im just testing things and i am not seeing a way to share the pet sto
+[33m20c9636[m HEAD@{159}: commit: ok i have added all env info
+[33m0483fb1[m HEAD@{160}: commit: lets work on the upgrade to pro system. just place placeholders in the.e
+[33me3691cb[m HEAD@{161}: commit: Try fixing this error: `Console Error: Error: Failed to execute 'share'
+[33mfdd4de3[m HEAD@{162}: commit: the shareable image can be adjusted. Lets just have it be the image pers
+[33mca1066c[m HEAD@{163}: commit: continue
+[33m2efc7dd[m HEAD@{164}: commit: That worked perfect. What was next on the agenda before we got side trac
+[33m2696bd3[m HEAD@{165}: commit: still nothing is happening when i click. i am also not seeing any errors
+[33m1990dc8[m HEAD@{166}: commit: the button still does not work i click and nothing happens. no errors it
+[33m010a242[m HEAD@{167}: commit: it still does not work. just so i am clear in what button im referring t
+[33mbc070bf[m HEAD@{168}: commit: I would like to point out the delete persona button does not work
+[33m55cacae[m HEAD@{169}: commit: What is next?
+[33me5c1761[m HEAD@{170}: commit: proceed
+[33m6268332[m HEAD@{171}: commit: Continue with 1 and 2 but do not work on future ideas yet.
+[33m91b0b54[m HEAD@{172}: commit: Ok it does not seem like i am able to click on a story from the gallery
+[33m7ceb3eb[m HEAD@{173}: commit: awesome deployment worked. What if we work on our app logo/pwa icon that
+[33mfa77bab[m HEAD@{174}: commit: the publish failed again below are the cloud build logs
+[33mf32a11a[m HEAD@{175}: commit: Ok thank you that worked. I tried publishing the app and ran into errors
+[33m5e55b91[m HEAD@{176}: commit: Try fixing this error: `Runtime Error: FirebaseError: Missing or insuffi
+[33m176e527[m HEAD@{177}: commit: ok i tried liking my own gallery story and got this error
+[33m49b7780[m HEAD@{178}: commit: Try fixing this error: `Runtime Error: FirebaseError: Missing or insuffi
+[33ma28c40f[m HEAD@{179}: commit: Try fixing this error: `Console Error: FirebaseError: Missing or insuffi
+[33meac8ddf[m HEAD@{180}: commit: ok looks good the publish to gallery worked. What is next in this build
+[33m9a8dba0[m HEAD@{181}: commit: ok continue with your build out
+[33m8c33515[m HEAD@{182}: commit: We have this gallery section we have not done much. What if we use that
+[33m965c55a[m HEAD@{183}: commit: Ok lets talk about the sharing aspect of this. Assuming users want to sh
+[33m53d4c60[m HEAD@{184}: commit: Try fixing this error: `Console Error: `DialogContent` requires a `Dialo
+[33mc580998[m HEAD@{185}: commit: Stories should have a natural arc. I think we should find a way to make
+[33mee34d19[m HEAD@{186}: commit: Try fixing this error: `Console Error: Error: refetchChapters is not a f
+[33md177853[m HEAD@{187}: commit: Ok now lets talk about stories and how we want to handle them. Stories a
+[33m0ebe08a[m HEAD@{188}: commit: This is going great. On the pet persona page we have a regenerate lore o
+[33mea49d40[m HEAD@{189}: commit: ok this view is perfect but notice the images are the same i think. I ma
+[33m4b462e5[m HEAD@{190}: reset: moving to 4b462e5
+[33m6ad2bce[m HEAD@{191}: commit: Try fixing this error: `Console Error: Error: Must supply a `contentType
+[33mb8481c6[m HEAD@{192}: commit: notice the images are the same (_for element <Primitive.div>_)
+[33m4b462e5[m HEAD@{193}: commit: ok the image gen seemed to try but i dont think it changed the image. Ca
+[33m04412ba[m HEAD@{194}: commit: Ok lets add an option to regen the image if it doesnt fit quite right. f
+[33m2b18b87[m HEAD@{195}: commit: Perfect should we do the same for art style?
+[33m5eba503[m HEAD@{196}: commit: Lets add an other option to theme with a dropdown for user to enter for
+[33m777d5c5[m HEAD@{197}: commit: ok lets talk about the pet personas page and such. I like how the pet pr
+[33m14e4241[m HEAD@{198}: commit: For email/password auth lets add confirm password and maybe we should ad
+[33mb05524f[m HEAD@{199}: commit: Ok the deployment worked and the install on my mobile device worked as w
+[33m9c59409[m HEAD@{200}: commit: the build failed again. Here are the new logs
+[33mb6d7002[m HEAD@{201}: commit: the publish failed again. Here are the new logs. I hope it helps
+[33m0274874[m HEAD@{202}: commit: the publish failed again. Here are the cloud build logs.
+[33m6c87cf2[m HEAD@{203}: commit: ok I tried to publish and have these logs for review and fixing
+[33m2b92a54[m HEAD@{204}: commit: Ok i rolled back to a working version. I was going to deploy but had iss
+[33m77ea569[m HEAD@{205}: reset: moving to 77ea569
+[33m1214da1[m HEAD@{206}: commit: Try fixing this error: `Console Error: GenkitError: INVALID_ARGUMENT: Sc
+[33m317f773[m HEAD@{207}: commit: Try fixing this error: `Console Error: GenkitError: INVALID_ARGUMENT: Sc
+[33mb7b5ab7[m HEAD@{208}: commit: GenkitError: INVALID_ARGUMENT: Schema validation failed. Parse Errors:
+[33m54916da[m HEAD@{209}: commit: Try fixing this error: `Console Error: GenkitError: INVALID_ARGUMENT: Sc
+[33m660af46[m HEAD@{210}: commit: Also lets allow for full crud of pets and pet personas with confirmation
+[33m3910a2a[m HEAD@{211}: commit: ok we are coming together nicely. Lets go back to the persona image gene
+[33m77ea569[m HEAD@{212}: commit: I think this is a great direction. I would like to add when a new chapte
+[33m265d8a5[m HEAD@{213}: commit: Ok the story creation worked. However i cannot click to view the story f
+[33m36fa53b[m HEAD@{214}: commit: Ok that works. We can successfully create pet personas and everything is
+[33md2e206c[m HEAD@{215}: commit: Try fixing this error: `Console Error: GenkitError: INVALID_ARGUMENT: at
+[33m1490bab[m HEAD@{216}: commit: Try fixing this error: `Console Error: Error: Failed to fetch from https
+[33m7d6f40d[m HEAD@{217}: commit: Try fixing this error: `Console Error: Error: An unexpected response was
+[33m1f5415f[m HEAD@{218}: commit: The issue persists and also the image gen failed to for the persona
+[33mae44431[m HEAD@{219}: commit: The issue persists and i wonder if its because the user has no personas
+[33mee0a53f[m HEAD@{220}: commit: Try fixing this error: `Console Error: A param property was accessed dir
+[33m7992823[m HEAD@{221}: commit: Try fixing this error: `Console Error: A param property was accessed dir
+[33mc05bb75[m HEAD@{222}: commit: Try fixing this error: `Console Error: A param property was accessed dir
+[33mf2a1e7b[m HEAD@{223}: commit: Try fixing this error: `Console Error: A param property was accessed dir
+[33m0953475[m HEAD@{224}: commit: ok that worked and i was able to save a pet profile. Now lets move onto
+[33m1056779[m HEAD@{225}: commit: i think we need a storage rules file if we dont have one and update rule
+[33m7e1a401[m HEAD@{226}: commit: Try fixing this error: `Console Error: Error: Failed to upload file.. Er
+[33m77e7291[m HEAD@{227}: commit: Try fixing this error: `Console Error: FirebaseError: Firebase Storage:
+[33mbfde097[m HEAD@{228}: commit: Ok I tried again and the result was the same. I have the logs below and
+[33mee676ce[m HEAD@{229}: commit: why did i get this studio-4909354378:~/studio{main}$ gsutil cors set cor
+[33m00a0177[m HEAD@{230}: commit: ok i created the cors.json file in the root but its empty. can you help
+[33m5bc350a[m HEAD@{231}: commit: Oh thats interesting. THe issue still persists but maybe i can add a url
+[33mef7ac86[m HEAD@{232}: commit: Ok today is a new day. I booted up the app logged in via google sign in
+[33m4d15e86[m HEAD@{233}: commit: still same issue pets:1 Access to XMLHttpRequest at 'https://firebasesto
+[33m931c0da[m HEAD@{234}: commit: the issue persists but there are these console log errors too that may h
+[33m617680d[m HEAD@{235}: commit: Try fixing this error: `Console Error: FirebaseError: Firebase Storage:
+[33m2e5acc2[m HEAD@{236}: commit: The issue persists. Why is this happening? How are we handling user stat
+[33m2ed86f8[m HEAD@{237}: commit: You have failed to fix the issue once again. see image
+[33mf48c390[m HEAD@{238}: commit: i logged out and logged in with google login again and still have the sa
+[33mb508444[m HEAD@{239}: commit: I attached a screenshot showing the issue persists. i even logged out an
+[33m9752a4c[m HEAD@{240}: commit: ok google auth worked. Now lets work on the flow to make sure the app fl
+[33mb857572[m HEAD@{241}: commit: Try fixing this error: `Build Error: Export AppleAuthProvider doesn't ex
+[33m6d8dfcd[m HEAD@{242}: commit: Something is wrong with the auth can you do a review? For starters nothi
+[33meb7ea68[m HEAD@{243}: commit: Try fixing this error: `Console Error: Cannot update a component (`Route
+[33md009472[m HEAD@{244}: commit: there is still a create view and its still on the nav bar. we can get ri
+[33mc5a3090[m HEAD@{245}: commit: ok lets go ahead and start to move this into a production build for live
+[33m53d70fa[m HEAD@{246}: commit: Lets repurpose the create view. The work you did was great with my layou
+[33m641a5fa[m HEAD@{247}: commit: File changes
+[33maf718b5[m HEAD@{248}: commit: Set up a Firebase backend
+[33m0f1bd47[m HEAD@{249}: commit: Initial prototype
+[33meb3bfa1[m HEAD@{250}: commit (initial): Initialized workspace with Firebase Studio
