@@ -45,6 +45,55 @@ export async function POST(req: Request) {
       }
       break;
     
+    case 'customer.subscription.deleted':
+      const subscriptionDeleted = event.data.object as Stripe.Subscription;
+      if (subscriptionDeleted.customer) {
+        try {
+            const admin = getFirebaseAdmin();
+            const firestore = admin.firestore();
+            const usersRef = firestore.collection('users');
+            const query = usersRef.where('stripeCustomerId', '==', subscriptionDeleted.customer);
+            const querySnapshot = await query.get();
+
+            if (!querySnapshot.empty) {
+                const userDoc = querySnapshot.docs[0];
+                await userDoc.ref.update({
+                    planType: 'free',
+                });
+                console.log(`Successfully downgraded user ${userDoc.id} to Free plan.`);
+            }
+        } catch (error) {
+            console.error('Error updating user profile in Firestore:', error);
+            return NextResponse.json({ error: 'Error updating user profile' }, { status: 500 });
+        }
+      }
+      break;
+
+    case 'customer.subscription.updated':
+        const subscriptionUpdated = event.data.object as Stripe.Subscription;
+        if (subscriptionUpdated.customer) {
+          try {
+              const admin = getFirebaseAdmin();
+              const firestore = admin.firestore();
+              const usersRef = firestore.collection('users');
+              const query = usersRef.where('stripeCustomerId', '==', subscriptionUpdated.customer);
+              const querySnapshot = await query.get();
+
+              if (!querySnapshot.empty) {
+                  const userDoc = querySnapshot.docs[0];
+                  const planType = subscriptionUpdated.status === 'active' ? 'pro' : 'free';
+                  await userDoc.ref.update({
+                      planType: planType,
+                  });
+                  console.log(`Successfully updated user ${userDoc.id} to ${planType} plan.`);
+              }
+          } catch (error) {
+              console.error('Error updating user profile in Firestore:', error);
+              return NextResponse.json({ error: 'Error updating user profile' }, { status: 500 });
+          }
+        }
+        break;
+
     // Add other event types to handle here (e.g., subscription cancellation)
     default:
       console.log(`Unhandled event type ${event.type}`);
