@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { FirebaseClientProvider } from '@/firebase';
+import { PWAProvider } from 'next-pwa-pack';
 
 export const metadata: Metadata = {
   title: 'Mythic Pets',
@@ -24,9 +25,11 @@ export default function RootLayout({
         <link rel="icon" href="/icon.svg" type="image/svg+xml" />
       </head>
       <body className="font-body antialiased">
-        <FirebaseClientProvider>
-          {children}
-        </FirebaseClientProvider>
+        <PWAProvider>
+          <FirebaseClientProvider>
+            {children}
+          </FirebaseClientProvider>
+        </PWAProvider>
         <Toaster />
       </body>
     </html>
