@@ -9,7 +9,7 @@ import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
 // Define the correct props type for a dynamic Next.js page
-type Props = {
+type PageProps = {
   params: { personaId: string };
   searchParams: { [key: string]: string | string[] | undefined };
 };
@@ -44,7 +44,7 @@ async function getPersonaData(personaId: string) {
 }
 
 export async function generateMetadata(
-  { params }: Props,
+  { params }: PageProps,
   parent: ResolvingMetadata
 ): Promise<Metadata> {
   const personaId = params.personaId;
@@ -83,7 +83,7 @@ export async function generateMetadata(
   }
 }
 
-export default async function PublicPersonaPage({ params }: Props) {
+export default async function PublicPersonaPage({ params }: PageProps) {
   const persona = await getPersonaData(params.personaId);
 
   if (!persona) {
