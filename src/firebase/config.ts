@@ -12,10 +12,7 @@ export const firebaseConfig = {
 };
 
 // Initialize Firebase
-let app;
-if (!getApps().length) {
-  app = initializeApp(firebaseConfig);
-}
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 
 // Export firestore instance
 export const db = getFirestore(app);
