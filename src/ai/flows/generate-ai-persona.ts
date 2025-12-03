@@ -61,11 +61,11 @@ const generateImagePrompt = ai.definePrompt({
         stylePrompt = `in a cinematic noir painting style, featuring dramatic high-contrast lighting (chiaroscuro), a moody atmosphere, and visible digital brush strokes. The scene should feel like a frame from a detective film, with a dark, muted color palette and pops of vibrant neon light.`
     }
     
-    return `You are a creative AI that generates AI personas for pets.
+    return [{text: `You are a creative AI that generates AI personas for pets.
     Generate an image of the pet in this photo: {{media url=photoDataUri}}.
     The generated image should be ${stylePrompt}.
     The theme for the persona is: {{{theme}}}.
-    The user also provided this creative direction: {{{prompt}}}.`
+    The user also provided this creative direction: {{{prompt}}}.`}]
   },
   config: {
     responseModalities: ['IMAGE'],
