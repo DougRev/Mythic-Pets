@@ -1,3 +1,4 @@
+
 /**
  * @description This ruleset enforces a strict user-ownership model for all data. Users can only access their own profiles, pets, personas, and stories. It also defines security for file storage.
  * @dataStructure
@@ -75,6 +76,14 @@ service cloud.firestore {
         }
     }
     
+    /**
+     * @description Rule for Collection Group queries on 'aiStories'.
+     * This allows a user to query for all stories they own across all their pets and personas.
+     */
+    match /{path=**}/aiStories/{storyId} {
+        allow get, list: if isSignedIn() && resource.data.userProfileId == request.auth.uid;
+    }
+
     /**
      * @description Enforces access control for the public story gallery.
      * @path /publishedStories/{publishedStoryId}
