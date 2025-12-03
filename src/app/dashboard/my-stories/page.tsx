@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useCollection } from '@/firebase';
-import { collection, query, doc } from 'firebase/firestore';
+import { collection, query, doc, getDocs } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { BookHeart, Loader2 } from 'lucide-react';
