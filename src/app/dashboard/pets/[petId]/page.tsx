@@ -115,14 +115,14 @@ export default function PersonaGalleryPage() {
                 <div className="relative aspect-square">
                   <Image
                     src={persona.imageUrl}
-                    alt={persona.theme}
+                    alt={persona.personaName}
                     fill
                     className="object-cover"
                     data-ai-hint={persona.theme}
                   />
                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                    <div className="absolute bottom-0 left-0 p-4">
-                    <h3 className="font-bold text-xl text-white font-headline">{persona.theme}</h3>
+                    <h3 className="font-bold text-xl text-white font-headline">{persona.personaName}</h3>
                   </div>
                 </div>
               </CardContent>
