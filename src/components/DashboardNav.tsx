@@ -13,7 +13,7 @@ import {
 
 const navItems = [
   { href: '/dashboard/pets', label: 'Pets', icon: PawPrint },
-  { href: '/dashboard/gallery', label: 'Gallery', icon: BookImage },
+  { href: '/gallery', label: 'Gallery', icon: BookImage },
 ];
 
 export function DashboardNav() {

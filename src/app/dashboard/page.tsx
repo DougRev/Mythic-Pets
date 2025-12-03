@@ -64,11 +64,11 @@ export default function DashboardPage() {
         <Card className="flex flex-col">
             <CardHeader>
                 <CardTitle>Explore the Gallery</CardTitle>
-                <CardDescription>Browse through all the amazing personas and epic stories you've created for your mythic pets.</CardDescription>
+                <CardDescription>Browse through all the amazing personas and epic stories created by the community.</CardDescription>
             </CardHeader>
             <CardContent className="flex-1 flex items-end">
                 <Button asChild className="w-full">
-                    <Link href="/dashboard/gallery">View Story Gallery</Link>
+                    <Link href="/gallery">View Story Gallery</Link>
                 </Button>
             </CardContent>
         </Card>
