@@ -4,7 +4,7 @@
 import React from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useCollection } from '@/firebase';
-import { collectionGroup, query, where, and } from 'firebase/firestore';
+import { collectionGroup, query, where } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { BookHeart, Loader2 } from 'lucide-react';
@@ -26,15 +26,14 @@ export default function MyStoriesPage() {
 
   const storiesQuery = React.useMemo(() => {
     if (!user || !firestore) return null;
-    // This query finds all 'aiStories' collections across the entire database
-    // that are under the path of the currently logged-in user.
+    // This query finds all 'aiStories' documents across all subcollections
+    // where the userProfileId matches the current user's ID.
     return query(
       collectionGroup(firestore, 'aiStories'),
       where('userProfileId', '==', user.uid)
     );
   }, [firestore, user]);
 
-  // The hook will filter based on user ID implicitly via security rules
   const { data: stories, isLoading } = useCollection<any>(storiesQuery);
 
   const enrichedStories = React.useMemo(() => {

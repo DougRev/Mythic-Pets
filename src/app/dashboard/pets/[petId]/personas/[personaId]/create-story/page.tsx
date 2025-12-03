@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState } from 'react';
@@ -220,7 +221,7 @@ export default function CreateStoryPage() {
           <CardTitle>Create a New Story</CardTitle>
           <CardDescription>
             Generate the first chapter of a new tale for {pet.name} as the {persona.theme}.
-            {isFreeTier && ` You have ${userProfile.generationCredits} credits remaining.`}
+            {isFreeTier && !hasNoCredits && ` You have ${userProfile.generationCredits} credits remaining.`}
           </CardDescription>
         </CardHeader>
         <Form {...form}>
