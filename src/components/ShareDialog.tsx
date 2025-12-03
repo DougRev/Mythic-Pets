@@ -20,6 +20,7 @@ export function ShareDialog({ children, title, body, url }: ShareDialogProps) {
   const { toast } = useToast();
 
   useEffect(() => {
+    // navigator.share is a function on the navigator object, so we check for its existence
     if (typeof navigator !== 'undefined' && typeof navigator.share !== 'undefined') {
       setCanShare(true);
     }

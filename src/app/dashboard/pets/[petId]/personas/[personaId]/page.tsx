@@ -163,13 +163,12 @@ export default function PersonaDetailsPage() {
           </Card>
            <div className="mt-4 grid grid-cols-2 gap-2">
             <Button variant="outline" onClick={handleDownload}><Download className="mr-2"/>Download</Button>
-            <Button variant="outline" onClick={handleShareToSocial}><Send className="mr-2"/>Share</Button>
+            <SharePublicPersona persona={persona} pet={pet} personaId={personaId} />
           </div>
-          <div className="mt-4 grid grid-cols-3 gap-2">
+          <div className="mt-4 grid grid-cols-2 gap-2">
             <RegenerateImageDialog persona={persona} pet={pet} onRegenerationComplete={refetchPersona}>
               <Button variant="outline"><RefreshCw className="mr-2"/>Regen Image</Button>
             </RegenerateImageDialog>
-            <SharePublicPersona persona={persona} pet={pet} personaId={personaId} />
              <AlertDialog>
                 <AlertDialogTrigger asChild>
                     <Button variant="outline" className="text-destructive hover:bg-destructive/10 hover:text-destructive">

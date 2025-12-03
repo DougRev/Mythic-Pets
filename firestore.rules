@@ -114,9 +114,9 @@ service cloud.firestore {
         allow get, list: if true;
         // Only the original author (owner) of the persona can create/update it.
         // We'd need to store the author's UID in the public persona document.
-        allow create, update: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
-        // Public personas can't be deleted directly, they are removed when the original is deleted.
-        allow delete: if false;
+        allow create: if isSignedIn();
+        // Public personas can't be deleted or updated directly
+        allow update, delete: if false;
     }
   }
 
