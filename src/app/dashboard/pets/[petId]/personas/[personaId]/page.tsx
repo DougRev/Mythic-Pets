@@ -4,7 +4,7 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, Bot, Edit, Share2, Sparkles, Trash2, BookOpen, RefreshCw, Loader2 } from 'lucide-react';
+import { ArrowLeft, Bot, Edit, Share2, Sparkles, Trash2, BookOpen, RefreshCw, Loader2, Download, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
@@ -33,6 +33,36 @@ import { RegenerateLoreDialog } from '@/components/RegenerateLoreDialog';
 import { SharePublicPersona } from '@/components/SharePublicPersona';
 import { useToast } from '@/hooks/use-toast';
 import { deletePersona } from '@/firebase/actions';
+
+async function downloadImage(imageUrl: string, filename: string) {
+    try {
+        // Fetch the image data
+        const response = await fetch(imageUrl);
+        if (!response.ok) {
+            throw new Error(`Failed to fetch image: ${response.statusText}`);
+        }
+        const blob = await response.blob();
+
+        // Create a temporary URL for the blob
+        const url = window.URL.createObjectURL(blob);
+
+        // Create a temporary anchor element and trigger download
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename || 'download.png';
+        document.body.appendChild(a);
+        a.click();
+
+        // Clean up
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error("Image download failed:", error);
+        // We'll use a toast to notify the user, defined in the component.
+        throw error;
+    }
+}
+
 
 export default function PersonaDetailsPage() {
   const router = useRouter();
@@ -82,6 +112,25 @@ export default function PersonaDetailsPage() {
     }
   }
 
+  const handleDownload = async () => {
+    toast({ title: 'Preparing Download...', description: 'Your image will begin downloading shortly.' });
+    try {
+        await downloadImage(persona.imageUrl, `${pet.name}-${persona.theme}.png`);
+    } catch (error) {
+        toast({
+            variant: 'destructive',
+            title: 'Download Failed',
+            description: 'Could not download the image. Please try again.',
+        });
+    }
+  };
+
+  const handleShareToSocial = () => {
+    toast({
+        title: 'Coming Soon!',
+        description: 'Sharing to social media is on its way. For now, you can download the image and share it manually.',
+    });
+  };
 
   if (isPersonaLoading || isPetLoading) {
     return <div className="flex h-screen items-center justify-center">Loading persona...</div>;
@@ -112,7 +161,11 @@ export default function PersonaDetailsPage() {
               />
             </CardContent>
           </Card>
-           <div className="mt-4 grid grid-cols-3 gap-2">
+           <div className="mt-4 grid grid-cols-2 gap-2">
+            <Button variant="outline" onClick={handleDownload}><Download className="mr-2"/>Download</Button>
+            <Button variant="outline" onClick={handleShareToSocial}><Send className="mr-2"/>Share</Button>
+          </div>
+          <div className="mt-4 grid grid-cols-3 gap-2">
             <RegenerateImageDialog persona={persona} pet={pet} onRegenerationComplete={refetchPersona}>
               <Button variant="outline"><RefreshCw className="mr-2"/>Regen Image</Button>
             </RegenerateImageDialog>
