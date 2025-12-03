@@ -197,8 +197,8 @@ export default function PersonaDetailsPage() {
         <div className="flex flex-col gap-6">
           <Card>
             <CardHeader>
-              <CardTitle className="font-headline text-3xl">{persona.theme} Persona</CardTitle>
-              <CardDescription>Generated on {new Date(persona.generationDate).toLocaleDateString()}</CardDescription>
+              <CardTitle className="font-headline text-3xl">{persona.personaName}</CardTitle>
+              <CardDescription>A {persona.theme} persona generated on {new Date(persona.generationDate).toLocaleDateString()}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
@@ -249,3 +249,5 @@ export default function PersonaDetailsPage() {
     </div>
   );
 }
+
+    

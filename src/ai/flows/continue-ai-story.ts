@@ -23,7 +23,10 @@ const db = getFirestore();
 const ContinueAiStoryInputSchema = z.object({
   persona: z.string().describe("The pet's persona, including theme and lore."),
   tone: z.string().describe('The tone of the story (e.g., "Wholesome", "Funny").'),
-  petName: z.string().describe('The name of the pet.'),
+  petName: z.string().describe('The real name of the pet.'),
+  personaName: z.string().describe('The name of the persona/character for the story.'),
+  petSpecies: z.string().describe('The species of the pet (e.g., Cat, Dog).'),
+  petBreed: z.string().describe('The breed of the pet.'),
   previousChapters: z.string().describe('The text of all previous chapters to provide context.'),
   personaImage: z
     .string()
@@ -64,14 +67,22 @@ const generateNextChapterTextPrompt = ai.definePrompt({
   })},
   prompt: `You are a creative story writer continuing a story about a pet.
 
-  Based on the pet's persona, the story's tone, the previous chapters, and optional user direction, you will generate the next chapter of the story. The pet should be the main character.
+  Based on the pet's persona, the story's tone, the previous chapters, and optional user direction, you will generate the next chapter of the story.
   This is chapter {{currentChapter}} of a {{storyLength}} story.
 
-  Pet Name: {{{petName}}}
-  Persona: {{{persona}}}
-  Tone: {{{tone}}}
-  Story Length: {{{storyLength}}}
-  Creative Direction: {{{prompt}}}
+  CRITICAL: The main character, {{{personaName}}}, is a {{petSpecies}} of the {{petBreed}} breed. Ensure the story reflects this.
+
+  Character Details:
+  - Persona Name: {{{personaName}}}
+  - Species: {{{petSpecies}}}
+  - Breed: {{{petBreed}}}
+  - Real Name: {{{petName}}}
+
+  Story Context:
+  - Persona: {{{persona}}}
+  - Tone: {{{tone}}}
+  - Story Length: {{{storyLength}}}
+  - Creative Direction: {{{prompt}}}
   
   Here are the previous chapters to provide context:
   {{{previousChapters}}}
@@ -85,12 +96,15 @@ const generateNextChapterImagePrompt = ai.definePrompt({
     schema: z.object({
       chapterText: z.string(),
       personaImage: z.string(),
+      personaName: z.string(),
+      petSpecies: z.string(),
+      petBreed: z.string(),
     }),
   },
   model: googleAI.model('gemini-2.5-flash-image-preview'),
   prompt: `You are an expert illustrator for a storybook. Your task is to generate a dynamic and immersive scene based on the chapter text provided.
 
-  CRITICAL: The main character's appearance (breed, color, markings, etc.) MUST be consistent with the provided Persona Image. Use the Persona Image as the primary reference for the character. The art style of the generated image should also match the Persona Image.
+  CRITICAL: The main character, {{{personaName}}}, is a {{petSpecies}} of the {{petBreed}} breed. Their appearance (color, markings, etc.) MUST be consistent with the provided Persona Image. Use the Persona Image as the primary visual reference for the character. The art style of the generated image should also match the Persona Image.
 
   IMPORTANT: The pose of the character and the environment should reflect the action, mood, and details described in the chapter text. Create a full scene, not just a portrait.
 
@@ -146,7 +160,10 @@ const continueAiStoryFlow = ai.defineFlow(
     // 3. Generate chapter image based on the new text
     const imageGenResponse = await generateNextChapterImagePrompt({
         chapterText: textOutput.chapterText,
-        personaImage: input.personaImage
+        personaImage: input.personaImage,
+        personaName: input.personaName,
+        petSpecies: input.petSpecies,
+        petBreed: input.petBreed,
     });
 
     if (!imageGenResponse.media?.url) {
@@ -168,3 +185,5 @@ const continueAiStoryFlow = ai.defineFlow(
     };
   }
 );
+
+    

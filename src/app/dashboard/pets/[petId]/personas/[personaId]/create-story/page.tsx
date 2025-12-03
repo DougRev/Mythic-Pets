@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState } from 'react';
@@ -113,6 +112,9 @@ export default function CreateStoryPage() {
       // 1. Generate the story 'book' and its first chapter
       const storyResult = await generateAiStory({
         petName: pet.name,
+        personaName: persona.personaName,
+        petSpecies: persona.petSpecies,
+        petBreed: persona.petBreed,
         persona: `Theme: ${persona.theme}\nLore: ${persona.loreText}`,
         tone: data.tone as any,
         prompt: data.prompt,
@@ -219,7 +221,7 @@ export default function CreateStoryPage() {
         <CardHeader>
           <CardTitle>Create a New Story</CardTitle>
           <CardDescription>
-            Generate the first chapter of a new tale for {pet.name} as the {persona.theme}.
+            Generate the first chapter of a new tale for {persona.personaName}.
             {isFreeTier && !hasNoCredits && ` You have ${userProfile.generationCredits} credits remaining.`}
           </CardDescription>
         </CardHeader>
@@ -306,3 +308,5 @@ export default function CreateStoryPage() {
     </div>
   );
 }
+
+    

@@ -30,6 +30,7 @@ const GenerateAiPersonaInputSchema = z.object({
   theme: z.string().describe('The narrative theme for the AI persona (e.g., Superhero, Detective, Knight).'),
   imageStyle: z.string().describe('The visual art style for the generated image (e.g., Anime, Photorealistic).'),
   petName: z.string().describe('The name of the pet.'),
+  personaName: z.string().optional().describe('An optional, user-provided name for the persona.'),
   prompt: z.string().optional().describe('Optional user prompt for more specific direction.'),
   userId: z.string().describe('The ID of the user requesting the generation.'),
 });
@@ -42,6 +43,7 @@ const GenerateAiPersonaOutputSchema = z.object({
       'The AI-generated image of the pet persona as a data URI.'
     ),
   loreText: z.string().describe('A short lore text (100-150 words) describing the pet persona.'),
+  personaName: z.string().describe("The generated or provided name for the persona."),
 });
 export type GenerateAiPersonaOutput = z.infer<typeof GenerateAiPersonaOutputSchema>;
 
@@ -68,15 +70,21 @@ const generateLorePrompt = ai.definePrompt({
     input: {schema: GenerateAiPersonaInputSchema},
     output: {schema: z.object({
         loreText: z.string().describe('A short lore text (100-150 words) describing the pet persona.'),
+        personaName: z.string().describe('The creative and fitting name for this persona.'),
     })},
     model: googleAI.model('gemini-2.5-flash'),
     prompt: `You are a creative AI that writes lore for pet personas.
-    The pet's name is {{{petName}}}.
+    The pet's real name is {{{petName}}}.
     The theme for the persona is: {{{theme}}}.
     The user also provided this creative direction: {{{prompt}}}.
 
-    Based on the theme and creative direction, write a short, engaging lore text (100-150 words) for {{{petName}}}.
-    Make sure to feature {{{petName}}} as the main character of the lore.`,
+    Your task is to write a short, engaging lore text (100-150 words) for this pet.
+    
+    CRITICAL: You must also generate a creative and fitting name for this specific persona. If the user provided a name ("{{personaName}}"), use that as the persona's name. Otherwise, invent a new one that fits the theme (e.g., for a Knight theme, "Sir Reginald the Brave").
+    
+    Make sure to feature the persona as the main character of the lore.
+    
+    Return the lore text and the final personaName.`,
 });
 
 
@@ -118,6 +126,9 @@ const generateAiPersonaFlow = ai.defineFlow(
     return {
       personaImage: imageResult.media.url,
       loreText: loreResult.output.loreText,
+      personaName: loreResult.output.personaName,
     };
   }
 );
+
+    

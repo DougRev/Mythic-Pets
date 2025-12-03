@@ -25,7 +25,10 @@ const GenerateAiStoryInputSchema = z.object({
   tone: z
     .enum(['Wholesome', 'Funny', 'Epic', 'Mystery', 'Sad'])
     .describe('The tone of the story.'),
-  petName: z.string().describe('The name of the pet.'),
+  petName: z.string().describe('The real name of the pet.'),
+  personaName: z.string().describe('The name of the persona/character for the story.'),
+  petSpecies: z.string().describe('The species of the pet (e.g., Cat, Dog).'),
+  petBreed: z.string().describe('The breed of the pet.'),
   personaImage: z
     .string()
     .describe(
@@ -65,14 +68,22 @@ const generateStoryPrompt = ai.definePrompt({
   })},
   prompt: `You are a creative story writer specializing in stories about pets.
 
-  Based on the pet's name, persona, and the user's preferences, you will generate the first chapter of a story. The story should feature the pet as the main character.
+  Based on the pet's persona and the user's preferences, you will generate the first chapter of a story. The story must feature the pet as the main character.
   The user wants this to be a {{storyLength}} story. This is the first chapter, so it should set up the beginning of a story with a clear narrative arc in mind.
 
-  Pet Name: {{{petName}}}
-  Persona: {{{persona}}}
-  Tone: {{{tone}}}
-  Story Length: {{{storyLength}}}
-  Creative Direction: {{{prompt}}}
+  CRITICAL: The main character is a {{petSpecies}} of the {{petBreed}} breed. Their name in this story is {{{personaName}}}.
+
+  Character Details:
+  - Persona Name: {{{personaName}}}
+  - Species: {{{petSpecies}}}
+  - Breed: {{{petBreed}}}
+  - Real Name: {{{petName}}}
+
+  Story Details:
+  - Persona Context: {{{persona}}}
+  - Tone: {{{tone}}}
+  - Story Length: {{{storyLength}}}
+  - Creative Direction: {{{prompt}}}
   
   Please provide an overall title for the story, a title for the first chapter, and the chapter text. The chapter text should be around 200-300 words.`,
 });
@@ -83,12 +94,15 @@ const generateImagePrompt = ai.definePrompt({
     schema: z.object({
       chapterText: z.string(),
       personaImage: z.string(),
+      personaName: z.string(),
+      petSpecies: z.string(),
+      petBreed: z.string(),
     }),
   },
   model: googleAI.model('gemini-2.5-flash-image-preview'),
   prompt: `You are an expert illustrator for a storybook. Your task is to generate a dynamic and immersive scene based on the chapter text provided.
 
-  CRITICAL: The main character's appearance (breed, color, markings, etc.) MUST be consistent with the provided Persona Image. Use the Persona Image as the primary reference for the character. The art style of the generated image should also match the Persona Image.
+  CRITICAL: The main character, {{{personaName}}}, is a {{petSpecies}} of the {{petBreed}} breed. Their appearance (color, markings, etc.) MUST be consistent with the provided Persona Image. Use the Persona Image as the primary visual reference for the character. The art style of the generated image should also match the Persona Image.
   
   IMPORTANT: The pose of the character and the environment should reflect the action, mood, and details described in the chapter text. Create a full scene, not just a portrait.
 
@@ -136,7 +150,10 @@ const generateAiStoryFlow = ai.defineFlow(
     // 2. Generate chapter image based on the generated text
     const imageGenResponse = await generateImagePrompt({
         chapterText: textOutput.chapterText,
-        personaImage: input.personaImage
+        personaImage: input.personaImage,
+        personaName: input.personaName,
+        petSpecies: input.petSpecies,
+        petBreed: input.petBreed,
     });
     
     if (!imageGenResponse.media?.url) {
@@ -158,3 +175,5 @@ const generateAiStoryFlow = ai.defineFlow(
     };
   }
 );
+
+    

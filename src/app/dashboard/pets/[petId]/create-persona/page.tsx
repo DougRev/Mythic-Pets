@@ -68,6 +68,7 @@ const artStyles = [
 ];
 
 const personaFormSchema = z.object({
+  personaName: z.string().optional(),
   theme: z.string({
     required_error: 'Please select a theme.',
   }),
@@ -125,6 +126,7 @@ export default function CreatePersonaPage() {
       prompt: '',
       customTheme: '',
       customImageStyle: '',
+      personaName: '',
     },
   });
 
@@ -157,6 +159,7 @@ export default function CreatePersonaPage() {
         theme: theme!,
         imageStyle: imageStyle!,
         petName: pet.name,
+        personaName: data.personaName,
         prompt: data.prompt,
         userId: user.uid,
       });
@@ -172,11 +175,14 @@ export default function CreatePersonaPage() {
       // 3. Save the new persona to Firestore
       const newPersona = {
         petProfileId: petId,
+        personaName: personaResult.personaName,
         theme: theme,
         imageStyle: imageStyle,
         imageUrl: imageUrl,
         loreText: personaResult.loreText,
         generationDate: new Date().toISOString(),
+        petSpecies: pet.species,
+        petBreed: pet.breed,
       };
 
       const personasCollection = collection(petRef, 'aiPersonas');
@@ -184,7 +190,7 @@ export default function CreatePersonaPage() {
 
       toast({
         title: 'Persona Created!',
-        description: `A new legend is born for ${pet.name}.`,
+        description: `A new legend, ${personaResult.personaName}, is born for ${pet.name}.`,
       });
 
       // 4. Redirect to the new persona page
@@ -272,6 +278,22 @@ export default function CreatePersonaPage() {
                 <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>
                     <CardContent className="space-y-6">
+                    <FormField
+                        control={form.control}
+                        name="personaName"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Persona Name (Optional)</FormLabel>
+                            <FormControl>
+                            <Input placeholder="e.g., Captain Whiskers, Sir Barks-a-lot" {...field} />
+                            </FormControl>
+                            <FormDescription>
+                                Give this persona a specific name, or let the AI create one.
+                            </FormDescription>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
                     <FormField
                         control={form.control}
                         name="theme"
@@ -388,3 +410,5 @@ export default function CreatePersonaPage() {
     </div>
   );
 }
+
+    

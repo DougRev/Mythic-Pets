@@ -109,6 +109,9 @@ export default function StoryDetailsPage() {
 
         const nextChapterResult = await continueAiStory({
             petName: pet.name,
+            personaName: persona.personaName,
+            petSpecies: persona.petSpecies,
+            petBreed: persona.petBreed,
             persona: `Theme: ${persona.theme}\nLore: ${persona.loreText}`,
             tone: story.tone,
             previousChapters: previousChaptersText,
@@ -402,3 +405,5 @@ export default function StoryDetailsPage() {
     </div>
   );
 }
+
+    

@@ -138,6 +138,10 @@
           "type": "string",
           "description": "Reference to PetProfile. (Relationship: PetProfile 1:N AIPersona)"
         },
+        "personaName": {
+            "type": "string",
+            "description": "The specific name of the persona (e.g., 'Captain Whiskers')."
+        },
         "theme": {
           "type": "string",
           "description": "Theme of the AI persona (e.g., 'Superhero', 'Detective')."
@@ -159,16 +163,27 @@
           "type": "string",
           "description": "Date and time when the AI persona was generated.",
           "format": "date-time"
+        },
+        "petSpecies": {
+            "type": "string",
+            "description": "The species of the pet (e.g., 'Cat', 'Dog') for this persona."
+        },
+        "petBreed": {
+            "type": "string",
+            "description": "The breed of the pet (e.g., 'Siamese', 'Golden Retriever') for this persona."
         }
       },
       "required": [
         "id",
         "petProfileId",
+        "personaName",
         "theme",
         "imageStyle",
         "imageUrl",
         "loreText",
-        "generationDate"
+        "generationDate",
+        "petSpecies",
+        "petBreed"
       ]
     },
     "AIStory": {
@@ -464,3 +479,5 @@
     "reasoning": "The Firestore data structure is designed to support the Mythic Pets application, focusing on user profiles, pet profiles, AI personas, and AI-generated stories. The structure prioritizes authorization independence and simplifies security rules, adhering to the core design principles.\n\n**Authorization Independence:**\n\n*   User-owned data (PetProfiles, AIPersonas, AIStories) is nested under the `/users/{userId}` path, ensuring that access control is based on the user's ID. This eliminates the need for `get()` calls in security rules to check ownership.\n\n**Public Data:**\n\n*   A new top-level collection, `/publishedStories`, is introduced for the public gallery. This separates public data from private user data, simplifying security rules. Data in this collection is denormalized to allow for efficient loading of the gallery without needing complex joins or multiple reads.\n\n**Access Modeling:**\n\n*   Private Data: User profiles and all associated data (pets, personas, stories) are stored under the `/users/{userId}` path, providing path-based ownership.\n*   Public Data: Stories intended for public viewing are copied to `/publishedStories`.\n\n**QAPs (Rules are not Filters):**\n\n*   The structure supports secure `list` operations. Rules can allow listing of all documents under `/users/{userId}` for an owner, and all documents under `/publishedStories` for any user."
   }
 }
+
+    
