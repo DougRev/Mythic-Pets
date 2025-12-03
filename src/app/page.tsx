@@ -1,17 +1,12 @@
+
 import Link from 'next/link';
 import Image from 'next/image';
-import { PawPrint, Star } from 'lucide-react';
+import { Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { PersonaGallery } from '@/components/PersonaGallery';
-
-const AppLogo = () => (
-  <Link href="/" className="flex items-center gap-2">
-    <PawPrint className="h-6 w-6 text-primary" />
-    <span className="text-xl font-bold tracking-tight text-foreground">Mythic Pets</span>
-  </Link>
-);
+import { AppLogo } from '@/components/AppLogo';
 
 const Header = () => (
   <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-sm">
