@@ -35,7 +35,8 @@ export interface InternalQuery extends Query<DocumentData> {
     path: {
       canonicalString(): string;
       toString(): string;
-    }
+    },
+    collectionGroup: string | null;
   }
 }
 
@@ -60,15 +61,19 @@ export function useCollection<T = any>(
   type StateDataType = ResultItemType[] | null;
 
   const [data, setData] = useState<StateDataType>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<FirestoreError | Error | null>(null);
 
   const getPath = (target: any): string => {
+    if (!target) return '';
+    const internalQuery = target as unknown as InternalQuery;
+     if (internalQuery._query?.collectionGroup) {
+        return `collectionGroup: ${internalQuery._query.collectionGroup}`;
+     }
      if (target.type === 'collection') {
         return (target as CollectionReference).path;
      }
-     // This is a hack to get the path from a query. It might break in future Firebase versions.
-     return (target as unknown as InternalQuery)._query.path.canonicalString();
+     return internalQuery._query?.path?.canonicalString() || '';
   }
 
   const refetch = useCallback(async () => {
@@ -82,7 +87,7 @@ export function useCollection<T = any>(
       const snapshot = await getDocs(memoizedTargetRefOrQuery);
       const results: ResultItemType[] = [];
       for (const doc of snapshot.docs) {
-          results.push({ ...(doc.data() as T), id: doc.id });
+          results.push({ ...(doc.data() as T), id: doc.id, ref: doc.ref });
       }
       setData(results);
       setError(null);
@@ -105,19 +110,18 @@ export function useCollection<T = any>(
       setData(null);
       setIsLoading(false);
       setError(null);
-      return;
+      return () => {};
     }
 
     setIsLoading(true);
     setError(null);
 
-    // Directly use memoizedTargetRefOrQuery as it's assumed to be the final query
     const unsubscribe = onSnapshot(
       memoizedTargetRefOrQuery,
       (snapshot: QuerySnapshot<DocumentData>) => {
         const results: ResultItemType[] = [];
         for (const doc of snapshot.docs) {
-          results.push({ ...(doc.data() as T), id: doc.id });
+          results.push({ ...(doc.data() as T), id: doc.id, ref: doc.ref });
         }
         setData(results);
         setError(null);
@@ -133,13 +137,12 @@ export function useCollection<T = any>(
         setData(null)
         setIsLoading(false)
 
-        // trigger global error propagation
         errorEmitter.emit('permission-error', contextualError);
       }
     );
 
     return () => unsubscribe();
-  }, [memoizedTargetRefOrQuery]); // Re-run if the target query/reference changes.
+  }, [memoizedTargetRefOrQuery]);
 
   return { data, isLoading, error, refetch };
 }
