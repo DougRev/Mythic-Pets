@@ -1,9 +1,10 @@
+
 'use client';
 
 import React from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useCollection } from '@/firebase';
-import { collectionGroup, query, where } from 'firebase/firestore';
+import { collectionGroup, query, where, and } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { BookHeart, Loader2 } from 'lucide-react';
@@ -26,10 +27,10 @@ export default function MyStoriesPage() {
   const storiesQuery = React.useMemo(() => {
     if (!user || !firestore) return null;
     // This query finds all 'aiStories' collections across the entire database
-    // and filters them to only those belonging to the current user.
+    // that are under the path of the currently logged-in user.
     return query(
       collectionGroup(firestore, 'aiStories'),
-      where('aiPersonaId', '!=', '') // A necessary condition for collection group queries
+      where('userProfileId', '==', user.uid)
     );
   }, [firestore, user]);
 
