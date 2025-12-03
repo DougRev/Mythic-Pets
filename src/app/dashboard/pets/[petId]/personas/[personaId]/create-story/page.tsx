@@ -136,7 +136,6 @@ export default function CreateStoryPage() {
         generationDate: new Date().toISOString(),
         isFavorite: false,
         lastChapter: 1,
-        userProfileId: user.uid, // Add userProfileId for collectionGroup query
       });
 
       // 3. Upload chapter image to storage

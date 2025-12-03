@@ -79,9 +79,10 @@ service cloud.firestore {
     /**
      * @description Rule for Collection Group queries on 'aiStories'.
      * This allows a user to query for all stories they own across all their pets and personas.
+     * It works by checking that the user's ID is present in the document path.
      */
     match /{path=**}/aiStories/{storyId} {
-        allow get, list: if isSignedIn() && resource.data.userProfileId == request.auth.uid;
+        allow get, list: if isSignedIn() && request.auth.uid in path;
     }
 
     /**

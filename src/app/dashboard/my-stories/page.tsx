@@ -26,11 +26,10 @@ export default function MyStoriesPage() {
 
   const storiesQuery = React.useMemo(() => {
     if (!user || !firestore) return null;
-    // This query finds all 'aiStories' documents across all subcollections
-    // where the userProfileId matches the current user's ID.
+    // This query finds all 'aiStories' documents across all subcollections.
+    // The security rule will ensure only the user's own stories are returned.
     return query(
-      collectionGroup(firestore, 'aiStories'),
-      where('userProfileId', '==', user.uid)
+      collectionGroup(firestore, 'aiStories')
     );
   }, [firestore, user]);
 
@@ -38,16 +37,20 @@ export default function MyStoriesPage() {
 
   const enrichedStories = React.useMemo(() => {
     if (!stories) return [];
-    // We need to extract the petId from the document reference path
-    return stories.map(story => {
+    
+    // We need to extract the petId and personaId from the document reference path
+    return stories.filter(story => story.ref.path.includes(user!.uid)).map(story => {
         // The path will be something like: users/{userId}/petProfiles/{petId}/aiPersonas/{personaId}/aiStories/{storyId}
-        // We can parse the petId from this path.
         const pathSegments = story.ref.path.split('/');
         const petIdIndex = pathSegments.indexOf('petProfiles') + 1;
+        const personaIdIndex = pathSegments.indexOf('aiPersonas') + 1;
+        
         const petProfileId = pathSegments[petIdIndex];
-        return { ...story, petProfileId };
+        const aiPersonaId = pathSegments[personaIdIndex];
+        
+        return { ...story, petProfileId, aiPersonaId };
     });
-  }, [stories]);
+  }, [stories, user]);
 
 
   const renderContent = () => {
