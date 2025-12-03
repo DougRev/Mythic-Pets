@@ -115,7 +115,7 @@ export default function PersonaGalleryPage() {
                 <div className="relative aspect-square">
                   <Image
                     src={persona.imageUrl}
-                    alt={persona.personaName}
+                    alt={persona.personaName || persona.theme}
                     fill
                     className="object-cover"
                     data-ai-hint={persona.theme}
