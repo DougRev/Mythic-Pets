@@ -4,7 +4,7 @@
 import React from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useCollection } from '@/firebase';
-import { collectionGroup, query, where } from 'firebase/firestore';
+import { collectionGroup, query } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { BookHeart, Loader2 } from 'lucide-react';
@@ -36,10 +36,10 @@ export default function MyStoriesPage() {
   const { data: stories, isLoading } = useCollection<any>(storiesQuery);
 
   const enrichedStories = React.useMemo(() => {
-    if (!stories) return [];
+    if (!stories || !user) return [];
     
     // We need to extract the petId and personaId from the document reference path
-    return stories.filter(story => story.ref.path.includes(user!.uid)).map(story => {
+    return stories.filter(story => story.ref.path.includes(user.uid)).map(story => {
         // The path will be something like: users/{userId}/petProfiles/{petId}/aiPersonas/{personaId}/aiStories/{storyId}
         const pathSegments = story.ref.path.split('/');
         const petIdIndex = pathSegments.indexOf('petProfiles') + 1;
