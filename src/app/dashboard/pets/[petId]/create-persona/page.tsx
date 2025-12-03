@@ -57,6 +57,7 @@ const themes = [
 ];
 
 const artStyles = [
+    'Cinematic Noir',
     'Anime',
     'Cartoon',
     'Photorealistic',
@@ -410,5 +411,3 @@ export default function CreatePersonaPage() {
     </div>
   );
 }
-
-    
