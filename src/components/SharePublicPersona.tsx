@@ -20,14 +20,14 @@ export function SharePublicPersona({ persona, pet, personaId }: SharePublicPerso
   const { toast } = useToast();
   const { trackEvent } = useAnalytics();
 
-  const handlePublish = async () => {
+  const handleCreatePublicLink = async () => {
     if (!firestore) {
       toast({ variant: 'destructive', title: 'Error', description: 'Could not connect to the database.' });
       return;
     }
 
     try {
-      // Create a public version of the persona data
+      // Create a public version of the persona data for the shareable page
       const publicPersonaData = {
         theme: persona.theme,
         loreText: persona.loreText,
@@ -36,15 +36,15 @@ export function SharePublicPersona({ persona, pet, personaId }: SharePublicPerso
         petName: pet.name,
       };
 
-      // Write it to the public collection
+      // Write it to the public collection so the link will work
       await setDoc(doc(firestore, 'publicPersonas', personaId), publicPersonaData);
 
-      trackEvent('persona_published', { persona_id: personaId, theme: persona.theme });
-      toast({ title: 'Persona Published', description: 'A public, shareable link has been created.' });
+      trackEvent('persona_shared', { persona_id: personaId, theme: persona.theme });
+      toast({ title: 'Share Link Ready', description: 'Your unique link has been created.' });
 
     } catch (error) {
       console.error("Failed to publish persona:", error);
-      toast({ variant: 'destructive', title: 'Publishing Failed', description: 'Could not create a public link for this persona.' });
+      toast({ variant: 'destructive', title: 'Sharing Failed', description: 'Could not create a public link for this persona.' });
     }
   };
 
@@ -52,11 +52,11 @@ export function SharePublicPersona({ persona, pet, personaId }: SharePublicPerso
 
   return (
     <ShareDialog
-      title={persona.theme}
-      body={`Check out my pet, ${pet.name}, as a ${persona.theme}!`}
+      title={`Meet ${persona.personaName}, the ${persona.theme}`}
+      body={`Check out my pet, ${pet.name}, as "${persona.personaName}"! Created with Mythic Pets.`}
       url={publicUrl}
     >
-      <Button variant="outline" onClick={handlePublish}><Share2 className="mr-2"/>Share</Button>
+      <Button variant="outline" onClick={handleCreatePublicLink}><Share2 className="mr-2"/>Share</Button>
     </ShareDialog>
   );
 }

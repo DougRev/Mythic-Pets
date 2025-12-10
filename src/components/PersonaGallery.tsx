@@ -2,31 +2,16 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { useCollection } from '@/firebase';
-import { collection, query, where, limit } from 'firebase/firestore';
 import { Card, CardContent } from '@/components/ui/card';
-import { useAuth } from '@/hooks/useAuth';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 export function PersonaGallery() {
-  const { firestore } = useAuth();
 
-  const personasQuery = React.useMemo(() => {
-    if (!firestore) return null;
-    // Query for personas that are marked as public
-    return query(
-      collection(firestore, 'publicPersonas'),
-      limit(6)
-    );
-  }, [firestore]);
+  // Filter for gallery items from the placeholder data
+  const galleryImages = PlaceHolderImages.filter(p => p.id.startsWith('gallery-item-'));
 
-  const { data: personas, isLoading } = useCollection<any>(personasQuery);
-
-  if (isLoading) {
-    return <div className="text-center">Loading gallery...</div>;
-  }
-
-  if (!personas || personas.length === 0) {
-    return null; // Don't show the section if there's nothing to show
+  if (galleryImages.length === 0) {
+    return null; // Don't show the section if there are no curated images
   }
 
   return (
@@ -38,16 +23,17 @@ export function PersonaGallery() {
             See what legends other users have created for their companions.
           </p>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {personas.map((persona) => (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {galleryImages.map((persona) => (
             <Card key={persona.id} className="overflow-hidden">
               <CardContent className="p-0">
                 <Image
                   src={persona.imageUrl}
-                  alt={persona.theme}
+                  alt={persona.description}
                   width={400}
                   height={400}
                   className="aspect-square w-full object-cover transition-transform duration-300 ease-in-out group-hover:scale-105"
+                  data-ai-hint={persona.imageHint}
                 />
               </CardContent>
             </Card>
