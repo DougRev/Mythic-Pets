@@ -35,32 +35,37 @@ import { useToast } from '@/hooks/use-toast';
 import { deletePersona } from '@/firebase/actions';
 
 async function downloadImage(imageUrl: string, filename: string) {
-    try {
-        // Fetch the image data
-        const response = await fetch(imageUrl);
-        if (!response.ok) {
-            throw new Error(`Failed to fetch image: ${response.statusText}`);
-        }
-        const blob = await response.blob();
-
-        // Create a temporary URL for the blob
-        const url = window.URL.createObjectURL(blob);
-
-        // Create a temporary anchor element and trigger download
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename || 'download.png';
-        document.body.appendChild(a);
-        a.click();
-
-        // Clean up
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-    } catch (error) {
-        console.error("Image download failed:", error);
-        // We'll use a toast to notify the user, defined in the component.
-        throw error;
+  try {
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    
+    // Fetch the image data. We need to do this to get a blob.
+    const response = await fetch(imageUrl);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch image: ${response.statusText}`);
     }
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+
+    if (isMobile) {
+      // On mobile, the best we can do is open the image in a new tab.
+      // The user can then save it manually.
+      window.open(url, '_blank');
+      window.URL.revokeObjectURL(url); // Revoke the URL after opening
+    } else {
+      // On desktop, we can trigger a direct download.
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename || 'download.png';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url); // Revoke the URL after download
+    }
+  } catch (error) {
+    console.error("Image download failed:", error);
+    // This custom error will be caught by the calling function.
+    throw error;
+  }
 }
 
 
