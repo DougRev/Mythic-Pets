@@ -1,3 +1,4 @@
+
 'use client';
 
 import React from 'react';
@@ -30,7 +31,6 @@ import { useCollection, useDoc } from '@/firebase';
 import { doc, collection, query, orderBy } from 'firebase/firestore';
 import { RegenerateImageDialog } from '@/components/RegenerateImageDialog';
 import { RegenerateLoreDialog } from '@/components/RegenerateLoreDialog';
-import { SharePublicPersona } from '@/components/SharePublicPersona';
 import { useToast } from '@/hooks/use-toast';
 import { deletePersona } from '@/firebase/actions';
 
@@ -125,13 +125,6 @@ export default function PersonaDetailsPage() {
     }
   };
 
-  const handleShareToSocial = () => {
-    toast({
-        title: 'Coming Soon!',
-        description: 'Sharing to social media is on its way. For now, you can download the image and share it manually.',
-    });
-  };
-
   if (isPersonaLoading || isPetLoading) {
     return <div className="flex h-screen items-center justify-center">Loading persona...</div>;
   }
@@ -161,9 +154,8 @@ export default function PersonaDetailsPage() {
               />
             </CardContent>
           </Card>
-           <div className="mt-4 grid grid-cols-2 gap-2">
-            <Button variant="outline" onClick={handleDownload}><Download className="mr-2"/>Download</Button>
-            <SharePublicPersona persona={persona} pet={pet} personaId={personaId} />
+           <div className="mt-4 grid grid-cols-1 gap-2">
+            <Button variant="outline" onClick={handleDownload}><Download className="mr-2"/>Download Image</Button>
           </div>
           <div className="mt-4 grid grid-cols-2 gap-2">
             <RegenerateImageDialog persona={persona} pet={pet} onRegenerationComplete={refetchPersona}>
@@ -249,5 +241,3 @@ export default function PersonaDetailsPage() {
     </div>
   );
 }
-
-    
