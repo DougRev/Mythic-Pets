@@ -43,14 +43,27 @@ async function downloadImage(imageUrl: string, filename: string) {
     const file = new File([blob], filename, { type: blob.type });
 
     // Use the Web Share API if available (best for mobile PWAs)
+    // We attempt to share first. If sharing fails (e.g. not supported or error), we fall back to download.
+    let shareSuccess = false;
     if (navigator.share && navigator.canShare({ files: [file] })) {
-      await navigator.share({
-        files: [file],
-        title: 'Mythic Pet Persona',
-        text: `Check out this persona I created!`,
-      });
-    } else {
-      // Fallback for desktop or browsers that don't support Web Share API
+      try {
+        await navigator.share({
+          files: [file],
+          title: 'Mythic Pet Persona',
+          text: `Check out this persona I created!`,
+        });
+        shareSuccess = true;
+      } catch (shareError: any) {
+        if (shareError.name === 'AbortError') {
+          return; // User cancelled share, treat as success/handled
+        }
+        console.warn("Share failed, falling back to download:", shareError);
+        // Fall through to download logic
+      }
+    }
+
+    if (!shareSuccess) {
+      // Fallback for desktop, browsers that don't support Web Share API, or if share failed
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -61,10 +74,6 @@ async function downloadImage(imageUrl: string, filename: string) {
       window.URL.revokeObjectURL(url);
     }
   } catch (error: any) {
-    // Don't show an error if the user cancels the share sheet
-    if (error.name === 'AbortError') {
-      return;
-    }
     console.error("Image download/share failed:", error);
     throw error; // Re-throw to be caught by the calling function's toast
   }
