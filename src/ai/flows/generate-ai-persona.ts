@@ -2,7 +2,7 @@
 'use server';
 
 /**
- * @fileOverview This file defines a Genkit flow for generating an AI persona for a pet based on a user-provided image and theme.
+ * @fileOverview This file defines a Genkit flow for generating an AI persona for a pet based on a user-provided image and a theme.
  *
  * - generateAiPersona -  A function that takes an image of a pet and a theme, and generates an AI persona with lore.
  * - GenerateAiPersonaInput - The input type for the generateAiPersona function.
@@ -11,7 +11,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import {googleAI} from '@genkit-ai/google-genai';
+import {googleAI}from '@genkit-ai/google-genai';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import { initializeApp, getApps, applicationDefault } from 'firebase-admin/app';
 import {FieldValue} from 'firebase-admin/firestore';
@@ -61,11 +61,14 @@ const generateImagePrompt = ai.definePrompt({
         stylePrompt = `in a cinematic noir painting style, featuring dramatic high-contrast lighting (chiaroscuro), a moody atmosphere, and visible digital brush strokes. The scene should feel like a frame from a detective film, with a dark, muted color palette and pops of vibrant neon light.`
     }
     
-    return [{text: `You are a creative AI that generates AI personas for pets.
-    Generate an image of the pet in this photo: {{media url=photoDataUri}}.
-    The generated image should be ${stylePrompt}.
-    The theme for the persona is: {{{theme}}}.
-    The user also provided this creative direction: {{{prompt}}}.`}]
+    return [
+        { media: { url: input.photoDataUri } },
+        { text: `You are a creative AI that generates AI personas for pets.
+        Generate an image of the pet in the provided photo.
+        The generated image should be ${stylePrompt}.
+        The theme for the persona is: ${input.theme}.
+        The user also provided this creative direction: ${input.prompt}.`},
+    ]
   },
   config: {
     responseModalities: ['IMAGE'],
@@ -137,5 +140,3 @@ const generateAiPersonaFlow = ai.defineFlow(
     };
   }
 );
-
-    
