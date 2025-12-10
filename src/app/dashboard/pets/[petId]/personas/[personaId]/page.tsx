@@ -1,4 +1,3 @@
-
 'use client';
 
 import React from 'react';
@@ -36,35 +35,38 @@ import { deletePersona } from '@/firebase/actions';
 
 async function downloadImage(imageUrl: string, filename: string) {
   try {
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    
-    // Fetch the image data. We need to do this to get a blob.
     const response = await fetch(imageUrl);
     if (!response.ok) {
       throw new Error(`Failed to fetch image: ${response.statusText}`);
     }
     const blob = await response.blob();
-    const url = window.URL.createObjectURL(blob);
+    const file = new File([blob], filename, { type: blob.type });
 
-    if (isMobile) {
-      // On mobile, the best we can do is open the image in a new tab.
-      // The user can then save it manually.
-      window.open(url, '_blank');
-      window.URL.revokeObjectURL(url); // Revoke the URL after opening
+    // Use the Web Share API if available (best for mobile PWAs)
+    if (navigator.share && navigator.canShare({ files: [file] })) {
+      await navigator.share({
+        files: [file],
+        title: 'Mythic Pet Persona',
+        text: `Check out this persona I created!`,
+      });
     } else {
-      // On desktop, we can trigger a direct download.
+      // Fallback for desktop or browsers that don't support Web Share API
+      const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = filename || 'download.png';
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      window.URL.revokeObjectURL(url); // Revoke the URL after download
+      window.URL.revokeObjectURL(url);
     }
-  } catch (error) {
-    console.error("Image download failed:", error);
-    // This custom error will be caught by the calling function.
-    throw error;
+  } catch (error: any) {
+    // Don't show an error if the user cancels the share sheet
+    if (error.name === 'AbortError') {
+      return;
+    }
+    console.error("Image download/share failed:", error);
+    throw error; // Re-throw to be caught by the calling function's toast
   }
 }
 
@@ -118,14 +120,14 @@ export default function PersonaDetailsPage() {
   }
 
   const handleDownload = async () => {
-    toast({ title: 'Preparing Download...', description: 'Your image will begin downloading shortly.' });
+    toast({ title: 'Preparing Image...', description: 'Getting your persona ready to share or save.' });
     try {
         await downloadImage(persona.imageUrl, `${pet.name}-${persona.theme}.png`);
     } catch (error) {
         toast({
             variant: 'destructive',
-            title: 'Download Failed',
-            description: 'Could not download the image. Please try again.',
+            title: 'Action Failed',
+            description: 'Could not share or download the image. Please try again.',
         });
     }
   };
@@ -160,7 +162,7 @@ export default function PersonaDetailsPage() {
             </CardContent>
           </Card>
            <div className="mt-4 grid grid-cols-1 gap-2">
-            <Button variant="outline" onClick={handleDownload}><Download className="mr-2"/>Download Image</Button>
+            <Button variant="outline" onClick={handleDownload}><Download className="mr-2"/>Download or Share</Button>
           </div>
           <div className="mt-4 grid grid-cols-2 gap-2">
             <RegenerateImageDialog persona={persona} pet={pet} onRegenerationComplete={refetchPersona}>
