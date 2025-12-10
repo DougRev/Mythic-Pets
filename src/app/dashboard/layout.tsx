@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useEffect } from 'react';
@@ -23,9 +24,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   useEffect(() => {
     // If the user is not loading and there's no user, redirect to login.
     if (!isUserLoading && !user) {
-      router.push('/login');
+      // Force a full page reload to ensure a clean state for the login page,
+      // which prevents the form from being unresponsive on mobile.
+      window.location.href = '/login';
     }
-  }, [isUserLoading, user, router]);
+  }, [isUserLoading, user]);
 
   if (isUserLoading || !user) {
     // While loading or before redirecting, show a loading indicator or nothing
